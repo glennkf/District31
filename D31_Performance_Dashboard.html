@@ -628,15 +628,21 @@
 
 <!-- Upload Bar -->
 <div class="upload-bar">
-  <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-    Drop CSVs here or click to upload
-  </div>
-  <input type="file" id="file-input" accept=".csv" multiple>
-  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+  <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+    <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Manual override
+    </div>
+    <input type="file" id="file-input" accept=".csv" multiple>
     <span class="upload-hint">Snapshot date (optional):</span>
     <input type="date" id="manual-date" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 10px;font-size:13px;font-family:var(--sans);outline:none;">
-    <span class="upload-hint" id="upload-status">Upload one or multiple CSVs · date tag applies to single-file uploads</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">
+    <div id="github-status" style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span id="github-status-text">Loading data from GitHub…</span>
+    </div>
+    <span class="upload-hint" id="upload-status" style="color:var(--muted)"></span>
   </div>
 </div>
 
@@ -1534,62 +1540,108 @@ function clearAllData() {
 }
 
 // ══════════════════════════════════════════════
-// INIT — restore persisted data on page load
+// GITHUB AUTO-FETCH
 // ══════════════════════════════════════════════
-(function init() {
-  renderSnapshotList();
-  // Show or skip welcome overlay
-  if (localStorage.getItem('d31_hide_welcome') === '1') {
-    document.getElementById('title-overlay').style.display = 'none';
-  }
 
+// Base URL for raw CSV files in the GitHub repo data/ folder
+const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/glennkf/District31/main/data/';
+const GITHUB_MANIFEST = GITHUB_RAW_BASE + 'manifest.json';
+
+function setGithubStatus(msg, color) {
+  document.getElementById('github-status-text').textContent = msg;
+  document.getElementById('github-status').style.color = color || 'var(--muted)';
+}
+
+async function fetchGithubData() {
+  try {
+    setGithubStatus('Fetching data from GitHub…', 'var(--accent2)');
+
+    // Fetch manifest listing all CSV filenames
+    const manifestRes = await fetch(GITHUB_MANIFEST + '?nocache=' + Date.now());
+    if (!manifestRes.ok) throw new Error('manifest.json not found in data/ folder');
+    const manifest = await manifestRes.json();
+
+    if (!manifest.files || manifest.files.length === 0) {
+      setGithubStatus('No CSV files listed in manifest.json', 'var(--yellow)');
+      return;
+    }
+
+    setGithubStatus(`Fetching ${manifest.files.length} CSV file${manifest.files.length !== 1 ? 's' : ''}…`, 'var(--accent2)');
+
+    // Fetch all CSVs in parallel
+    const results = await Promise.all(
+      manifest.files.map(filename =>
+        fetch(GITHUB_RAW_BASE + filename + '?nocache=' + Date.now())
+          .then(r => r.ok ? r.text() : null)
+          .catch(() => null)
+      )
+    );
+
+    const texts = results.filter(Boolean);
+    if (texts.length === 0) {
+      setGithubStatus('Could not load any CSV files from GitHub', 'var(--red)');
+      return;
+    }
+
+    // Process all fetched CSVs
+    processAllTexts(texts, texts.length);
+    setGithubStatus(`✓ Auto-loaded ${texts.length} file${texts.length !== 1 ? 's' : ''} from GitHub`, 'var(--green)');
+    document.getElementById('title-overlay').style.display = 'none';
+
+  } catch(e) {
+    console.warn('GitHub fetch failed:', e);
+    setGithubStatus('Could not reach GitHub — use manual upload below', 'var(--yellow)');
+    // Fall back to localStorage cache if available
+    restoreFromCache();
+  }
+}
+
+function restoreFromCache() {
   try {
     const savedRows = localStorage.getItem('d31_latest_rows');
     const savedDate = localStorage.getItem('d31_latest_date');
     if (savedRows && savedDate) {
       const rows = JSON.parse(savedRows);
-
-      // Validate: check restored rows match the latest snapshot's stats
-      // If they don't match (stale/corrupt cache), clear and prompt re-upload
       const latestSnap = snapshots.length
         ? snapshots.slice().sort((a,b) => parseSnapDate(b.date) - parseSnapDate(a.date))[0]
         : null;
-
       const active = rows.filter(isActive);
       const renewedCount = active.filter(r => r['April Renewals'] === '1').length;
-      const goalsTotal = active.reduce((s,r) => s + goals(r), 0);
-
       let dataIsValid = true;
       if (latestSnap) {
-        // Mismatch detected if active club count or April renewals don't match latest snapshot
-        const snapRenewed = latestSnap.aprRenewed;
-        const snapActive  = latestSnap.activeClubs;
-        if (renewedCount !== snapRenewed || active.length !== snapActive) {
+        if (renewedCount !== latestSnap.aprRenewed || active.length !== latestSnap.activeClubs) {
           dataIsValid = false;
-          console.warn('Cached rows mismatch latest snapshot — clearing stale cache');
           localStorage.removeItem('d31_latest_rows');
           localStorage.removeItem('d31_latest_date');
-          document.getElementById('upload-status').textContent =
-            '⚠ Cached data was stale and has been cleared — please re-upload your CSVs';
         }
       }
-
       if (dataIsValid) {
         allRows = rows;
         const displayDate = latestSnapshotDate() || savedDate;
         document.getElementById('data-date').textContent = displayDate;
         document.getElementById('upload-status').textContent =
-          '✓ Restored latest data from ' + displayDate + ' — drop a new CSV to refresh';
+          '✓ Restored from cache (' + displayDate + ')';
         renderAll();
         updateBanner(displayDate);
         document.getElementById('title-overlay').style.display = 'none';
       }
     }
   } catch(e) {
-    console.warn('Could not restore latest data from localStorage:', e);
     localStorage.removeItem('d31_latest_rows');
     localStorage.removeItem('d31_latest_date');
   }
+}
+
+// ══════════════════════════════════════════════
+// INIT — restore persisted data on page load
+// ══════════════════════════════════════════════
+(function init() {
+  renderSnapshotList();
+  if (localStorage.getItem('d31_hide_welcome') === '1') {
+    document.getElementById('title-overlay').style.display = 'none';
+  }
+  // Always fetch fresh from GitHub first; fall back to cache if offline
+  fetchGithubData();
 })();
 </script>
 </body>
