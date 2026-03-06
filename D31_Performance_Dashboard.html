@@ -641,6 +641,7 @@
     <div id="github-status" style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       <span id="github-status-text">Loading data from GitHub…</span>
+      <span id="retry-btn" onclick="retryFetch()" style="display:none;cursor:pointer;background:rgba(91,156,246,0.15);color:var(--accent2);border:1px solid rgba(91,156,246,0.3);border-radius:4px;padding:2px 10px;font-size:11px;font-weight:500;transition:opacity 0.2s" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">↺ Retry</span>
     </div>
     <span class="upload-hint" id="upload-status" style="color:var(--muted)"></span>
   </div>
@@ -1547,9 +1548,15 @@ function clearAllData() {
 const GITHUB_RAW_BASE = 'https://glennkf.github.io/District31/data/';
 const GITHUB_MANIFEST = GITHUB_RAW_BASE + 'manifest.json';
 
-function setGithubStatus(msg, color) {
+function setGithubStatus(msg, color, showRetry) {
   document.getElementById('github-status-text').textContent = msg;
   document.getElementById('github-status').style.color = color || 'var(--muted)';
+  document.getElementById('retry-btn').style.display = showRetry ? 'inline-block' : 'none';
+}
+
+function retryFetch() {
+  setGithubStatus('Retrying…', 'var(--accent2)', false);
+  fetchGithubData();
 }
 
 async function fetchGithubData() {
@@ -1562,13 +1569,13 @@ async function fetchGithubData() {
     try {
       manifestRes = await fetch(manifestUrl);
     } catch(networkErr) {
-      setGithubStatus('Network error fetching manifest: ' + networkErr.message, 'var(--red)');
+      setGithubStatus('Network error fetching manifest: ' + networkErr.message, 'var(--red)', true);
       restoreFromCache();
       return;
     }
 
     if (!manifestRes.ok) {
-      setGithubStatus('manifest.json fetch failed: HTTP ' + manifestRes.status + ' — check data/ folder exists', 'var(--red)');
+      setGithubStatus('manifest.json fetch failed: HTTP ' + manifestRes.status + ' — check data/ folder exists', 'var(--red)', true);
       restoreFromCache();
       return;
     }
@@ -1582,7 +1589,7 @@ async function fetchGithubData() {
     }
 
     if (!manifest.files || manifest.files.length === 0) {
-      setGithubStatus('manifest.json has no files listed', 'var(--yellow)');
+      setGithubStatus('manifest.json has no files listed', 'var(--yellow)', true);
       return;
     }
 
@@ -1610,7 +1617,7 @@ async function fetchGithubData() {
     const failed = manifest.files.length - texts.length;
 
     if (texts.length === 0) {
-      setGithubStatus('All ' + manifest.files.length + ' CSV fetches failed — check filenames in manifest.json match files in data/', 'var(--red)');
+      setGithubStatus('All ' + manifest.files.length + ' CSV fetches failed — check filenames in manifest.json match files in data/', 'var(--red)', true);
       restoreFromCache();
       return;
     }
@@ -1625,7 +1632,7 @@ async function fetchGithubData() {
 
   } catch(e) {
     console.error('GitHub fetch unexpected error:', e);
-    setGithubStatus('Unexpected error: ' + e.message, 'var(--red)');
+    setGithubStatus('Unexpected error: ' + e.message, 'var(--red)', true);
     restoreFromCache();
   }
 }
@@ -1654,16 +1661,18 @@ function restoreFromCache() {
         const displayDate = latestSnapshotDate() || savedDate;
         document.getElementById('data-date').textContent = displayDate;
         document.getElementById('upload-status').textContent =
-          '✓ Restored from cache (' + displayDate + ')';
+          '⚡ Showing cached data from ' + displayDate + ' — refreshing from GitHub…';
         renderAll();
         updateBanner(displayDate);
         document.getElementById('title-overlay').style.display = 'none';
+        return true; // cache was valid and restored
       }
     }
   } catch(e) {
     localStorage.removeItem('d31_latest_rows');
     localStorage.removeItem('d31_latest_date');
   }
+  return false; // no valid cache
 }
 
 // ══════════════════════════════════════════════
@@ -1674,7 +1683,15 @@ function restoreFromCache() {
   if (localStorage.getItem('d31_hide_welcome') === '1') {
     document.getElementById('title-overlay').style.display = 'none';
   }
-  // Always fetch fresh from GitHub first; fall back to cache if offline
+
+  // Step 1: Immediately restore from cache so returning users see data right away
+  const hasCachedData = restoreFromCache();
+
+  // Step 2: Then fetch fresh data from GitHub in the background
+  // This updates data silently — cache was just shown so users aren't staring at a blank screen
+  if (hasCachedData) {
+    setGithubStatus('Refreshing data from GitHub…', 'var(--muted)');
+  }
   fetchGithubData();
 })();
 </script>
