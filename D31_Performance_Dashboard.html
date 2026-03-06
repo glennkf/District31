@@ -1,0 +1,1596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>District 31 — Performance Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1c2230;
+    --border: #2a3244;
+    --accent: #e8a44a;
+    --accent2: #5b9cf6;
+    --green: #3fb950;
+    --yellow: #d29922;
+    --red: #f85149;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --serif: 'DM Serif Display', Georgia, serif;
+    --sans: 'DM Sans', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .logo-badge {
+    background: var(--accent);
+    color: #0d1117;
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .header h1 {
+    font-family: var(--serif);
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--text);
+  }
+  .header-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    text-align: right;
+  }
+  #data-date { color: var(--accent); }
+
+  /* ── Upload Zone ── */
+  .upload-bar {
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .upload-zone {
+    border: 1.5px dashed var(--border);
+    border-radius: 8px;
+    padding: 8px 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: border-color 0.2s, background 0.2s;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .upload-zone:hover, .upload-zone.dragover {
+    border-color: var(--accent);
+    background: rgba(232,164,74,0.06);
+    color: var(--accent);
+  }
+  .upload-zone svg { width:16px; height:16px; flex-shrink:0; }
+  #file-input { display: none; }
+  .upload-hint { font-size: 12px; color: var(--muted); }
+
+  /* ── Nav Tabs ── */
+  .nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex;
+    gap: 4px;
+  }
+  .tab {
+    padding: 14px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
+    white-space: nowrap;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── Main ── */
+  .main { padding: 28px 32px; max-width: 1400px; margin: 0 auto; }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ── Section Heading ── */
+  .section-title {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 400;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+  .section-sub { font-size: 12px; color: var(--muted); margin-bottom: 24px; }
+
+  /* ── KPI Cards ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--kpi-color, var(--accent2));
+    border-radius: 10px 10px 0 0;
+  }
+  .kpi-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
+  .kpi-value { font-family: var(--serif); font-size: 36px; line-height: 1; color: var(--text); }
+  .kpi-sub { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+  /* ── Two-col layout ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  @media (max-width: 900px) { .two-col, .three-col { grid-template-columns: 1fr; } }
+
+  /* ── Card ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .card-title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  /* ── Tables ── */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+  th:hover { color: var(--text); }
+  th.sorted { color: var(--accent); }
+  td {
+    padding: 9px 12px;
+    border-bottom: 1px solid rgba(42,50,68,0.5);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.025); }
+
+  /* ── Status Badges ── */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: var(--mono);
+    white-space: nowrap;
+  }
+  .badge-green { background: rgba(63,185,80,0.15); color: var(--green); }
+  .badge-yellow { background: rgba(210,153,34,0.15); color: var(--yellow); }
+  .badge-red { background: rgba(248,81,73,0.15); color: var(--red); }
+  .badge-blue { background: rgba(91,156,246,0.15); color: var(--accent2); }
+  .badge-gray { background: rgba(139,148,158,0.15); color: var(--muted); }
+  .badge-orange { background: rgba(232,164,74,0.15); color: var(--accent); }
+
+  /* ── Progress Bar ── */
+  .progress-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s ease;
+  }
+
+  /* ── Division bar chart ── */
+  .div-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .div-bar-label { width: 80px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .div-bar-track { flex: 1; height: 20px; background: var(--border); border-radius: 4px; overflow: hidden; position: relative; }
+  .div-bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 8px; font-size: 11px; font-weight: 500; color: #0d1117; transition: width 0.8s ease; }
+  .div-bar-num { width: 40px; font-family: var(--mono); font-size: 12px; color: var(--text); text-align: right; }
+
+  /* ── Goals distribution ── */
+  .goals-dist { display: flex; align-items: flex-end; gap: 6px; height: 80px; margin-top: 8px; }
+  .goals-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+  .goals-bar { width: 100%; border-radius: 3px 3px 0 0; transition: height 0.6s ease; min-height: 2px; }
+  .goals-bar-lbl { font-size: 10px; color: var(--muted); font-family: var(--mono); }
+
+  /* ── Filter row ── */
+  .filter-row { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .filter-row select, .filter-row input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 6px 12px;
+    font-size: 13px;
+    font-family: var(--sans);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .filter-row select:focus, .filter-row input:focus { border-color: var(--accent); }
+  .filter-label { font-size: 12px; color: var(--muted); }
+
+  /* ── Renewal dot ── */
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+  .dot-green { background: var(--green); }
+  .dot-red { background: var(--red); }
+
+  /* ── Trend chart (canvas) ── */
+  .trend-canvas-wrap { position: relative; height: 200px; }
+  canvas { width: 100% !important; }
+
+  /* ── At-risk alert ── */
+  .alert {
+    background: rgba(248,81,73,0.08);
+    border: 1px solid rgba(248,81,73,0.3);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #f0a0a0;
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .alert-icon { font-size: 16px; flex-shrink: 0; }
+
+  /* ── Empty state ── */
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; }
+  .empty p { font-size: 14px; }
+
+  /* ── Tooltip ── */
+  .tooltip-wrap { position: relative; display: inline-block; }
+  .tooltip-wrap:hover .tooltip-box { display: block; }
+  .tooltip-box {
+    display: none;
+    position: absolute;
+    bottom: 120%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1c2230;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 11px;
+    color: var(--text);
+    white-space: nowrap;
+    z-index: 200;
+    pointer-events: none;
+  }
+
+  /* ── Snapshot history ── */
+  .snapshot-list { display: flex; flex-direction: column; gap: 8px; }
+  .snapshot-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+  }
+  .snapshot-date { font-family: var(--mono); color: var(--accent); }
+  .snapshot-stats { color: var(--muted); }
+  .snapshot-del { cursor: pointer; color: var(--muted); font-size: 16px; padding: 0 4px; transition: color 0.2s; }
+  .snapshot-del:hover { color: var(--red); }
+
+  .wide-card { margin-bottom: 20px; }
+
+  /* ── Last Updated Banner ── */
+  .update-banner {
+    background: linear-gradient(90deg, rgba(232,164,74,0.12), rgba(232,164,74,0.04));
+    border-bottom: 1px solid rgba(232,164,74,0.25);
+    padding: 7px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+    gap: 12px;
+  }
+  .update-banner-left { display: flex; align-items: center; gap: 10px; }
+  .update-banner .pulse {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 0 rgba(232,164,74,0.6);
+    animation: pulse 2s infinite;
+    flex-shrink: 0;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(232,164,74,0.6); }
+    70% { box-shadow: 0 0 0 7px rgba(232,164,74,0); }
+    100% { box-shadow: 0 0 0 0 rgba(232,164,74,0); }
+  }
+  .update-banner-right { display: flex; align-items: center; gap: 16px; }
+  .banner-help-btn {
+    font-size: 11px;
+    color: var(--accent2);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    white-space: nowrap;
+  }
+  .banner-help-btn:hover { color: var(--text); }
+
+  /* ── Title / Welcome Overlay ── */
+  .title-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(13,17,23,0.92);
+    backdrop-filter: blur(6px);
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .title-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    max-width: 640px;
+    width: 100%;
+    overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  }
+  .title-hero {
+    background: linear-gradient(135deg, #1a2235 0%, #0d1117 60%);
+    border-bottom: 1px solid var(--border);
+    padding: 40px 40px 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .title-hero::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(232,164,74,0.15), transparent 70%);
+  }
+  .title-hero-badge {
+    display: inline-block;
+    background: var(--accent);
+    color: #0d1117;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 4px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .title-hero h2 {
+    font-family: var(--serif);
+    font-size: 32px;
+    font-weight: 400;
+    line-height: 1.2;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  .title-hero p {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .title-body { padding: 28px 40px 32px; }
+  .title-body h3 {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+  .instructions-list { list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 28px; }
+  .instructions-list li {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .inst-num {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .inst-text strong { color: var(--text); display: block; margin-bottom: 2px; }
+  .inst-text span { color: var(--muted); font-size: 12px; }
+  .title-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .title-dismiss {
+    background: var(--accent);
+    color: #0d1117;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--sans);
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .title-dismiss:hover { opacity: 0.85; }
+  .title-skip { font-size: 12px; color: var(--muted); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+  .title-skip:hover { color: var(--text); }
+
+  /* ── Help Modal (re-triggered from banner) ── */
+  .help-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(13,17,23,0.85);
+    backdrop-filter: blur(4px);
+    z-index: 500;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .help-modal.open { display: flex; }
+  .help-modal-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    max-width: 560px;
+    width: 100%;
+    padding: 32px 36px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+    position: relative;
+  }
+  .help-modal-close {
+    position: absolute;
+    top: 16px; right: 20px;
+    font-size: 20px;
+    color: var(--muted);
+    cursor: pointer;
+    line-height: 1;
+  }
+  .help-modal-close:hover { color: var(--text); }
+  .help-modal h3 {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 400;
+    margin-bottom: 20px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Title / Welcome Overlay -->
+<div class="title-overlay" id="title-overlay">
+  <div class="title-card">
+    <div class="title-hero">
+      <div class="title-hero-badge">District 31 · 2025–2026</div>
+      <h2>Performance<br>Dashboard</h2>
+      <p>Massachusetts &amp; Rhode Island · Toastmasters International</p>
+    </div>
+    <div class="title-body">
+      <h3>Getting Started</h3>
+      <ul class="instructions-list">
+        <li>
+          <div class="inst-num">1</div>
+          <div class="inst-text">
+            <strong>Upload your CSV</strong>
+            <span>Drag and drop your Division_Performance export from Toastmasters International onto the upload bar. You can drop multiple files at once to build trend history.</span>
+          </div>
+        </li>
+        <li>
+          <div class="inst-num">2</div>
+          <div class="inst-text">
+            <strong>Explore the four views</strong>
+            <span>District Summary shows district-wide KPIs. Division and Area views let you drill down by leadership level. Trend &amp; History charts progress over time.</span>
+          </div>
+        </li>
+        <li>
+          <div class="inst-num">3</div>
+          <div class="inst-text">
+            <strong>Refresh anytime</strong>
+            <span>Drop a new CSV whenever TI publishes updated data. Your snapshot history and latest data are saved automatically — no data is lost on refresh.</span>
+          </div>
+        </li>
+        <li>
+          <div class="inst-num">4</div>
+          <div class="inst-text">
+            <strong>Tag your snapshots (optional)</strong>
+            <span>Use the date picker next to the upload bar to manually label a snapshot if the file's date needs overriding.</span>
+          </div>
+        </li>
+      </ul>
+      <div class="title-footer">
+        <button class="title-dismiss" onclick="dismissTitle()">Open Dashboard →</button>
+        <span class="title-skip" onclick="dismissTitle(true)">Don't show again</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Help Modal -->
+<div class="help-modal" id="help-modal">
+  <div class="help-modal-card">
+    <span class="help-modal-close" onclick="document.getElementById('help-modal').classList.remove('open')">×</span>
+    <h3>Dashboard Guide</h3>
+    <ul class="instructions-list">
+      <li><div class="inst-num">1</div><div class="inst-text"><strong>Upload CSV</strong><span>Drag one or multiple Division_Performance CSVs onto the upload bar. The most recent file becomes the live view; all files are saved as trend snapshots.</span></div></li>
+      <li><div class="inst-num">2</div><div class="inst-text"><strong>District Summary</strong><span>Top-level KPIs, division rankings, goals distribution, top 10 clubs, and suspended clubs.</span></div></li>
+      <li><div class="inst-num">3</div><div class="inst-text"><strong>Division View</strong><span>Select a division to see area summaries and a full club breakdown with goal status.</span></div></li>
+      <li><div class="inst-num">4</div><div class="inst-text"><strong>Area View</strong><span>Select a division and area for club-level coaching priorities and goals-to-Distinguished tracking.</span></div></li>
+      <li><div class="inst-num">5</div><div class="inst-text"><strong>Trend &amp; History</strong><span>Charts show Distinguished clubs, at-risk clubs, April renewals %, and total members over time across all saved snapshots.</span></div></li>
+      <li><div class="inst-num">6</div><div class="inst-text"><strong>Duplicate protection</strong><span>Uploading the same data under a different filename is detected automatically — no duplicate snapshots will be created.</span></div></li>
+    </ul>
+  </div>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <span class="logo-badge">D31</span>
+    <h1>Performance Dashboard</h1>
+  </div>
+  <div class="header-meta">
+    <div>District 31 · Massachusetts &amp; Rhode Island</div>
+    <div>Data as of: <span id="data-date">—</span></div>
+  </div>
+</div>
+
+<!-- Upload Bar -->
+<div class="upload-bar">
+  <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Drop CSVs here or click to upload
+  </div>
+  <input type="file" id="file-input" accept=".csv" multiple>
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+    <span class="upload-hint">Snapshot date (optional):</span>
+    <input type="date" id="manual-date" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 10px;font-size:13px;font-family:var(--sans);outline:none;">
+    <span class="upload-hint" id="upload-status">Upload one or multiple CSVs · date tag applies to single-file uploads</span>
+  </div>
+</div>
+
+<!-- Last Updated Banner -->
+<div class="update-banner" id="update-banner" style="display:none">
+  <div class="update-banner-left">
+    <div class="pulse"></div>
+    <span>Data as of <strong id="banner-date" style="color:var(--accent)">—</strong></span>
+    <span id="banner-season" style="color:var(--muted)"></span>
+  </div>
+  <div class="update-banner-right">
+    <span id="banner-snapshot-count" style="color:var(--muted)"></span>
+    <span class="banner-help-btn" onclick="clearAllData()" style="color:var(--red)">🗑 Clear all data</span>
+    <span class="banner-help-btn" onclick="document.getElementById('help-modal').classList.add('open')">📖 How to use this dashboard</span>
+  </div>
+</div>
+
+<!-- Nav -->
+<div class="nav">
+  <div class="tab active" data-view="summary">District Summary</div>
+  <div class="tab" data-view="division">Division View</div>
+  <div class="tab" data-view="area">Area View</div>
+  <div class="tab" data-view="trend">Trend &amp; History</div>
+</div>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- ═══════════════════════════════════════════════
+       VIEW 1 — DISTRICT SUMMARY
+  ════════════════════════════════════════════════ -->
+  <div class="view active" id="view-summary">
+    <div class="section-title">District Executive Summary</div>
+    <div class="section-sub" id="summary-sub">Upload a CSV to populate this dashboard.</div>
+
+    <div class="kpi-grid" id="kpi-grid">
+      <div class="kpi" style="--kpi-color:#5b9cf6"><div class="kpi-label">Active Clubs</div><div class="kpi-value" id="kpi-active">—</div><div class="kpi-sub">of <span id="kpi-total">—</span> total</div></div>
+      <div class="kpi" style="--kpi-color:#3fb950"><div class="kpi-label">Distinguished</div><div class="kpi-value" id="kpi-dist">—</div><div class="kpi-sub">5+ goals met</div></div>
+      <div class="kpi" style="--kpi-color:#e8a44a"><div class="kpi-label">Select Dist.</div><div class="kpi-value" id="kpi-select">—</div><div class="kpi-sub">7+ goals met</div></div>
+      <div class="kpi" style="--kpi-color:#a371f7"><div class="kpi-label">Pres. Dist.</div><div class="kpi-value" id="kpi-pres">—</div><div class="kpi-sub">9+ goals met</div></div>
+      <div class="kpi" style="--kpi-color:#f85149"><div class="kpi-label">At-Risk Clubs</div><div class="kpi-value" id="kpi-risk">—</div><div class="kpi-sub">0–1 goals</div></div>
+      <div class="kpi" style="--kpi-color:#3fb950"><div class="kpi-label">April Renewed</div><div class="kpi-value" id="kpi-renewed">—</div><div class="kpi-sub" id="kpi-renewed-pct">—</div></div>
+      <div class="kpi" style="--kpi-color:#8b949e"><div class="kpi-label">Suspended</div><div class="kpi-value" id="kpi-susp">—</div><div class="kpi-sub">this season</div></div>
+      <div class="kpi" style="--kpi-color:#5b9cf6"><div class="kpi-label">Total Members</div><div class="kpi-value" id="kpi-members">—</div><div class="kpi-sub">active clubs</div></div>
+    </div>
+
+    <div id="at-risk-alert" class="alert" style="display:none">
+      <span class="alert-icon">⚠️</span>
+      <span id="at-risk-msg"></span>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Division Rankings — Avg Goals / Club</div>
+        <div id="div-bars"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Goals Met Distribution (Active Clubs)</div>
+        <div class="goals-dist" id="goals-dist"></div>
+        <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap">
+          <span><span class="badge badge-red">0–1</span> At-risk</span>
+          <span><span class="badge badge-yellow">2–4</span> Building</span>
+          <span><span class="badge badge-green">5–6</span> Distinguished</span>
+          <span><span class="badge badge-orange">7–8</span> Select</span>
+          <span><span class="badge" style="background:rgba(163,113,247,0.15);color:#a371f7">9+</span> President's</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card wide-card">
+      <div class="card-title">Top 10 Clubs by Goals Met</div>
+      <div class="table-wrap"><table id="top-clubs-table">
+        <thead><tr><th>#</th><th>Club Name</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Apr Renewed</th><th>Status</th></tr></thead>
+        <tbody id="top-clubs-body"></tbody>
+      </table></div>
+    </div>
+
+    <div class="card wide-card">
+      <div class="card-title">Suspended &amp; Inactive Clubs</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Club Name</th><th>Div</th><th>Area</th><th>Note</th></tr></thead>
+        <tbody id="susp-body"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       VIEW 2 — DIVISION VIEW
+  ════════════════════════════════════════════════ -->
+  <div class="view" id="view-division">
+    <div class="section-title">Division Director View</div>
+    <div class="section-sub">Select a division to see a focused breakdown.</div>
+
+    <div class="filter-row">
+      <span class="filter-label">Division:</span>
+      <select id="div-select">
+        <option value="">-- Select Division --</option>
+      </select>
+    </div>
+
+    <div class="kpi-grid" id="div-kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
+      <div class="kpi" style="--kpi-color:#5b9cf6"><div class="kpi-label">Active Clubs</div><div class="kpi-value" id="div-kpi-clubs">—</div></div>
+      <div class="kpi" style="--kpi-color:#3fb950"><div class="kpi-label">Distinguished+</div><div class="kpi-value" id="div-kpi-dist">—</div><div class="kpi-sub">5+ goals</div></div>
+      <div class="kpi" style="--kpi-color:#f85149"><div class="kpi-label">At-Risk</div><div class="kpi-value" id="div-kpi-risk">—</div><div class="kpi-sub">0–1 goals</div></div>
+      <div class="kpi" style="--kpi-color:#e8a44a"><div class="kpi-label">Avg Goals</div><div class="kpi-value" id="div-kpi-avg">—</div></div>
+      <div class="kpi" style="--kpi-color:#3fb950"><div class="kpi-label">Apr Renewed</div><div class="kpi-value" id="div-kpi-renewed">—</div></div>
+      <div class="kpi" style="--kpi-color:#5b9cf6"><div class="kpi-label">Total Members</div><div class="kpi-value" id="div-kpi-members">—</div></div>
+    </div>
+
+    <div class="card wide-card">
+      <div class="card-title">Area Summary within Division</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Area</th><th>Active Clubs</th><th>Total Goals</th><th>Avg Goals</th><th>Distinguished+</th><th>At-Risk</th><th>Apr Renewed</th></tr></thead>
+        <tbody id="div-area-body"></tbody>
+      </table></div>
+    </div>
+
+    <div class="card wide-card">
+      <div class="card-title">All Clubs in Division</div>
+      <div class="table-wrap"><table id="div-clubs-table">
+        <thead><tr><th onclick="sortTable('div-clubs-body',0)">Area</th><th onclick="sortTable('div-clubs-body',1)">Club Name</th><th onclick="sortTable('div-clubs-body',2)">Goals ▾</th><th onclick="sortTable('div-clubs-body',3)">Members</th><th>Apr Renewed</th><th>Status</th></tr></thead>
+        <tbody id="div-clubs-body"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       VIEW 3 — AREA VIEW
+  ════════════════════════════════════════════════ -->
+  <div class="view" id="view-area">
+    <div class="section-title">Area Director View</div>
+    <div class="section-sub">Select a division and area for club-level coaching priorities.</div>
+
+    <div class="filter-row">
+      <span class="filter-label">Division:</span>
+      <select id="area-div-select">
+        <option value="">-- Select Division --</option>
+      </select>
+      <span class="filter-label">Area:</span>
+      <select id="area-area-select">
+        <option value="">-- Select Area --</option>
+      </select>
+    </div>
+
+    <div class="kpi-grid" id="area-kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
+      <div class="kpi" style="--kpi-color:#5b9cf6"><div class="kpi-label">Active Clubs</div><div class="kpi-value" id="area-kpi-clubs">—</div></div>
+      <div class="kpi" style="--kpi-color:#3fb950"><div class="kpi-label">Distinguished+</div><div class="kpi-value" id="area-kpi-dist">—</div></div>
+      <div class="kpi" style="--kpi-color:#f85149"><div class="kpi-label">At-Risk</div><div class="kpi-value" id="area-kpi-risk">—</div></div>
+      <div class="kpi" style="--kpi-color:#e8a44a"><div class="kpi-label">Avg Goals</div><div class="kpi-value" id="area-kpi-avg">—</div></div>
+      <div class="kpi" style="--kpi-color:#3fb950"><div class="kpi-label">Apr Renewed</div><div class="kpi-value" id="area-kpi-renewed">—</div></div>
+    </div>
+
+    <div class="card wide-card">
+      <div class="card-title">Club Coaching Priorities</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Club Name</th><th>Goals Met</th><th>Members</th><th>Apr Renewed</th><th>Goals to Distinguished</th><th>Priority</th></tr></thead>
+        <tbody id="area-clubs-body"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       VIEW 4 — TREND & HISTORY
+  ════════════════════════════════════════════════ -->
+  <div class="view" id="view-trend">
+    <div class="section-title">Trend &amp; Snapshot History</div>
+    <div class="section-sub">Each time you upload a new CSV, a snapshot is saved automatically for comparison.</div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Distinguished Clubs Over Time</div>
+        <div class="trend-canvas-wrap"><canvas id="trend-dist-chart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">At-Risk Clubs Over Time</div>
+        <div class="trend-canvas-wrap"><canvas id="trend-risk-chart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">April Renewals % Over Time</div>
+        <div class="trend-canvas-wrap"><canvas id="trend-renewal-chart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Total Active Members Over Time</div>
+        <div class="trend-canvas-wrap"><canvas id="trend-members-chart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card wide-card">
+      <div class="card-title">Saved Snapshots</div>
+      <div id="snapshot-list" class="snapshot-list">
+        <div class="empty"><div class="empty-icon">📂</div><p>No snapshots yet. Upload a CSV to create your first snapshot.</p></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let allRows = [];
+let snapshots = JSON.parse(localStorage.getItem('d31_snapshots') || '[]');
+
+// ══════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('view-' + t.dataset.view).classList.add('active');
+    if (t.dataset.view === 'trend') renderTrendCharts();
+  });
+});
+
+// ══════════════════════════════════════════════
+// FILE UPLOAD
+// ══════════════════════════════════════════════
+const zone = document.getElementById('upload-zone');
+const fileInput = document.getElementById('file-input');
+
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.classList.remove('dragover');
+  const files = Array.from(e.dataTransfer.files).filter(f => f.name.endsWith('.csv'));
+  if (files.length) handleFiles(files);
+});
+fileInput.addEventListener('change', () => {
+  const files = Array.from(fileInput.files);
+  if (files.length) handleFiles(files);
+  fileInput.value = '';
+});
+
+function handleFiles(files) {
+  const status = document.getElementById('upload-status');
+  if (files.length === 1) {
+    // Single file — honor manual date tag if set
+    readCSV(files[0], document.getElementById('manual-date').value || null);
+    if (!document.getElementById('upload-status').textContent.includes('Duplicate'))
+      status.textContent = `✓ Loaded: ${files[0].name}`;
+  } else {
+    // Multiple files — read ALL as text first (parallel), then process in order
+    status.textContent = `Processing ${files.length} files…`;
+    const results = new Array(files.length);
+    let completed = 0;
+
+    Array.from(files).forEach((file, idx) => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        results[idx] = e.target.result;
+        completed++;
+        if (completed === files.length) {
+          processAllTexts(results, files.length);
+        }
+      };
+      reader.readAsText(file);
+    });
+  }
+}
+
+function extractDateFromText(text) {
+  // Extract the As of date from CSV content
+  const m1 = text.match(/As of (\d{1,2}\/\d{1,2}\/\d{4})/);
+  if (m1) return m1[1];
+  const m2 = text.match(/(\d{1,2}\/\d{1,2}\/\d{4})/);
+  return m2 ? m2[1] : null;
+}
+
+function processAllTexts(texts, total) {
+  const status = document.getElementById('upload-status');
+
+  // Step 1: Parse all file contents into rows + date
+  const parsed = texts.map(text => {
+    const dateStr = extractDateFromText(text);
+    const dateObj = dateStr ? parseSnapDate(dateStr) : new Date(0);
+    return { text, dateStr, dateObj };
+  });
+
+  // Step 2: Save all as snapshots — silent mode (no status message on dupes)
+  const countBefore = snapshots.length;
+  parsed.forEach(({ text, dateStr }) => {
+    if (dateStr) saveSnapshotFromRows(parseRowsFromText(text), dateStr, true);
+  });
+  const newCount = snapshots.length - countBefore;
+
+  // Step 3: Live view = latest snapshot across ALL saved snapshots (not just this batch)
+  // Find the snapshot with the latest date, then find its matching rows from the batch
+  // or fall back to existing allRows if the latest snapshot predates this batch
+  const latestDateLabel = latestSnapshotDate();
+  const latestParsed = parsed
+    .filter(p => p.dateStr)
+    .sort((a, b) => b.dateObj - a.dateObj)[0]; // newest in this batch
+
+  // Use latest from batch only if it matches the overall latest snapshot date
+  if (latestParsed && latestParsed.dateStr === latestDateLabel) {
+    const latestRows = parseRowsFromText(latestParsed.text);
+    allRows = latestRows;
+    try {
+      localStorage.setItem('d31_latest_rows', JSON.stringify(latestRows));
+      localStorage.setItem('d31_latest_date', latestParsed.dateStr);
+    } catch(e) { console.warn('localStorage quota exceeded:', e); }
+  }
+  // If the overall latest snapshot is older than what was previously loaded
+  // (e.g. March was already loaded, now July-Feb batch added), keep existing allRows
+
+  document.getElementById('data-date').textContent = latestDateLabel || '—';
+  renderAll();
+  updateBanner(latestDateLabel || '—');
+
+  status.textContent = `✓ Loaded ${total} files · ${newCount} new snapshot${newCount !== 1 ? 's' : ''} saved`;
+  renderTrendCharts();
+}
+
+// Parse rows from raw CSV text (shared helper used by processAllTexts and parseCSV)
+function parseRowsFromText(text) {
+  const lines = text.trim().split('\n')
+    .filter(l => !l.startsWith('Month') && !l.startsWith('"Month'));
+  function parseLine(line) {
+    const result = []; let cur = '', inQuote = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { inQuote = !inQuote; }
+      else if (ch === ',' && !inQuote) { result.push(cur.trim().replace(/\r/,'')); cur = ''; }
+      else { cur += ch; }
+    }
+    result.push(cur.trim().replace(/\r/,''));
+    return result;
+  }
+  const header = parseLine(lines[0]);
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const vals = parseLine(lines[i]);
+    const row = {};
+    header.forEach((h, idx) => row[h] = (vals[idx] || '').trim());
+    if (row['District']) rows.push(row);
+  }
+  return rows;
+}
+
+function readCSV(file, manualDate) {
+  const reader = new FileReader();
+  reader.onload = e => parseCSV(e.target.result, manualDate);
+  reader.readAsText(file);
+}
+
+// ══════════════════════════════════════════════
+// CSV PARSE
+// ══════════════════════════════════════════════
+function parseCSV(text, manualDate) {
+  // Single-file upload path — always sets the live view
+  const rows = parseRowsFromText(text);
+
+  // Resolve the snapshot date label
+  let dataDate;
+  if (manualDate) {
+    const [y, m, d] = manualDate.split('-');
+    dataDate = parseInt(m) + '/' + parseInt(d) + '/' + y;
+  } else {
+    dataDate = extractDateFromText(text) || new Date().toLocaleDateString();
+  }
+
+  // Save snapshot (not silent — show dupe warning if needed for single file upload)
+  const saved = saveSnapshotFromRows(rows, dataDate, false);
+
+  // Always set live view to the latest snapshot across ALL snapshots
+  // For a single file upload, if this file is newer than what's already loaded, use it
+  // If it's older, keep existing allRows but still update the display date
+  const overallLatestDate = latestSnapshotDate();
+  const thisFileIsLatest = !overallLatestDate || 
+    parseSnapDate(dataDate) >= parseSnapDate(overallLatestDate);
+
+  if (thisFileIsLatest) {
+    allRows = rows;
+    try {
+      localStorage.setItem('d31_latest_rows', JSON.stringify(rows));
+      localStorage.setItem('d31_latest_date', dataDate);
+    } catch(e) {
+      console.warn('localStorage quota exceeded:', e);
+    }
+  }
+
+  document.getElementById('data-date').textContent = overallLatestDate || dataDate;
+  renderAll();
+  updateBanner(overallLatestDate || dataDate);
+
+  if (saved) {
+    document.getElementById('upload-status').textContent = '✓ Snapshot saved for ' + dataDate;
+  }
+}
+
+// ══════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════
+function isActive(r) {
+  const mem = parseInt(r['Membership to date']) || 0;
+  const note = r['Charter Date/Suspend Date'] || '';
+  return mem > 0 && !note.includes('Susp');
+}
+function isSuspended(r) { return (r['Charter Date/Suspend Date'] || '').includes('Susp'); }
+function goals(r) { return parseInt(r['Club Goals Met']) || 0; }
+function members(r) { return parseInt(r['Membership to date']) || 0; }
+function goalStatus(g) {
+  if (g >= 9) return { label: "Pres. Dist.", cls: "badge", style: "background:rgba(163,113,247,0.15);color:#a371f7" };
+  if (g >= 7) return { label: "Select Dist.", cls: "badge badge-orange" };
+  if (g >= 5) return { label: "Distinguished", cls: "badge badge-green" };
+  if (g >= 2) return { label: "Building", cls: "badge badge-yellow" };
+  return { label: "At Risk", cls: "badge badge-red" };
+}
+function priorityLabel(g) {
+  if (g === 0) return '<span class="badge badge-red">🔴 Urgent</span>';
+  if (g === 1) return '<span class="badge badge-red">🔴 High</span>';
+  if (g <= 3) return '<span class="badge badge-yellow">🟡 Medium</span>';
+  if (g <= 4) return '<span class="badge badge-blue">🔵 Watch</span>';
+  return '<span class="badge badge-green">✅ On Track</span>';
+}
+
+// ══════════════════════════════════════════════
+// RENDER ALL
+// ══════════════════════════════════════════════
+function renderAll() {
+  renderSummary();
+  populateDivisionSelects();
+  renderDivisionView();
+  renderAreaView();
+}
+
+// ══════════════════════════════════════════════
+// SUMMARY VIEW
+// ══════════════════════════════════════════════
+function renderSummary() {
+  const active = allRows.filter(isActive);
+  const susp = allRows.filter(isSuspended);
+  const total = allRows.length;
+  const dist = active.filter(r => goals(r) >= 5).length;
+  const sel = active.filter(r => goals(r) >= 7).length;
+  const pres = active.filter(r => goals(r) >= 9).length;
+  const risk = active.filter(r => goals(r) <= 1).length;
+  const renewed = active.filter(r => r['April Renewals'] === '1').length;
+  const totalMem = active.reduce((s, r) => s + members(r), 0);
+
+  document.getElementById('kpi-active').textContent = active.length;
+  document.getElementById('kpi-total').textContent = total;
+  document.getElementById('kpi-dist').textContent = dist;
+  document.getElementById('kpi-select').textContent = sel;
+  document.getElementById('kpi-pres').textContent = pres;
+  document.getElementById('kpi-risk').textContent = risk;
+  document.getElementById('kpi-renewed').textContent = renewed;
+  document.getElementById('kpi-renewed-pct').textContent = `${(renewed/active.length*100).toFixed(1)}% of active clubs`;
+  document.getElementById('kpi-susp').textContent = susp.length;
+  document.getElementById('kpi-members').textContent = totalMem.toLocaleString();
+
+  document.getElementById('summary-sub').textContent =
+    `${active.length} active clubs across 7 divisions · ${dist} distinguished (${(dist/active.length*100).toFixed(0)}%) · ${risk} at-risk`;
+
+  if (risk > 0) {
+    document.getElementById('at-risk-alert').style.display = 'flex';
+    document.getElementById('at-risk-msg').textContent =
+      `${risk} active clubs have 0–1 goals met. These clubs need coaching outreach before the season ends. See Area View to identify priorities.`;
+  }
+
+  // Division bars
+  const divs = [...new Set(active.map(r => r['Division']))].sort();
+  const divAvgs = divs.map(d => {
+    const clubs = active.filter(r => r['Division'] === d);
+    const avg = clubs.reduce((s, r) => s + goals(r), 0) / clubs.length;
+    return { d, avg, clubs: clubs.length };
+  }).sort((a, b) => b.avg - a.avg);
+  const maxAvg = Math.max(...divAvgs.map(x => x.avg));
+  const colors = ['#3fb950','#5b9cf6','#e8a44a','#a371f7','#d29922','#58a6ff','#f85149'];
+  document.getElementById('div-bars').innerHTML = divAvgs.map((x, i) => `
+    <div class="div-bar-row">
+      <div class="div-bar-label">Division ${x.d}</div>
+      <div class="div-bar-track">
+        <div class="div-bar-fill" style="width:${(x.avg/maxAvg*100).toFixed(0)}%;background:${colors[i]}">
+          ${x.clubs} clubs
+        </div>
+      </div>
+      <div class="div-bar-num">${x.avg.toFixed(1)}</div>
+    </div>`).join('');
+
+  // Goals distribution
+  const maxG = 9;
+  const dist_data = Array.from({length: maxG+1}, (_, i) => active.filter(r => goals(r) === i).length);
+  const maxCount = Math.max(...dist_data);
+  const barColors = ['#f85149','#f85149','#d29922','#d29922','#d29922','#3fb950','#3fb950','#e8a44a','#e8a44a','#a371f7'];
+  document.getElementById('goals-dist').innerHTML = dist_data.map((c, i) => `
+    <div class="goals-bar-wrap">
+      <div class="tooltip-wrap">
+        <div class="goals-bar" style="height:${maxCount ? (c/maxCount*64).toFixed(0) : 0}px;background:${barColors[i]}"></div>
+        <div class="tooltip-box">${i} goals: ${c} clubs</div>
+      </div>
+      <div class="goals-bar-lbl">${i}</div>
+    </div>`).join('');
+
+  // Top 10 clubs
+  const top10 = [...active].sort((a, b) => {
+    if (goals(b) !== goals(a)) return goals(b) - goals(a);                          // 1. Goals desc
+    const aRenewed = a['April Renewals'] === '1' ? 1 : 0;
+    const bRenewed = b['April Renewals'] === '1' ? 1 : 0;
+    if (bRenewed !== aRenewed) return bRenewed - aRenewed;                          // 2. April renewal (renewed first)
+    return members(b) - members(a);                                                  // 3. Membership count desc
+  }).slice(0, 10);
+  const s = goalStatus;
+  document.getElementById('top-clubs-body').innerHTML = top10.map((r, i) => {
+    const st = goalStatus(goals(r));
+    const stStyle = st.style ? `class="${st.cls}" style="${st.style}"` : `class="${st.cls}"`;
+    return `<tr>
+      <td style="color:var(--muted);font-family:var(--mono)">${i+1}</td>
+      <td style="font-weight:500">${r['Club Name']}</td>
+      <td><span class="badge badge-blue">${r['Division']}</span></td>
+      <td style="font-family:var(--mono)">${r['Area']}</td>
+      <td style="font-family:var(--mono);font-weight:600;color:var(--text)">${goals(r)}</td>
+      <td style="font-family:var(--mono)">${members(r)}</td>
+      <td>${r['April Renewals']==='1' ? '<span class="dot dot-green"></span>Yes' : '<span class="dot dot-red"></span>No'}</td>
+      <td><span ${stStyle}>${st.label}</span></td>
+    </tr>`;
+  }).join('');
+
+  // Suspended
+  const suspClubs = allRows.filter(r => isSuspended(r) || (parseInt(r['Membership to date'])||0) === 0);
+  document.getElementById('susp-body').innerHTML = suspClubs.map(r => `<tr>
+    <td style="font-weight:500">${r['Club Name']}</td>
+    <td><span class="badge badge-blue">${r['Division']}</span></td>
+    <td style="font-family:var(--mono)">${r['Area']}</td>
+    <td style="font-family:var(--mono);color:var(--muted)">${r['Charter Date/Suspend Date'] || 'No members / inactive'}</td>
+  </tr>`).join('');
+}
+
+// ══════════════════════════════════════════════
+// DIVISION VIEW
+// ══════════════════════════════════════════════
+function populateDivisionSelects() {
+  const active = allRows.filter(isActive);
+  const divs = [...new Set(active.map(r => r['Division']))].sort();
+  ['div-select', 'area-div-select'].forEach(id => {
+    const sel = document.getElementById(id);
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">-- Select Division --</option>' +
+      divs.map(d => `<option value="${d}" ${d===cur?'selected':''}>${'Division ' + d}</option>`).join('');
+  });
+
+  document.getElementById('div-select').addEventListener('change', renderDivisionView);
+  document.getElementById('area-div-select').addEventListener('change', () => {
+    populateAreaSelect();
+    renderAreaView();
+  });
+}
+
+function renderDivisionView() {
+  const div = document.getElementById('div-select').value;
+  if (!div) return;
+  const active = allRows.filter(r => isActive(r) && r['Division'] === div);
+
+  const dist = active.filter(r => goals(r) >= 5).length;
+  const risk = active.filter(r => goals(r) <= 1).length;
+  const avg = active.length ? (active.reduce((s, r) => s + goals(r), 0) / active.length).toFixed(1) : '—';
+  const renewed = active.filter(r => r['April Renewals'] === '1').length;
+  const totalMem = active.reduce((s, r) => s + members(r), 0);
+
+  document.getElementById('div-kpi-clubs').textContent = active.length;
+  document.getElementById('div-kpi-dist').textContent = dist;
+  document.getElementById('div-kpi-risk').textContent = risk;
+  document.getElementById('div-kpi-avg').textContent = avg;
+  document.getElementById('div-kpi-renewed').textContent = renewed;
+  document.getElementById('div-kpi-members').textContent = totalMem;
+
+  // Area summary
+  const areas = [...new Set(active.map(r => r['Area']))].sort((a,b) => parseInt(a)-parseInt(b));
+  document.getElementById('div-area-body').innerHTML = areas.map(a => {
+    const clubs = active.filter(r => r['Area'] === a);
+    const tg = clubs.reduce((s, r) => s + goals(r), 0);
+    const avgA = (tg / clubs.length).toFixed(1);
+    const distA = clubs.filter(r => goals(r) >= 5).length;
+    const riskA = clubs.filter(r => goals(r) <= 1).length;
+    const ren = clubs.filter(r => r['April Renewals'] === '1').length;
+    const color = parseFloat(avgA) >= 5 ? 'var(--green)' : parseFloat(avgA) >= 3 ? 'var(--yellow)' : 'var(--red)';
+    return `<tr>
+      <td style="font-family:var(--mono);font-weight:600">${a}</td>
+      <td>${clubs.length}</td>
+      <td style="font-family:var(--mono)">${tg}</td>
+      <td style="font-family:var(--mono);color:${color};font-weight:600">${avgA}</td>
+      <td>${distA}</td>
+      <td>${riskA > 0 ? `<span class="badge badge-red">${riskA}</span>` : '<span class="badge badge-green">0</span>'}</td>
+      <td>${ren}/${clubs.length}</td>
+    </tr>`;
+  }).join('');
+
+  // Clubs table
+  const sorted = [...active].sort((a, b) => goals(b) - goals(a));
+  document.getElementById('div-clubs-body').innerHTML = sorted.map(r => {
+    const st = goalStatus(goals(r));
+    const stStyle = st.style ? `class="${st.cls}" style="${st.style}"` : `class="${st.cls}"`;
+    return `<tr>
+      <td style="font-family:var(--mono)">${r['Area']}</td>
+      <td style="font-weight:500">${r['Club Name']}</td>
+      <td style="font-family:var(--mono);font-weight:600">${goals(r)}</td>
+      <td style="font-family:var(--mono)">${members(r)}</td>
+      <td>${r['April Renewals']==='1' ? '<span class="dot dot-green"></span>Yes' : '<span class="dot dot-red"></span>No'}</td>
+      <td><span ${stStyle}>${st.label}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// AREA VIEW
+// ══════════════════════════════════════════════
+function populateAreaSelect() {
+  const div = document.getElementById('area-div-select').value;
+  const active = allRows.filter(r => isActive(r) && (!div || r['Division'] === div));
+  const areas = [...new Set(active.map(r => r['Area']))].sort((a,b) => parseInt(a)-parseInt(b));
+  const sel = document.getElementById('area-area-select');
+  sel.innerHTML = '<option value="">-- Select Area --</option>' +
+    areas.map(a => `<option value="${a}">Area ${a}</option>`).join('');
+  sel.removeEventListener('change', renderAreaView);
+  sel.addEventListener('change', renderAreaView);
+}
+
+function renderAreaView() {
+  const div = document.getElementById('area-div-select').value;
+  const area = document.getElementById('area-area-select').value;
+  if (!area) return;
+  const clubs = allRows.filter(r => isActive(r) && r['Area'] === area);
+
+  const dist = clubs.filter(r => goals(r) >= 5).length;
+  const risk = clubs.filter(r => goals(r) <= 1).length;
+  const avg = clubs.length ? (clubs.reduce((s, r) => s + goals(r), 0) / clubs.length).toFixed(1) : '—';
+  const renewed = clubs.filter(r => r['April Renewals'] === '1').length;
+
+  document.getElementById('area-kpi-clubs').textContent = clubs.length;
+  document.getElementById('area-kpi-dist').textContent = dist;
+  document.getElementById('area-kpi-risk').textContent = risk;
+  document.getElementById('area-kpi-avg').textContent = avg;
+  document.getElementById('area-kpi-renewed').textContent = renewed;
+
+  const sorted = [...clubs].sort((a, b) => goals(a) - goals(b));
+  document.getElementById('area-clubs-body').innerHTML = sorted.map(r => {
+    const g = goals(r);
+    const needed = Math.max(0, 5 - g);
+    const st = goalStatus(g);
+    const stStyle = st.style ? `class="${st.cls}" style="${st.style}"` : `class="${st.cls}"`;
+    return `<tr>
+      <td style="font-weight:500">${r['Club Name']}</td>
+      <td style="font-family:var(--mono);font-weight:600">${g}</td>
+      <td style="font-family:var(--mono)">${members(r)}</td>
+      <td>${r['April Renewals']==='1' ? '<span class="dot dot-green"></span>Yes' : '<span class="dot dot-red"></span>No'}</td>
+      <td style="font-family:var(--mono);color:${needed===0?'var(--green)':'var(--accent)'}">${needed===0 ? '✓ Achieved' : `+${needed} more`}</td>
+      <td>${priorityLabel(g)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// SNAPSHOTS
+// ══════════════════════════════════════════════
+function contentFingerprint(rows) {
+  // Build a deterministic fingerprint from every club's key metrics
+  // sorted by club ID so order in the CSV doesn't matter
+  const active = rows.filter(isActive);
+  const clubSigs = rows
+    .map(r => r['Club'] + ':' + (r['Membership to date']||'0') + ':' + (r['Club Goals Met']||'0') + ':' + (r['April Renewals']||'0'))
+    .sort()
+    .join('|');
+  // Simple deterministic hash (djb2)
+  let hash = 5381;
+  for (let i = 0; i < clubSigs.length; i++) {
+    hash = ((hash << 5) + hash) ^ clubSigs.charCodeAt(i);
+    hash = hash & hash; // keep 32-bit
+  }
+  return hash.toString(16);
+}
+
+function saveSnapshotFromRows(rows, dateLabel, silent) {
+  const active = rows.filter(isActive);
+  const fingerprint = contentFingerprint(rows);
+
+  // Check for duplicate content regardless of filename or date label
+  const existingMatch = snapshots.find(s => s.fingerprint === fingerprint);
+  if (existingMatch) {
+    if (!silent) {
+      document.getElementById('upload-status').textContent =
+        `⚠ Duplicate data detected — matches snapshot from ${existingMatch.date}. Not saved.`;
+    }
+    return false;
+  }
+
+  const snap = {
+    date: dateLabel,
+    savedAt: new Date().toISOString(),
+    fingerprint: fingerprint,
+    totalClubs: rows.length,
+    activeClubs: active.length,
+    distinguished: active.filter(r => goals(r) >= 5).length,
+    atRisk: active.filter(r => goals(r) <= 1).length,
+    aprRenewed: active.filter(r => r['April Renewals'] === '1').length,
+    totalMembers: active.reduce((s, r) => s + members(r), 0),
+  };
+  // Also deduplicate by date label (same date = overwrite)
+  snapshots = snapshots.filter(s => s.date !== dateLabel);
+  snapshots.push(snap);
+  snapshots.sort((a, b) => parseSnapDate(a.date) - parseSnapDate(b.date));
+  localStorage.setItem('d31_snapshots', JSON.stringify(snapshots));
+  renderSnapshotList();
+  return true;
+}
+
+function renderSnapshotList() {
+  const el = document.getElementById('snapshot-list');
+  if (!snapshots.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📂</div><p>No snapshots yet. Upload a CSV to create your first snapshot.</p></div>';
+    return;
+  }
+  el.innerHTML = snapshots.slice().reverse().map((s, i) => `
+    <div class="snapshot-item">
+      <div>
+        <span class="snapshot-date">${s.date}</span>
+        <span class="snapshot-stats"> · ${s.activeClubs} active · ${s.distinguished} distinguished · ${s.atRisk} at-risk · ${s.aprRenewed} Apr renewed</span>
+        ${s.fingerprint ? `<span style="font-family:var(--mono);font-size:10px;color:var(--border);margin-left:8px" title="Content fingerprint">fp:${s.fingerprint}</span>` : ''}
+      </div>
+      <span class="snapshot-del" onclick="deleteSnapshot('${s.date}')" title="Remove">×</span>
+    </div>`).join('');
+}
+
+function deleteSnapshot(date) {
+  snapshots = snapshots.filter(s => s.date !== date);
+  localStorage.setItem('d31_snapshots', JSON.stringify(snapshots));
+  renderSnapshotList();
+  renderTrendCharts();
+}
+
+// ══════════════════════════════════════════════
+// TREND CHARTS (vanilla canvas)
+// ══════════════════════════════════════════════
+function parseSnapDate(label) {
+  // Handles M/D/YYYY or MM/DD/YYYY date labels
+  const parts = label.split('/');
+  if (parts.length === 3) return new Date(parseInt(parts[2]), parseInt(parts[0])-1, parseInt(parts[1]));
+  return new Date(label);
+}
+
+function renderTrendCharts() {
+  renderSnapshotList();
+  if (snapshots.length < 1) return;
+  // Sort chronologically by the actual data date label (oldest → newest)
+  const ordered = snapshots.slice().sort((a, b) => parseSnapDate(a.date) - parseSnapDate(b.date));
+  const labels = ordered.map(s => s.date);
+  drawLineChart('trend-dist-chart', labels, ordered.map(s => s.distinguished), '#3fb950', 'Distinguished Clubs');
+  drawLineChart('trend-risk-chart', labels, ordered.map(s => s.atRisk), '#f85149', 'At-Risk Clubs');
+  drawLineChart('trend-renewal-chart', labels, ordered.map(s => Math.round(s.aprRenewed/s.activeClubs*100)), '#e8a44a', 'April Renewal %');
+  drawLineChart('trend-members-chart', labels, ordered.map(s => s.totalMembers), '#5b9cf6', 'Total Members');
+}
+
+function drawLineChart(canvasId, labels, data, color, label) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const parent = canvas.parentElement;
+  canvas.width = parent.clientWidth || 400;
+  canvas.height = 180;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const pad = { top: 20, right: 20, bottom: 40, left: 50 };
+  const cW = W - pad.left - pad.right;
+  const cH = H - pad.top - pad.bottom;
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#161b22';
+  ctx.fillRect(0, 0, W, H);
+
+  if (data.length < 1) {
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '12px DM Sans, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Upload more snapshots to see trends', W/2, H/2);
+    return;
+  }
+
+  const minV = Math.min(...data) * 0.9;
+  const maxV = Math.max(...data) * 1.1 || 1;
+  const toX = i => pad.left + (data.length > 1 ? (i / (data.length - 1)) * cW : cW / 2);
+  const toY = v => pad.top + cH - ((v - minV) / (maxV - minV)) * cH;
+
+  // Grid lines
+  ctx.strokeStyle = '#2a3244';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.top + (cH / 4) * i;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cW, y); ctx.stroke();
+    const val = maxV - ((maxV - minV) / 4) * i;
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '10px DM Mono, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(Math.round(val), pad.left - 6, y + 4);
+  }
+
+  // Area fill
+  if (data.length > 1) {
+    ctx.beginPath();
+    ctx.moveTo(toX(0), toY(data[0]));
+    data.forEach((v, i) => ctx.lineTo(toX(i), toY(v)));
+    ctx.lineTo(toX(data.length - 1), pad.top + cH);
+    ctx.lineTo(toX(0), pad.top + cH);
+    ctx.closePath();
+    const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + cH);
+    grad.addColorStop(0, color + '33');
+    grad.addColorStop(1, color + '00');
+    ctx.fillStyle = grad;
+    ctx.fill();
+  }
+
+  // Line
+  ctx.beginPath();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  data.forEach((v, i) => { if (i === 0) ctx.moveTo(toX(i), toY(v)); else ctx.lineTo(toX(i), toY(v)); });
+  ctx.stroke();
+
+  // Dots
+  data.forEach((v, i) => {
+    ctx.beginPath();
+    ctx.arc(toX(i), toY(v), 4, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = '#161b22';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  });
+
+  // X labels
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '10px DM Mono, monospace';
+  ctx.textAlign = 'center';
+  const step = Math.max(1, Math.floor(labels.length / 6));
+  labels.forEach((l, i) => {
+    if (i % step === 0) ctx.fillText(l, toX(i), H - 8);
+  });
+}
+
+// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════
+// TITLE OVERLAY
+// ══════════════════════════════════════════════
+function dismissTitle(permanent) {
+  document.getElementById('title-overlay').style.display = 'none';
+  if (permanent) localStorage.setItem('d31_hide_welcome', '1');
+}
+
+function latestSnapshotDate() {
+  // Return the most recent data date across all saved snapshots
+  if (!snapshots.length) return null;
+  return snapshots.slice().sort((a, b) => parseSnapDate(b.date) - parseSnapDate(a.date))[0].date;
+}
+
+function updateBanner(dateLabel) {
+  // Always show the most recent date across all snapshots, not just the last upload
+  const latest = latestSnapshotDate() || dateLabel;
+  const banner = document.getElementById('update-banner');
+  banner.style.display = 'flex';
+  document.getElementById('data-date').textContent = latest;
+  document.getElementById('banner-date').textContent = latest;
+  document.getElementById('banner-season').textContent = '· 2025–2026 Season';
+  document.getElementById('banner-snapshot-count').textContent =
+    snapshots.length + ' snapshot' + (snapshots.length !== 1 ? 's' : '') + ' saved';
+}
+
+// ══════════════════════════════════════════════
+// CLEAR ALL DATA
+// ══════════════════════════════════════════════
+function clearAllData() {
+  if (!confirm('Clear all snapshots and cached data? This cannot be undone.')) return;
+  localStorage.removeItem('d31_snapshots');
+  localStorage.removeItem('d31_latest_rows');
+  localStorage.removeItem('d31_latest_date');
+  snapshots = [];
+  allRows = [];
+  document.getElementById('data-date').textContent = '—';
+  document.getElementById('update-banner').style.display = 'none';
+  document.getElementById('upload-status').textContent = 'Upload one or multiple CSVs · date tag applies to single-file uploads';
+  renderSnapshotList();
+  // Clear all rendered views
+  ['kpi-active','kpi-total','kpi-dist','kpi-select','kpi-pres','kpi-risk',
+   'kpi-renewed','kpi-members','kpi-susp'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.textContent = '—';
+  });
+  document.getElementById('top-clubs-body').innerHTML = '';
+  document.getElementById('susp-body').innerHTML = '';
+  document.getElementById('div-bars').innerHTML = '';
+  document.getElementById('goals-dist').innerHTML = '';
+  document.getElementById('at-risk-alert').style.display = 'none';
+}
+
+// ══════════════════════════════════════════════
+// INIT — restore persisted data on page load
+// ══════════════════════════════════════════════
+(function init() {
+  renderSnapshotList();
+  // Show or skip welcome overlay
+  if (localStorage.getItem('d31_hide_welcome') === '1') {
+    document.getElementById('title-overlay').style.display = 'none';
+  }
+
+  try {
+    const savedRows = localStorage.getItem('d31_latest_rows');
+    const savedDate = localStorage.getItem('d31_latest_date');
+    if (savedRows && savedDate) {
+      const rows = JSON.parse(savedRows);
+
+      // Validate: check restored rows match the latest snapshot's stats
+      // If they don't match (stale/corrupt cache), clear and prompt re-upload
+      const latestSnap = snapshots.length
+        ? snapshots.slice().sort((a,b) => parseSnapDate(b.date) - parseSnapDate(a.date))[0]
+        : null;
+
+      const active = rows.filter(isActive);
+      const renewedCount = active.filter(r => r['April Renewals'] === '1').length;
+      const goalsTotal = active.reduce((s,r) => s + goals(r), 0);
+
+      let dataIsValid = true;
+      if (latestSnap) {
+        // Mismatch detected if active club count or April renewals don't match latest snapshot
+        const snapRenewed = latestSnap.aprRenewed;
+        const snapActive  = latestSnap.activeClubs;
+        if (renewedCount !== snapRenewed || active.length !== snapActive) {
+          dataIsValid = false;
+          console.warn('Cached rows mismatch latest snapshot — clearing stale cache');
+          localStorage.removeItem('d31_latest_rows');
+          localStorage.removeItem('d31_latest_date');
+          document.getElementById('upload-status').textContent =
+            '⚠ Cached data was stale and has been cleared — please re-upload your CSVs';
+        }
+      }
+
+      if (dataIsValid) {
+        allRows = rows;
+        const displayDate = latestSnapshotDate() || savedDate;
+        document.getElementById('data-date').textContent = displayDate;
+        document.getElementById('upload-status').textContent =
+          '✓ Restored latest data from ' + displayDate + ' — drop a new CSV to refresh';
+        renderAll();
+        updateBanner(displayDate);
+        document.getElementById('title-overlay').style.display = 'none';
+      }
+    }
+  } catch(e) {
+    console.warn('Could not restore latest data from localStorage:', e);
+    localStorage.removeItem('d31_latest_rows');
+    localStorage.removeItem('d31_latest_date');
+  }
+})();
+</script>
+</body>
+</html>
