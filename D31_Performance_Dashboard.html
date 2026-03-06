@@ -1554,44 +1554,78 @@ function setGithubStatus(msg, color) {
 
 async function fetchGithubData() {
   try {
-    setGithubStatus('Fetching data from GitHub…', 'var(--accent2)');
+    setGithubStatus('Fetching manifest from GitHub…', 'var(--accent2)');
 
-    // Fetch manifest listing all CSV filenames
-    const manifestRes = await fetch(GITHUB_MANIFEST + '?nocache=' + Date.now());
-    if (!manifestRes.ok) throw new Error('manifest.json not found in data/ folder');
-    const manifest = await manifestRes.json();
+    // Step 1: Fetch manifest
+    const manifestUrl = GITHUB_MANIFEST + '?nocache=' + Date.now();
+    let manifestRes;
+    try {
+      manifestRes = await fetch(manifestUrl);
+    } catch(networkErr) {
+      setGithubStatus('Network error fetching manifest: ' + networkErr.message, 'var(--red)');
+      restoreFromCache();
+      return;
+    }
+
+    if (!manifestRes.ok) {
+      setGithubStatus('manifest.json fetch failed: HTTP ' + manifestRes.status + ' — check data/ folder exists', 'var(--red)');
+      restoreFromCache();
+      return;
+    }
+
+    let manifest;
+    try {
+      manifest = await manifestRes.json();
+    } catch(jsonErr) {
+      setGithubStatus('manifest.json is not valid JSON: ' + jsonErr.message, 'var(--red)');
+      return;
+    }
 
     if (!manifest.files || manifest.files.length === 0) {
-      setGithubStatus('No CSV files listed in manifest.json', 'var(--yellow)');
+      setGithubStatus('manifest.json has no files listed', 'var(--yellow)');
       return;
     }
 
     setGithubStatus(`Fetching ${manifest.files.length} CSV file${manifest.files.length !== 1 ? 's' : ''}…`, 'var(--accent2)');
 
-    // Fetch all CSVs in parallel
+    // Step 2: Fetch all CSVs in parallel, capturing individual errors
     const results = await Promise.all(
-      manifest.files.map(filename =>
-        fetch(GITHUB_RAW_BASE + filename + '?nocache=' + Date.now())
-          .then(r => r.ok ? r.text() : null)
-          .catch(() => null)
-      )
+      manifest.files.map(async filename => {
+        const url = GITHUB_RAW_BASE + filename + '?nocache=' + Date.now();
+        try {
+          const r = await fetch(url);
+          if (!r.ok) {
+            console.warn('CSV fetch failed for', filename, '— HTTP', r.status);
+            return null;
+          }
+          return await r.text();
+        } catch(e) {
+          console.warn('CSV fetch error for', filename, '—', e.message);
+          return null;
+        }
+      })
     );
 
     const texts = results.filter(Boolean);
+    const failed = manifest.files.length - texts.length;
+
     if (texts.length === 0) {
-      setGithubStatus('Could not load any CSV files from GitHub', 'var(--red)');
+      setGithubStatus('All ' + manifest.files.length + ' CSV fetches failed — check filenames in manifest.json match files in data/', 'var(--red)');
+      restoreFromCache();
       return;
     }
 
-    // Process all fetched CSVs
+    // Step 3: Process successfully fetched CSVs
     processAllTexts(texts, texts.length);
-    setGithubStatus(`✓ Auto-loaded ${texts.length} file${texts.length !== 1 ? 's' : ''} from GitHub`, 'var(--green)');
+    const statusMsg = failed > 0
+      ? `✓ Loaded ${texts.length} files (${failed} failed — check console)`
+      : `✓ Auto-loaded ${texts.length} file${texts.length !== 1 ? 's' : ''} from GitHub`;
+    setGithubStatus(statusMsg, 'var(--green)');
     document.getElementById('title-overlay').style.display = 'none';
 
   } catch(e) {
-    console.warn('GitHub fetch failed:', e);
-    setGithubStatus('Could not reach GitHub — use manual upload below', 'var(--yellow)');
-    // Fall back to localStorage cache if available
+    console.error('GitHub fetch unexpected error:', e);
+    setGithubStatus('Unexpected error: ' + e.message, 'var(--red)');
     restoreFromCache();
   }
 }
