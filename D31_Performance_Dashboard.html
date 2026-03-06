@@ -1543,8 +1543,8 @@ function clearAllData() {
 // GITHUB AUTO-FETCH
 // ══════════════════════════════════════════════
 
-// Base URL for raw CSV files in the GitHub repo data/ folder
-const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/glennkf/District31/main/data/';
+// Base URL for CSV files served via GitHub Pages (same domain = no CORS issues)
+const GITHUB_RAW_BASE = 'https://glennkf.github.io/District31/data/';
 const GITHUB_MANIFEST = GITHUB_RAW_BASE + 'manifest.json';
 
 function setGithubStatus(msg, color) {
