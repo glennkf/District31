@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>District 31 — District Bucks Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #D4A843;
+    --gold-light: #F0C96A;
+    --gold-dim: #8B6A1F;
+    --bg: #0A0C10;
+    --bg2: #111418;
+    --bg3: #181C22;
+    --border: #252A33;
+    --text: #E8EAF0;
+    --muted: #6B7280;
+    --green: #34D399;
+    --blue: #60A5FA;
+    --red: #F87171;
+    --purple: #A78BFA;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:'DM Mono',monospace;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(rgba(212,168,67,0.03) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(212,168,67,0.03) 1px,transparent 1px);
+    background-size:40px 40px;
+    pointer-events:none; z-index:0;
+  }
+
+  /* ── Header ── */
+  header {
+    position:relative; z-index:10;
+    padding:28px 40px 22px;
+    border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+    gap:16px; flex-wrap:wrap;
+    background:linear-gradient(180deg,rgba(212,168,67,0.07) 0%,transparent 100%);
+  }
+  .header-left { display:flex; align-items:center; gap:14px; }
+  .logo-mark {
+    width:46px; height:46px;
+    background:linear-gradient(135deg,var(--gold),var(--gold-dim));
+    border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Syne',sans-serif; font-weight:800; font-size:19px; color:#000;
+    box-shadow:0 0 20px rgba(212,168,67,0.3); flex-shrink:0;
+  }
+  .header-title h1 { font-family:'Syne',sans-serif; font-size:19px; font-weight:700; letter-spacing:-0.3px; }
+  .header-title p  { font-size:10px; color:var(--muted); letter-spacing:.5px; text-transform:uppercase; margin-top:2px; }
+  .header-right { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .pill { background:var(--bg3); border:1px solid var(--border); border-radius:20px; padding:5px 13px; font-size:11px; color:var(--muted); }
+  .pill span { color:var(--gold); font-weight:500; }
+  .data-badge { background:rgba(212,168,67,.1); border:1px solid rgba(212,168,67,.3); border-radius:6px; padding:4px 10px; font-size:10px; color:var(--gold); letter-spacing:.5px; text-transform:uppercase; }
+
+  /* ── Nav tabs ── */
+  .nav-tabs {
+    position:relative; z-index:9;
+    display:flex; gap:0;
+    border-bottom:1px solid var(--border);
+    background:var(--bg2);
+    padding:0 40px;
+  }
+  .nav-tab {
+    padding:12px 20px; font-size:12px; color:var(--muted);
+    cursor:pointer; border-bottom:2px solid transparent;
+    transition:all .15s; letter-spacing:.3px;
+    display:flex; align-items:center; gap:6px;
+  }
+  .nav-tab:hover { color:var(--text); }
+  .nav-tab.active { color:var(--gold); border-bottom-color:var(--gold); }
+
+  /* ── Main ── */
+  main { position:relative; z-index:1; padding:28px 40px; max-width:1600px; margin:0 auto; }
+  .tab-panel { display:none; }
+  .tab-panel.active { display:block; }
+
+  /* ── KPI grid ── */
+  .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; margin-bottom:28px; }
+  .kpi-card {
+    background:var(--bg2); border:1px solid var(--border); border-radius:12px;
+    padding:18px 22px; position:relative; overflow:hidden; transition:border-color .2s;
+  }
+  .kpi-card:hover { border-color:var(--gold-dim); }
+  .kpi-card::before { content:''; position:absolute; top:0;left:0;right:0; height:2px; background:linear-gradient(90deg,var(--gold),transparent); }
+  .kpi-label { font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:7px; }
+  .kpi-value { font-family:'Syne',sans-serif; font-size:30px; font-weight:800; color:var(--gold); line-height:1; }
+  .kpi-sub { font-size:11px; color:var(--muted); margin-top:5px; }
+
+  /* ── Incentive legend ── */
+  .legend-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; margin-bottom:24px; }
+  .legend-card { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:15px 17px; }
+  .legend-title { font-family:'Syne',sans-serif; font-size:12px; font-weight:700; margin-bottom:4px; }
+  .legend-desc { font-size:11px; color:var(--muted); line-height:1.55; }
+  .legend-amount { font-size:11px; color:var(--gold); margin-top:6px; font-weight:500; }
+
+  /* ── Note banner ── */
+  .note {
+    background:rgba(248,113,113,.06); border:1px solid rgba(248,113,113,.15);
+    border-radius:8px; padding:11px 15px; font-size:11px; color:var(--muted);
+    line-height:1.6; margin-bottom:24px;
+  }
+  .note strong { color:var(--red); }
+
+  /* ── Controls ── */
+  .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; gap:12px; flex-wrap:wrap; }
+  .section-title { font-family:'Syne',sans-serif; font-size:13px; font-weight:700; display:flex; align-items:center; gap:8px; }
+  .section-title .dot { width:6px; height:6px; border-radius:50%; background:var(--gold); }
+  .controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:16px; }
+  input[type="text"],select {
+    background:var(--bg2); border:1px solid var(--border); border-radius:8px;
+    padding:7px 13px; color:var(--text); font-family:'DM Mono',monospace;
+    font-size:12px; outline:none; transition:border-color .2s;
+  }
+  input[type="text"] { min-width:210px; }
+  input[type="text"]:focus,select:focus { border-color:var(--gold-dim); }
+  select option { background:var(--bg2); }
+  .filter-btn {
+    background:var(--bg2); border:1px solid var(--border); border-radius:8px;
+    padding:7px 13px; color:var(--muted); font-family:'DM Mono',monospace;
+    font-size:11px; cursor:pointer; transition:all .2s;
+    text-transform:uppercase; letter-spacing:.5px;
+  }
+  .filter-btn.active,.filter-btn:hover { background:rgba(212,168,67,.1); border-color:var(--gold-dim); color:var(--gold); }
+
+  /* ── Table ── */
+  .table-container { background:var(--bg2); border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-bottom:28px; }
+  .leaderboard-table { width:100%; border-collapse:collapse; }
+  .leaderboard-table th {
+    background:var(--bg3); padding:11px 14px; text-align:left;
+    font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--muted);
+    border-bottom:1px solid var(--border); cursor:pointer; white-space:nowrap; user-select:none;
+  }
+  .leaderboard-table th:hover { color:var(--gold); }
+  .leaderboard-table th.sorted { color:var(--gold); }
+  .leaderboard-table td { padding:11px 14px; border-bottom:1px solid rgba(37,42,51,.6); font-size:12px; vertical-align:middle; }
+  .leaderboard-table tr:last-child td { border-bottom:none; }
+  .leaderboard-table tr:hover td { background:rgba(212,168,67,.03); }
+
+  .rank-badge { display:inline-flex; align-items:center; justify-content:center; width:27px; height:27px; border-radius:7px; font-family:'Syne',sans-serif; font-weight:700; font-size:12px; }
+  .rank-1 { background:linear-gradient(135deg,#D4A843,#8B6A1F); color:#000; }
+  .rank-2 { background:rgba(148,163,184,.15); color:#94A3B8; border:1px solid rgba(148,163,184,.3); }
+  .rank-3 { background:rgba(180,120,80,.15); color:#B47850; border:1px solid rgba(180,120,80,.3); }
+  .rank-other { background:var(--bg3); color:var(--muted); border:1px solid var(--border); font-size:11px; }
+
+  .club-name { font-weight:500; color:var(--text); }
+  .club-meta { font-size:10px; color:var(--muted); margin-top:1px; }
+  .bucks-total { font-family:'Syne',sans-serif; font-weight:700; font-size:15px; color:var(--gold); }
+
+  .q-badge { display:inline-block; border-radius:4px; padding:2px 7px; font-size:10px; margin:1px; }
+  .q-earned { background:rgba(52,211,153,.1); border:1px solid rgba(52,211,153,.2); color:var(--green); }
+  .q-zero   { background:rgba(107,114,128,.08); border:1px solid rgba(107,114,128,.15); color:var(--muted); }
+
+  .status-badge { display:inline-block; border-radius:4px; padding:2px 8px; font-size:10px; }
+  .s-active { background:rgba(52,211,153,.1); border:1px solid rgba(52,211,153,.2); color:var(--green); }
+  .s-other  { background:rgba(248,113,113,.1); border:1px solid rgba(248,113,113,.2); color:var(--red); }
+
+  /* ── Bottom panels ── */
+  .bottom-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:28px; }
+  @media(max-width:900px){.bottom-grid{grid-template-columns:1fr;}}
+  .panel { background:var(--bg2); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .panel-header { padding:15px 18px; border-bottom:1px solid var(--border); background:var(--bg3); display:flex; align-items:center; gap:10px; }
+  .panel-icon { width:28px; height:28px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+  .panel-title { font-family:'Syne',sans-serif; font-size:13px; font-weight:700; }
+  .panel-subtitle { font-size:10px; color:var(--muted); margin-top:1px; }
+  .panel-body { padding:16px 18px; }
+
+  .quarter-tabs { display:flex; gap:4px; margin-bottom:14px; }
+  .qtab { background:var(--bg3); border:1px solid var(--border); border-radius:6px; padding:5px 12px; font-size:11px; color:var(--muted); cursor:pointer; transition:all .15s; }
+  .qtab.active { background:rgba(212,168,67,.1); border-color:var(--gold-dim); color:var(--gold); }
+
+  .winner-row { display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid var(--border); }
+  .winner-row:last-child { border-bottom:none; }
+  .winner-rank { font-family:'Syne',sans-serif; font-size:19px; font-weight:800; width:28px; text-align:center; flex-shrink:0; }
+  .winner-info { flex:1; min-width:0; }
+  .winner-name { font-size:12px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .winner-detail { font-size:10px; color:var(--muted); margin-top:2px; }
+
+  /* ── Pagination ── */
+  .pagination { display:flex; align-items:center; gap:7px; padding:11px 14px; border-top:1px solid var(--border); font-size:11px; color:var(--muted); flex-wrap:wrap; }
+  .page-btn { background:var(--bg3); border:1px solid var(--border); border-radius:6px; padding:4px 10px; color:var(--muted); cursor:pointer; font-size:11px; font-family:'DM Mono',monospace; transition:all .15s; }
+  .page-btn:hover,.page-btn.active { background:rgba(212,168,67,.1); border-color:var(--gold-dim); color:var(--gold); }
+  .page-info { flex:1; }
+
+  /* ── Upload Panel ── */
+  .upload-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:14px; margin-bottom:24px; }
+  .upload-card {
+    background:var(--bg2); border:2px dashed var(--border); border-radius:12px;
+    padding:20px; text-align:center; cursor:pointer; transition:all .2s; position:relative;
+  }
+  .upload-card:hover,.upload-card.drag-over { border-color:var(--gold-dim); background:rgba(212,168,67,.04); }
+  .upload-card.loaded { border-style:solid; border-color:rgba(52,211,153,.4); background:rgba(52,211,153,.04); }
+  .upload-card input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+  .upload-icon { font-size:24px; margin-bottom:8px; }
+  .upload-label { font-family:'Syne',sans-serif; font-size:12px; font-weight:700; color:var(--text); margin-bottom:4px; }
+  .upload-desc { font-size:10px; color:var(--muted); line-height:1.5; }
+  .upload-status { font-size:10px; margin-top:8px; font-weight:500; }
+  .upload-status.ok { color:var(--green); }
+  .upload-status.err { color:var(--red); }
+
+  .upload-actions { display:flex; gap:10px; margin-bottom:28px; flex-wrap:wrap; }
+  .btn-primary {
+    background:linear-gradient(135deg,var(--gold),var(--gold-dim));
+    border:none; border-radius:8px; padding:10px 22px;
+    font-family:'Syne',sans-serif; font-weight:700; font-size:13px;
+    color:#000; cursor:pointer; transition:opacity .2s;
+  }
+  .btn-primary:hover { opacity:.85; }
+  .btn-primary:disabled { opacity:.4; cursor:not-allowed; }
+  .btn-secondary {
+    background:var(--bg2); border:1px solid var(--border); border-radius:8px;
+    padding:10px 18px; font-family:'DM Mono',monospace; font-size:12px;
+    color:var(--muted); cursor:pointer; transition:all .2s;
+  }
+  .btn-secondary:hover { border-color:var(--gold-dim); color:var(--gold); }
+
+  .data-status-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px; margin-bottom:24px; }
+  .data-status-card { background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:12px 15px; display:flex; align-items:center; gap:10px; }
+  .ds-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .ds-dot.loaded { background:var(--green); box-shadow:0 0 6px rgba(52,211,153,.5); }
+  .ds-dot.missing { background:var(--muted); }
+  .ds-info { flex:1; min-width:0; }
+  .ds-label { font-size:11px; color:var(--text); font-weight:500; }
+  .ds-detail { font-size:10px; color:var(--muted); margin-top:2px; }
+
+  @media(max-width:768px){main,header,.nav-tabs{padding-left:18px;padding-right:18px;} .legend-grid,.bottom-grid{grid-template-columns:1fr;} .kpi-grid{grid-template-columns:repeat(2,1fr);}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo-mark">31</div>
+    <div class="header-title">
+      <h1>District 31 — District Bucks</h1>
+      <p>Toastmasters International · Program Year 2025–2026</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="pill" id="headerDatePill">Loading data…</div>
+    <div class="data-badge">Live Tracking</div>
+  </div>
+</header>
+
+<div class="nav-tabs">
+  <div class="nav-tab active" onclick="showTab('dashboard',this)">📊 Dashboard</div>
+  <div class="nav-tab" onclick="showTab('leaderboard',this)">🏆 Leaderboard</div>
+  <div class="nav-tab" onclick="showTab('update',this)">📂 Update Data</div>
+</div>
+
+<main>
+
+<!-- ══ DASHBOARD TAB ══ -->
+<div class="tab-panel active" id="tab-dashboard">
+
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <div class="legend-grid">
+    <div class="legend-card">
+      <div class="legend-title">🎓 Up Your Game</div>
+      <div class="legend-desc">Earn at least one Education DCP point (Pathways level completion) each quarter. Consecutive quarters escalate payout. Streak resets on a missed quarter.</div>
+      <div class="legend-amount">$25 → $50 → $75 → $100 · Max $250/year</div>
+    </div>
+    <div class="legend-card">
+      <div class="legend-title">👥 Membership Building</div>
+      <div class="legend-desc">Add 5+ new, dual, or reinstated members within any quarter.</div>
+      <div class="legend-amount">$50 per qualifying quarter</div>
+    </div>
+    <div class="legend-card">
+      <div class="legend-title">📈 Pathways Level Up!</div>
+      <div class="legend-desc">Top 5 clubs in good standing with most members completing a Pathways level each quarter. Tiebreaker: highest member count on day 1 of quarter.</div>
+      <div class="legend-amount">$25 TI Store gift card · Not District Bucks</div>
+    </div>
+    <div class="legend-card">
+      <div class="legend-title">🍕 Early Membership Renewals</div>
+      <div class="legend-desc">Submit at least 8 member renewals by March 15, 2026. Entered into raffle for pizza party or $25 District Bucks.</div>
+      <div class="legend-amount">Data not yet available</div>
+    </div>
+  </div>
+
+  <div class="note" id="dashNote"></div>
+
+  <!-- Bottom panels -->
+  <div class="bottom-grid">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-icon" style="background:rgba(212,168,67,.1)">🏆</div>
+        <div>
+          <div class="panel-title">Pathways Level Up! — Top 5</div>
+          <div class="panel-subtitle">$25 TI Store Gift Card Winners per Quarter</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="quarter-tabs" id="luTabs">
+          <div class="qtab active" data-q="Q1" onclick="showLevelUpQ('Q1',this)">Q1</div>
+          <div class="qtab" data-q="Q2" onclick="showLevelUpQ('Q2',this)">Q2</div>
+          <div class="qtab" data-q="Q3" onclick="showLevelUpQ('Q3',this)">Q3 ★</div>
+          <div class="qtab" data-q="Q4" onclick="showLevelUpQ('Q4',this)" id="q4luTab" style="display:none">Q4</div>
+        </div>
+        <div id="levelUpList"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-icon" style="background:rgba(96,165,250,.1)">📊</div>
+        <div>
+          <div class="panel-title">Bucks Distribution</div>
+          <div class="panel-subtitle">How clubs are earning District Bucks</div>
+        </div>
+      </div>
+      <div class="panel-body" id="distPanel"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ LEADERBOARD TAB ══ -->
+<div class="tab-panel" id="tab-leaderboard">
+
+  <div class="section-header" style="margin-top:4px">
+    <div class="section-title"><div class="dot"></div> Club Leaderboard</div>
+  </div>
+
+  <div class="controls">
+    <input type="text" id="searchInput" placeholder="Search club name or number…" oninput="applyFilters()">
+    <select id="divFilter" onchange="applyFilters()">
+      <option value="">All Divisions</option>
+    </select>
+    <select id="statusFilter" onchange="applyFilters()">
+      <option value="">All Statuses</option>
+      <option value="Active">Active</option>
+    </select>
+    <button class="filter-btn active" id="allBtn" onclick="setEarnersFilter('all')">All Clubs</button>
+    <button class="filter-btn" id="earnersBtn" onclick="setEarnersFilter('earners')">Earners Only</button>
+    <select id="pageSize" onchange="applyFilters()">
+      <option value="25">25 per page</option>
+      <option value="50">50 per page</option>
+      <option value="100">100 per page</option>
+    </select>
+  </div>
+
+  <div class="table-container">
+    <div style="overflow-x:auto">
+      <table class="leaderboard-table">
+        <thead>
+          <tr>
+            <th onclick="sortBy('rank')"># <span>↕</span></th>
+            <th onclick="sortBy('name')">Club <span>↕</span></th>
+            <th onclick="sortBy('total')" class="sorted">Total $ <span>↓</span></th>
+            <th>Q1 UYG</th>
+            <th>Q2 UYG</th>
+            <th>Q3 UYG</th>
+            <th id="q4uygHeader" style="display:none">Q4 UYG</th>
+            <th>Q1 MB</th>
+            <th>Q2 MB</th>
+            <th>Q3 MB</th>
+            <th id="q4mbHeader" style="display:none">Q4 MB</th>
+            <th onclick="sortBy('active')">Members <span>↕</span></th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+</div>
+
+<!-- ══ UPDATE DATA TAB ══ -->
+<div class="tab-panel" id="tab-update">
+
+  <div class="section-header" style="margin-top:4px">
+    <div class="section-title"><div class="dot"></div> Update Quarter Data</div>
+  </div>
+
+  <p style="font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.7">
+    Upload new Club Performance Report CSVs from the TI website to update the dashboard.<br>
+    Each quarter requires a <strong style="color:var(--text)">start-of-quarter</strong> and <strong style="color:var(--text)">end-of-quarter</strong> (or current) snapshot.<br>
+    Drop files onto the cards below or click to browse. The dashboard recalculates automatically when you click <em>Apply Updates</em>.
+  </p>
+
+  <!-- Data status -->
+  <div class="data-status-grid" id="dataStatusGrid"></div>
+
+  <!-- Upload cards -->
+  <div class="upload-grid" id="uploadGrid"></div>
+
+  <div class="upload-actions">
+    <button class="btn-primary" id="applyBtn" onclick="applyUploads()">⚡ Apply Updates & Recalculate</button>
+    <button class="btn-secondary" onclick="resetToOriginal()">↺ Reset to Original Data</button>
+  </div>
+
+  <div class="note">
+    <strong>Tip:</strong> For each new quarter, upload the <em>first day</em> of the quarter as the start file, and the <em>last day</em> (or most recent export) as the end/current file. The dashboard computes deltas between them to determine what each club achieved within that quarter.
+  </div>
+
+</div>
+
+</main>
+
+<script>
+// ══════════════════════════════════════════════
+// EMBEDDED CSV DATA (original 6 snapshots)
+// ══════════════════════════════════════════════
+const ORIGINAL_CSV = {"Q1_start":"District,Division,Area,Club Number,Club Name,Club Status,Mem. Base,Active Members,Goals Met,Level 1s,Level 2s,Add. Level 2s,Level 3s,\"Level 4s, Level 5s, or DTM award\",\"Add. Level 4s, Level 5s, or DTM award\",New Members,Add. New Members,Off. Trained Round 1,Off. Trained Round 2,Mem. dues on time Oct,Mem. dues on time Apr,Off. List On Time,Club Distinguished Status\n31,A,11,508,Merrimack Toastmasters Club,Active,13,12,2,0,0,0,0,0,0,4,2,4,1,1,1,1,\n31,A,11,8508,Clipper City Club,Active,12,15,6,1,2,0,2,1,1,4,2,3,5,1,1,1,D\n31,A,11,7675820,EBSCO Toastmasters,Active,11,10,1,1,2,1,0,0,0,2,0,3,1,1,1,0,\n31,A,11,7988557,New England Biolabs,Active,17,20,2,3,0,0,0,0,0,4,3,4,5,1,1,0,\n31,A,12,1225457,Harold Parker Toastmasters,Active,11,11,5,2,2,0,1,1,0,4,1,6,4,1,1,1,\n31,A,12,3785939,Advanced Articulators of Andover,Active,11,10,2,0,0,0,0,0,0,1,0,7,7,1,1,1,\n31,A,12,5560447,Toast of the Town,Active,24,35,6,0,0,0,3,1,0,4,13,5,5,1,1,1,D\n31,A,12,6892975,Analog Orators,Active,19,10,2,3,0,0,0,1,0,2,0,7,6,1,1,0,\n31,A,13,2779,MITRE  Toastmasters Club,Active,11,9,3,0,1,0,1,1,0,3,0,4,4,0,1,1,\n31,A,13,5525,The Last Word,Active,11,9,5,1,2,0,1,1,1,4,0,4,3,1,1,1,\n31,A,13,7712170,Healthy Toast,Suspended,16,0,0,1,0,0,0,0,0,0,0,2,0,0,0,1,\n31,A,13,7928167,ToaSTRs,Active,27,10,1,1,1,0,0,0,0,3,0,0,4,1,1,1,\n31,A,13,28678135,Wilson Toastmasters,Active,23,21,1,2,0,0,0,0,0,0,0,0,0,1,1,1,\n31,A,14,3565,Eastern Middlesex Toastmasters,Active,26,27,7,6,0,0,1,1,2,4,11,7,6,1,1,1,S\n31,A,14,3908,Northshore Toastmasters Club,Active,24,30,9,5,2,2,1,1,2,4,9,7,6,1,1,1,P\n31,A,14,735541,Toastmasters Club of Beverly MA,Active,12,8,0,0,0,0,0,0,0,2,0,0,0,0,1,0,\n31,A,14,7962029,Toastmasters at Abiomed,Active,8,8,2,2,2,0,1,0,0,4,1,0,0,0,1,0,\n31,A,14,28677513,QBE A&H Toastmasters Club,Suspended,21,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,\n31,B,21,2193,Isaac Davis Club,Active,16,15,4,0,2,0,0,0,0,4,1,7,5,1,1,1,\n31,B,21,4690,Westford Expressions Club,Active,18,22,9,4,2,0,4,1,1,4,12,5,4,1,1,1,P\n31,B,21,7677,Wachusett Toastmasters #7677,Active,13,14,2,2,1,0,1,1,0,2,0,4,3,1,1,1,\n31,B,21,8753,Twin City Club,Active,9,11,3,0,0,0,0,0,0,4,4,1,1,1,1,1,\n31,B,22,4031,Chelmsford Toastmasters Club,Active,16,20,9,5,2,0,2,1,1,4,7,5,5,1,1,1,P\n31,B,22,2078400,Mill City Toastmasters,Active,16,10,2,1,1,0,0,0,0,2,0,6,7,1,1,1,\n31,B,22,3550659,New Life Toastmasters Club,Active,16,13,7,4,2,1,1,1,4,4,1,4,5,1,1,1,\n31,B,22,7958590,Share the Spark,Active,20,21,2,0,0,0,0,0,0,4,2,1,3,1,1,1,\n31,B,23,2201,Hanscom Toastmasters Club,Active,16,16,4,1,2,0,1,0,0,4,0,5,5,1,1,1,\n31,B,23,3981,Alcott Toastmasters,Active,19,22,5,3,2,0,1,0,0,4,12,6,6,1,1,1,D\n31,B,23,909842,Lincoln Laboratory Toastmasters Club,Active,15,13,5,1,2,0,1,1,0,4,0,4,5,1,1,1,\n31,B,23,1528212,Energy Talks,Active,14,15,2,0,0,0,0,0,0,3,0,5,5,1,1,1,\n31,B,24,2288,Minutemen Toastmasters of Waltham,Active,8,12,4,1,1,0,1,1,1,4,1,7,5,0,0,1,\n31,B,24,5738,Sales & Marketing Club,Active,18,20,7,5,2,0,0,1,1,4,6,5,6,1,1,0,S\n31,B,24,6174,AccelOrators Advanced Toastmasters,Active,9,10,3,0,0,0,0,1,0,2,0,6,6,1,1,1,\n31,B,24,6272,Lexington Toastmasters,Active,26,27,8,6,2,0,2,1,1,4,4,1,1,1,1,1,S\n31,B,24,28678250,BBH Beantown Articulators,Active,21,21,1,0,0,0,0,0,0,0,0,0,0,0,1,1,\n31,B,25,2753,Sylvan Speakers Club,Active,20,15,3,0,0,0,0,1,0,2,0,6,4,1,1,1,\n31,B,25,3077435,Broadcasters Toastmasters,Active,20,16,8,3,2,0,3,1,3,4,4,7,5,1,1,1,\n31,B,25,3163158,Dassault Systemes Boston Campus Toastmasters Club,Active,30,33,7,1,2,1,2,1,0,4,10,7,7,1,1,1,S\n31,B,25,7881302,Qlik Orators,Active,12,16,1,0,1,0,1,0,0,4,0,4,0,0,1,0,\n31,C,31,1295807,Somerville Toastmasters,Active,46,48,9,4,2,0,2,1,1,4,27,5,4,1,1,1,P\n31,C,31,3885194,Winchester Toastmasters,Active,26,31,5,2,2,0,1,1,0,4,10,4,2,1,1,1,D\n31,C,31,4025968,Toast Wizards,Active,15,19,6,2,2,0,0,1,2,4,2,7,7,1,1,1,D\n31,C,31,7049346,Saturday Toastmasters of Arlington,Active,22,14,8,4,2,2,2,1,1,4,0,5,1,1,1,1,\n31,C,32,6670,Speak Up Cambridge,Active,14,13,3,0,0,0,0,0,0,4,6,1,0,0,1,1,\n31,C,32,977250,Crimson Toastmasters Club,Active,16,20,5,1,1,0,0,1,0,4,10,5,5,1,1,1,D\n31,C,32,1928495,Novartis Toastmasters @ Cambridge,Low,13,5,0,0,0,0,0,0,0,2,0,0,2,0,0,0,\n31,C,32,28678055,Toast in Common,Active,21,14,2,0,0,0,0,0,0,0,0,0,4,1,1,1,\n31,C,33,7831,Humor And Drama Toastmasters,Active,10,9,2,1,0,0,0,0,0,0,0,6,7,1,0,1,\n31,C,33,8843,Toastmasters @ MIT,Active,9,9,2,0,0,0,0,0,0,4,3,5,5,0,0,1,\n31,C,33,680823,Tuesday Toastmasters at MIT Club,Active,22,20,5,1,1,0,1,1,2,4,16,2,1,1,1,1,D\n31,C,33,6423576,Takeda Toastmasters,Active,25,20,9,4,2,2,2,1,0,4,5,5,5,1,1,1,P\n31,C,33,28676929,BMS Toastmasters at CMX,Active,16,20,2,0,0,0,0,0,0,4,10,0,0,0,1,0,\n31,C,34,4975343,AKAToasts,Active,15,19,4,0,1,0,0,0,0,4,5,6,6,1,1,1,\n31,C,34,7032755,Toastmasters Google Cambridge,Active,8,8,0,0,0,0,0,0,0,3,0,0,0,0,0,0,\n31,C,34,7301975,The Toastologists,Ineligible,16,0,2,1,1,0,0,1,1,2,0,0,0,1,0,0,\n31,C,34,28676919,Moderna-Cambridge,Active,16,16,2,0,0,0,0,0,0,4,12,2,0,1,1,0,\n31,C,35,1867,Talk Of The Town Club,Active,24,27,5,1,0,0,1,1,0,4,7,5,5,1,1,1,D\n31,C,35,2263055,Watertown Saturday Toastmasters,Active,14,11,2,2,1,0,0,0,0,4,2,2,1,1,1,1,\n31,C,35,6935140,Boston College Toastmasters Club,Active,19,27,5,0,2,0,0,0,0,4,8,4,4,1,1,1,D\n31,C,35,7754658,Newton Voices Toastmasters,Active,23,20,5,2,2,2,1,0,0,4,2,6,5,1,1,1,D\n31,C,35,28678764,CCC Toastmasters,Active,30,30,1,0,0,0,0,0,0,0,0,0,0,0,1,1,\n31,D,41,1074,Boston Toastmasters,Active,30,28,5,1,0,0,1,1,0,4,24,6,6,1,1,1,D\n31,D,41,3991,Boston Seaport Toastmasters,Active,17,12,5,1,1,0,1,1,1,4,10,3,6,1,1,1,\n31,D,41,6384,John Hancock Club,Suspended,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,\n31,D,41,6454,Copley Square Toastmasters,Active,12,11,2,0,1,0,0,0,0,4,0,5,2,1,1,1,\n31,D,42,3757,TM at the FRB - Boston Club,Active,13,13,3,1,1,0,1,0,0,4,6,2,3,1,1,1,\n31,D,42,2908808,FactMasters,Active,15,18,3,2,0,0,0,0,0,4,7,5,1,1,1,1,\n31,D,42,4340726,Toastmasters General,Active,16,9,6,4,2,0,1,1,1,0,0,4,4,1,1,1,\n31,D,42,7890364,Quick Toast,Suspended,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,D,43,7057227,LEADA@Liberty Toastmasters,Active,33,35,6,1,1,0,1,1,2,4,18,4,4,1,1,1,D\n31,D,43,7116868,Unified Voices,Active,9,8,1,0,0,0,0,0,0,1,0,2,1,1,1,1,\n31,D,43,28676359,Toastmasters@Pier4,Active,19,12,1,0,0,0,0,0,0,2,0,0,0,1,1,1,\n31,D,43,28677354,Beantown Toasters Toastmasters,Active,31,18,4,0,0,0,0,0,0,4,8,4,4,1,0,1,\n31,D,44,7625,E.P.A. Club,Active,21,10,1,1,1,0,0,0,0,3,0,5,4,1,1,0,\n31,D,44,8387,Boston Speech Party Toastmasters Club,Active,12,12,2,0,0,0,0,0,0,4,3,3,2,0,1,1,\n31,D,44,1971671,Boston University Medical Campus,Active,8,8,1,0,0,0,0,0,0,4,3,2,0,0,0,1,\n31,D,44,28675787,East Coast Toastmasters,Active,31,13,2,0,0,0,0,0,0,3,0,0,5,1,0,1,\n31,D,45,2389888,Northeastern University Toastmasters,Active,8,8,2,0,0,0,0,0,0,4,0,3,0,0,1,1,\n31,D,45,3574270,Advanced Access,Active,16,16,6,0,2,0,2,1,1,3,0,5,4,1,1,1,\n31,D,45,3686963,Toast with Friends,Active,27,20,5,3,1,0,0,1,2,4,5,3,4,1,1,1,D\n31,D,45,6943872,Optum Tech Toasts,Active,21,15,2,0,0,0,0,0,0,4,2,0,0,1,1,1,\n31,E,51,727120,Village Toastmasters Club,Active,18,16,2,1,1,0,0,0,0,4,3,0,2,1,1,1,\n31,E,51,5870865,Unibank Toastmasters,Active,20,16,2,1,0,0,0,0,0,2,0,7,6,1,1,1,\n31,E,51,7759162,FLEXcon Toastmasters,Suspended,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,E,51,28677455,West Coast/Central Toastmasters,Active,21,18,4,0,0,0,0,0,0,4,4,0,4,1,0,1,\n31,E,52,2277,Central Club,Active,17,11,3,1,1,0,4,1,0,2,0,5,3,1,1,1,\n31,E,52,5574,Early Risers Toastmasters Club,Active,8,9,4,1,1,0,2,1,0,1,0,4,4,1,1,1,\n31,E,52,994078,AbbVie Bioresearch Toastmasters,Active,21,19,2,0,0,0,1,0,0,4,3,2,2,1,1,1,\n31,E,52,6978693,Seven Hills Advanced Toastmasters,Active,8,9,2,0,0,0,0,0,0,1,0,6,6,1,1,1,\n31,E,53,4495,Paul Revere Toastmasters,Active,11,14,5,1,1,0,0,1,0,4,5,5,5,1,1,1,D\n31,E,53,5414,Articulators Club,Active,15,16,5,3,2,0,0,1,1,2,0,6,6,1,1,1,\n31,E,53,5073971,Shrewsbury Toastmasters,Active,35,35,10,4,2,3,4,1,8,4,20,7,7,1,1,1,P\n31,E,53,6751480,Otis Street Orators,Active,21,18,4,0,0,0,0,1,0,4,5,1,3,1,1,1,\n31,E,54,3555,Staples Club,Active,12,28,3,2,1,0,0,0,0,4,16,4,2,1,1,1,\n31,E,54,7163,3Talkers Club,Active,13,16,7,1,2,0,3,1,2,4,3,5,4,1,1,1,S\n31,E,54,1154970,Speakeasy,Active,15,14,1,0,0,0,0,0,0,2,0,2,1,1,1,1,\n31,E,54,5991864,Boroughs Toastmasters,Active,13,17,5,0,2,1,0,0,0,4,5,5,4,1,1,1,D\n31,E,55,2352,Sun Life Club,Active,17,10,3,0,0,0,0,1,1,3,0,7,3,1,1,1,\n31,E,55,3993,Framingham / Natick Toastmasters,Active,45,28,10,4,2,5,6,1,6,4,11,7,7,1,1,1,P\n31,E,55,4735,Boston West Toastmasters Club,Active,25,31,10,4,2,2,2,1,1,4,13,7,7,1,1,1,P\n31,E,55,6430390,Metrowest Toastmasters,Active,20,20,9,5,2,2,2,1,3,4,2,5,6,1,1,1,P\n31,F,61,8310,Upper Cape Toastmasters,Active,22,21,6,1,1,0,1,1,2,4,4,6,4,1,1,1,D\n31,F,61,1174738,South Coast Toastmasters,Active,11,15,7,3,2,1,2,1,3,4,2,5,5,1,1,1,S\n31,F,61,1329712,Outermost Toast,Active,14,15,3,2,1,0,0,0,0,4,1,5,6,1,1,1,\n31,F,61,7959859,V.O.L.U.M.E. Toastmasters,Active,12,11,4,2,2,1,0,0,0,4,1,4,4,1,1,1,\n31,F,62,3345,Advanced Orators Club,Active,15,11,8,4,2,2,4,1,3,3,0,6,6,1,1,1,\n31,F,62,4652,Network Voice Club,Active,22,21,9,4,2,0,2,1,2,4,5,7,4,1,1,1,P\n31,F,62,1118652,South Shore Toastmasters,Active,20,23,5,1,1,0,0,1,0,4,8,7,4,1,1,1,D\n31,F,62,4389390,Amazon Boston Toastmasters,Active,14,9,4,2,1,0,1,1,2,4,5,3,1,0,0,1,\n31,F,63,1625,Achievers Toastmasters Club,Active,15,14,5,0,1,0,2,1,0,4,3,4,4,1,1,1,\n31,F,63,8612,Spirited Speakers,Active,10,10,2,1,1,0,0,1,0,1,0,5,4,1,1,0,\n31,F,63,9771,Fox Vox Club,Active,7,9,0,1,1,0,0,0,0,3,0,3,3,0,0,1,\n31,F,63,1576564,Toastmasters in Motion,Active,20,20,10,4,2,2,4,1,6,4,5,6,5,1,1,1,P\n31,F,64,675,Quincy Toastmasters Club,Active,37,42,10,6,2,2,4,1,4,4,13,7,7,1,1,1,P\n31,F,64,849,Quannapowitt Toastmasters,Active,9,9,0,0,0,0,0,0,0,3,0,0,0,1,1,0,\n31,F,64,8331,Blue Masters Toastmasters Club,Active,10,10,0,0,0,0,0,0,0,0,0,1,1,0,1,0,\n31,F,64,5930724,JP Toastmasters,Active,18,16,6,4,1,0,1,1,1,4,2,4,5,1,1,1,\n31,F,65,2685,Tri-County Talkers Toastmasters Club,Active,14,17,5,3,1,0,2,0,0,4,6,5,4,1,1,1,D\n31,F,65,3926,Norwood Toastmasters Club,Active,16,23,6,3,2,0,1,1,0,4,10,6,5,1,1,1,D\n31,F,65,873714,Point32Health Toastmasters Club,Ineligible,18,0,1,0,0,0,0,0,0,4,0,2,0,1,0,0,\n31,F,65,28677456,South East Toastmasters,Active,22,13,2,0,0,0,0,0,0,0,0,0,5,1,0,1,\n31,G,71,854,Ocean State Club,Active,17,13,8,2,2,0,2,1,3,4,6,7,6,1,1,1,\n31,G,71,843267,FM Toastmasters,Active,20,13,4,0,1,0,1,1,0,4,1,4,4,1,1,1,\n31,G,71,849200,East Coast Toast,Active,8,8,2,2,0,0,0,0,0,2,0,5,5,1,0,2,\n31,G,71,1427152,Rhode Island Active Toastmasters,Active,21,40,10,4,2,3,6,1,1,4,24,6,6,1,1,1,P\n31,G,72,1109,Island Foghorns Toastmasters Club,Active,12,15,9,4,2,2,2,1,3,4,1,7,7,1,1,1,P\n31,G,72,1172,Whaling City Club,Active,14,14,7,0,2,0,2,1,2,4,1,4,4,1,1,1,\n31,G,72,4750180,Fall River Innovators,Active,20,15,8,4,2,1,4,1,6,4,0,4,4,1,1,1,\n31,G,72,28675592,Celldex Toastmasters,Active,16,13,1,1,1,0,0,0,0,3,0,5,6,1,1,0,\n31,G,73,5288,Mutually Speaking Toastmasters Club,Active,10,8,1,0,0,0,0,0,0,0,0,3,4,1,1,1,\n31,G,73,6868,Saturday Brunch Bunch Club,Active,14,12,2,0,1,0,1,1,0,0,0,2,1,1,1,1,\n31,G,73,9556,East Bay Toastmasters Club,Active,15,23,3,3,0,0,0,0,0,4,8,1,1,1,1,1,\n31,G,73,7073679,CVS Health Marketing Toastmasters,Active,20,25,5,1,2,0,0,0,0,4,6,7,7,1,1,1,D\n31,G,73,28677501,Ocean State Orators,Active,24,19,3,2,1,0,0,0,0,4,7,0,2,0,1,1,\n31,G,74,4641,Speech Invaders Club,Active,13,18,9,4,2,1,3,1,6,4,6,5,7,1,1,1,P\n31,G,74,5464,Voice of Franklin Club,Active,14,24,5,4,0,0,0,0,0,4,13,6,4,1,1,1,D\n31,G,74,743989,Dell EMC Hopkinton,Active,9,12,5,1,0,0,1,1,1,4,2,7,5,1,1,1,D\n31,G,74,1257890,Franklin 5,Active,12,10,2,0,0,0,0,0,0,4,3,2,6,0,1,1,\n31,G,74,28677736,Ocean State Speaking Network,Active,22,16,0,0,0,0,0,0,0,1,0,1,2,0,0,1,\nMonth of Jun, As of 07/01/2025,,,,,,,,,,,,,,,,,,,,,","Q1_end":"District,Division,Area,Club Number,Club Name,Club Status,CSP,Mem. Base,Active Members,Net Growth,Goals Met,Level 1s,Level 2s,Add. Level 2s,Level 3s,\"Level 4s, Path Completions, or DTM Awards\",\"Add. Level 4s, Path Completions, or DTM award\",New Members,Add. New Members,Off. Trained Round 1,Off. Trained Round 2,Mem. dues on time Oct,Mem. dues on time Apr,Off. List On Time,Club Distinguished Status\n31,A,11,508,Merrimack Toastmasters Club,Active,Y,12,14,2,0,0,0,0,0,0,0,2,0,3,0,1,0,0,\n31,A,11,8508,Clipper City Club,Active,Y,16,17,1,1,0,0,0,0,0,0,1,0,5,0,1,0,1,\n31,A,11,7675820,EBSCO Toastmasters,Active,Y,10,13,3,0,0,0,0,0,0,0,3,0,1,0,1,0,0,\n31,A,11,7988557,New England Biolabs,Active,Y,20,20,0,1,0,1,0,0,0,0,0,0,6,0,1,0,1,\n31,A,12,1225457,Harold Parker Toastmasters,Active,Y,11,12,1,0,0,0,0,0,0,0,1,0,4,0,0,0,1,\n31,A,12,3785939,Advanced Articulators of Andover,Active,Y,10,11,1,2,0,0,0,0,1,0,1,0,7,0,1,0,1,\n31,A,12,6892975,Analog Orators,Active,Y,10,11,1,0,0,0,0,0,0,0,1,0,6,0,0,0,1,\n31,A,12,28677456,South East Toastmasters,Active,Y,13,13,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,A,13,2779,MITRE  Toastmasters Club,Active,Y,9,9,0,1,0,0,0,0,0,0,0,0,4,0,1,0,1,\n31,A,13,5525,The Last Word,Active,Y,9,9,0,1,0,1,0,0,0,0,0,0,5,0,1,0,1,\n31,A,13,5560447,Toast of the Town,Active,Y,35,37,2,1,0,0,0,0,0,0,2,0,5,0,1,0,1,\n31,A,13,7928167,ToaSTRs,Active,Y,10,13,3,1,0,0,0,0,0,0,3,0,2,0,1,0,1,\n31,A,14,3565,Eastern Middlesex Toastmasters,Active,Y,27,30,3,2,2,2,1,0,0,0,3,0,6,0,1,0,1,\n31,A,14,3908,Northshore Toastmasters Club,Active,Y,30,37,7,4,2,0,0,0,1,1,4,3,7,0,1,0,1,\n31,A,14,735541,Toastmasters Club of Beverly MA,Active,Y,8,8,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,\n31,A,14,7962029,Toastmasters at Abiomed,Active,Y,8,10,2,1,0,0,0,0,0,0,2,0,3,0,1,0,1,\n31,B,21,2193,Isaac Davis Club,Active,Y,15,17,2,1,0,0,0,0,0,0,2,0,5,0,1,0,1,\n31,B,21,4690,Westford Expressions Club,Active,Y,22,23,1,2,1,1,0,0,1,0,1,0,4,0,1,0,1,\n31,B,21,7677,Wachusett Toastmasters #7677,Active,Y,14,15,1,1,0,1,0,0,0,0,1,0,6,0,1,0,1,\n31,B,21,8753,Twin City Club,Active,Y,11,11,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,\n31,B,22,4031,Chelmsford Toastmasters Club,Active,Y,20,20,0,3,1,0,0,0,1,1,0,0,4,0,1,0,1,\n31,B,22,2078400,Mill City Toastmasters,Active,Y,10,11,1,2,0,1,0,1,1,0,1,0,7,0,1,0,1,\n31,B,22,3550659,New Life Toastmasters Club,Active,Y,13,15,2,1,0,0,0,0,0,0,2,0,5,0,1,0,1,\n31,B,22,7958590,Share the Spark,Active,Y,21,21,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,\n31,B,23,2201,Hanscom Toastmasters Club,Active,Y,16,18,2,3,1,0,0,1,1,1,2,0,7,0,1,0,1,\n31,B,23,3981,Alcott Toastmasters,Active,Y,22,24,2,1,1,0,0,1,0,0,2,0,7,0,1,0,1,\n31,B,23,909842,Lincoln Laboratory Toastmasters Club,Active,Y,13,13,0,2,0,0,0,0,1,0,0,0,4,0,1,0,1,\n31,B,23,1528212,Energy Talks,Active,Y,15,15,0,1,0,0,0,0,0,0,0,0,4,0,1,0,1,\n31,B,24,2288,Minutemen Toastmasters of Waltham,Active,Y,12,12,0,0,0,0,0,0,0,0,0,0,5,0,0,0,1,\n31,B,24,5738,Sales & Marketing Club,Active,Y,20,21,1,1,0,1,0,0,0,0,1,0,4,0,1,0,1,\n31,B,24,6174,AccelOrators Advanced Toastmasters,Active,Y,10,10,0,1,0,0,0,0,0,0,0,0,5,0,1,0,1,\n31,B,24,6272,Lexington Toastmasters,Active,Y,27,29,2,1,0,0,0,0,0,0,2,0,1,0,1,0,1,\n31,B,25,2753,Sylvan Speakers Wednesday Noon Eastern US Time Club,Active,Y,15,16,1,1,0,0,0,0,0,0,1,0,4,0,1,0,1,\n31,B,25,3077435,Broadcasters Toastmasters,Active,Y,16,40,24,3,0,0,0,0,0,0,4,20,5,0,1,0,1,\n31,B,25,3163158,Dassault Systemes Boston Campus Toastmasters Club,Active,Y,33,37,4,4,1,0,0,0,1,1,4,0,7,0,1,0,1,\n31,B,25,7881302,Qlik Orators,Active,Y,16,16,0,2,1,0,0,0,1,0,0,0,2,0,1,0,1,\n31,C,31,977250,Crimson Toastmasters Club,Active,Y,20,23,3,1,0,0,0,0,0,0,3,0,4,0,1,0,1,\n31,C,31,1295807,Somerville Toastmasters,Active,Y,49,54,5,3,1,0,0,0,1,0,4,1,4,0,1,0,1,\n31,C,31,3885194,Winchester Toastmasters,Active,Y,31,36,5,3,0,0,0,0,1,0,4,1,4,0,1,0,1,\n31,C,31,7049346,Saturday Toastmasters of Arlington,Active,Y,14,14,0,1,0,0,0,0,0,0,0,0,5,0,1,0,1,\n31,C,32,1867,Talk Of The Town Club,Active,Y,27,28,1,0,0,0,0,0,0,0,1,0,6,0,1,0,0,\n31,C,32,6670,Speak Up Cambridge,Active,Y,13,16,3,0,1,0,0,0,0,0,3,0,0,0,1,0,0,\n31,C,32,4025968,Toast Wizards,Active,Y,19,21,2,1,1,0,0,0,0,0,2,0,6,0,1,0,1,\n31,C,32,28675787,East Coast Toastmasters,Active,N,13,13,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,\n31,C,33,7831,Humor And Drama Toastmasters,Active,Y,9,9,0,0,1,0,0,0,0,0,0,0,4,0,0,0,1,\n31,C,33,8843,Toastmasters @ MIT,Active,Y,9,9,0,1,0,0,0,0,0,0,0,0,4,0,1,0,1,\n31,C,33,680823,Tuesday Toastmasters at MIT Club,Active,Y,21,25,4,2,0,0,0,0,0,0,4,0,5,0,1,0,1,\n31,C,33,1928495,Novartis Toastmasters @ Cambridge,Low,N,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,C,33,6423576,Takeda Toastmasters,Active,Y,20,23,3,1,2,0,0,0,0,0,3,0,5,0,1,0,1,\n31,C,34,4975343,AKAToasts,Active,Y,19,22,3,1,1,0,0,0,0,0,3,0,3,0,1,0,1,\n31,C,34,7032755,Toastmasters Google Cambridge,Active,N,8,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,C,34,7301975,The Toastologists,Ineligible,N,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,C,34,28676919,Moderna-Cambridge,Active,N,16,16,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,\n31,C,34,28676929,BMS Toastmasters at CMX,Active,N,20,20,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,\n31,C,35,2352,Sun Life Club,Active,N,10,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,C,35,2263055,Watertown Saturday Toastmasters,Active,Y,11,12,1,1,2,0,0,0,0,0,1,0,4,0,1,0,1,\n31,C,35,7754658,Newton Voices Toastmasters,Active,Y,20,20,0,1,0,0,0,0,0,0,0,0,6,0,1,0,1,\n31,C,35,28678055,Toast in Common,Active,Y,14,15,1,1,0,0,0,0,0,0,1,0,4,0,1,0,1,\n31,C,35,28678795,Clear Water Communicators,Active,Y,26,26,0,0,0,0,0,0,0,0,0,0,5,0,0,0,1,\n31,D,41,1074,Boston Toastmasters,Active,Y,28,43,15,3,0,0,0,0,0,0,4,11,5,0,1,0,1,\n31,D,41,6454,Copley Square Toastmasters,Active,Y,11,12,1,1,0,0,0,0,0,0,1,0,5,0,1,0,1,\n31,D,41,8387,Boston Speech Party Toastmasters Club,Active,Y,12,12,0,1,0,0,0,0,0,0,0,0,1,0,1,0,1,\n31,D,41,2389888,Northeastern University Toastmasters,Active,N,8,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,D,42,7625,E.P.A. Club,Active,Y,10,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,\n31,D,42,2908808,FactMasters,Active,Y,18,18,0,1,0,0,0,0,0,0,0,0,2,0,1,0,1,\n31,D,42,4340726,Toastmasters General,Active,Y,9,10,1,0,0,0,0,0,0,0,1,0,4,0,0,0,1,\n31,D,42,7057227,LEADA@Liberty Toastmasters,Active,Y,35,35,0,2,2,1,0,0,1,0,0,0,4,0,1,0,1,\n31,D,42,28677354,Beantown Toasters Toastmasters,Active,Y,18,21,3,1,0,0,0,0,0,0,3,0,2,0,1,0,1,\n31,D,43,3757,TM at the FRB - Boston Club,Active,Y,14,14,0,1,1,0,0,0,0,0,0,0,4,0,1,0,1,\n31,D,43,3991,Boston Seaport Toastmasters,Active,Y,12,14,2,1,0,0,0,0,0,0,2,0,4,0,1,0,1,\n31,D,43,7116868,Unified Voices,Active,Y,8,10,2,1,0,0,0,0,0,0,2,0,0,0,1,0,1,\n31,D,43,28676359,Toastmasters@Pier4,Active,Y,12,15,3,1,2,0,0,0,0,0,3,0,2,0,1,0,1,\n31,D,43,28678250,BBH Beantown Articulators,Active,Y,21,21,0,1,0,0,0,0,0,0,0,0,2,0,1,0,1,\n31,D,44,1971671,Boston University Medical Campus,Active,Y,8,8,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1,\n31,D,44,3574270,Advanced Access,Active,Y,16,16,0,1,0,0,0,0,0,0,0,0,5,0,1,0,1,\n31,D,44,3686963,Toast with Friends,Active,Y,20,22,2,2,2,0,0,0,1,0,2,0,6,0,1,0,1,\n31,D,44,6935140,Boston College Toastmasters Club,Active,Y,27,29,2,1,0,0,0,0,0,0,2,0,3,0,1,0,1,\n31,D,44,6943872,Optum Tech Toasts,Active,N,15,15,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,E,51,727120,Village Toastmasters Club,Active,Y,16,16,0,1,0,0,0,0,0,0,0,0,4,0,1,0,1,\n31,E,51,5870865,Unibank Toastmasters,Active,Y,16,17,1,0,0,0,0,0,0,0,1,0,2,0,0,0,1,\n31,E,51,28677455,West Coast/Central Toastmasters,Active,Y,18,18,0,0,0,0,0,0,0,0,0,0,7,0,1,0,0,\n31,E,51,28678135,Wilson Toastmasters,Active,Y,21,21,0,0,0,0,0,0,0,0,0,0,4,0,1,0,0,\n31,E,52,2277,Central Club,Active,Y,11,12,1,2,0,1,0,0,1,0,1,0,5,0,1,0,1,\n31,E,52,5574,Early Risers Toastmasters Club,Active,Y,9,9,0,1,0,0,0,1,0,0,0,0,6,0,1,0,1,\n31,E,52,994078,AbbVie Bioresearch Toastmasters,Active,Y,19,21,2,2,0,0,0,0,1,0,2,0,5,0,1,0,1,\n31,E,52,6978693,Seven Hills Advanced Toastmasters,Active,Y,9,9,0,0,0,0,0,0,0,0,0,0,4,0,0,0,1,\n31,E,53,4495,Paul Revere Toastmasters,Active,Y,14,15,1,1,0,0,0,0,0,0,1,0,5,0,1,0,1,\n31,E,53,5414,Articulators Club,Active,Y,16,16,0,3,1,2,0,2,0,0,0,0,5,0,1,0,1,\n31,E,53,5073971,Shrewsbury Toastmasters,Active,Y,36,43,7,3,1,1,0,1,1,0,4,3,5,0,1,0,1,\n31,E,53,6751480,Otis Street Orators,Active,Y,18,18,0,2,2,1,0,1,1,0,0,0,7,0,1,0,1,\n31,E,54,3555,Staples Club,Active,Y,28,28,0,1,0,0,0,0,0,0,0,0,5,0,1,0,1,\n31,E,54,7163,3Talkers Club,Active,Y,16,17,1,2,0,0,0,0,1,0,1,0,7,0,1,0,1,\n31,E,54,1154970,Speakeasy,Active,Y,14,16,2,1,0,0,0,0,0,0,2,0,3,0,1,0,1,\n31,E,54,5991864,Boroughs Toastmasters,Active,Y,17,17,0,1,0,0,0,0,0,0,0,0,6,0,1,0,1,\n31,E,55,3993,Framingham / Natick Toastmasters,Active,Y,28,32,4,3,2,0,0,0,1,0,4,0,4,0,1,0,1,\n31,E,55,4641,Speech Invaders Club,Active,Y,18,19,1,2,1,0,0,1,1,0,1,0,7,0,1,0,1,\n31,E,55,743989,Dell EMC Hopkinton,Active,Y,12,12,0,1,2,1,0,0,0,0,0,0,4,0,1,0,1,\n31,E,55,6430390,Metrowest Toastmasters,Active,Y,20,20,0,1,1,0,0,0,0,0,0,0,3,0,1,0,1,\n31,F,61,8310,Upper Cape Toastmasters,Active,Y,21,21,0,2,1,1,0,0,1,0,0,0,5,0,1,0,1,\n31,F,61,1174738,South Coast Toastmasters,Active,Y,15,16,1,3,0,0,0,0,1,1,1,0,6,0,1,0,1,\n31,F,61,1329712,Outermost Toast,Active,Y,15,15,0,1,1,0,0,0,0,0,0,0,6,0,1,0,1,\n31,F,61,7959859,V.O.L.U.M.E. Toastmasters,Active,Y,11,11,0,1,0,0,0,0,0,0,0,0,3,0,1,0,1,\n31,F,62,2685,Tri-County Talkers Toastmasters Club,Active,Y,17,17,0,1,0,0,0,0,0,0,0,0,5,0,1,0,1,\n31,F,62,3345,Advanced Orators Club,Active,Y,11,11,0,1,0,0,0,0,0,0,0,0,6,0,1,0,1,\n31,F,62,4652,Network Voice Club,Active,Y,21,22,1,2,2,0,0,0,1,0,1,0,5,0,1,0,1,\n31,F,62,1118652,South Shore Toastmasters,Active,Y,23,24,1,2,1,0,0,2,0,0,1,0,6,0,1,0,1,\n31,F,63,1625,Achievers Toastmasters Club,Active,Y,14,15,1,1,1,0,0,0,0,0,1,0,4,0,1,0,1,\n31,F,63,8612,Spirited Speakers,Active,Y,10,10,0,2,1,0,0,0,1,0,0,0,5,0,1,0,1,\n31,F,63,9771,Fox Vox Club,Active,Y,9,9,0,3,0,0,0,1,1,1,0,0,4,0,1,0,1,\n31,F,63,1576564,Toastmasters in Motion,Active,Y,20,21,1,2,0,1,0,1,1,0,1,0,6,0,1,0,1,\n31,F,64,675,Quincy Toastmasters Club,Active,Y,42,42,0,3,0,1,0,1,1,1,0,0,7,0,1,0,1,\n31,F,64,849,Quannapowitt Toastmasters,Active,Y,9,9,0,1,0,0,0,0,0,0,0,0,0,0,1,0,1,\n31,F,64,8331,Blue Masters Toastmasters Club,Active,Y,10,10,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1,\n31,F,64,5930724,JP Toastmasters,Active,Y,16,16,0,1,0,0,0,0,0,0,0,0,5,0,1,0,1,\n31,F,65,3926,Norwood Toastmasters Club,Active,Y,23,28,5,3,1,0,0,0,1,0,4,1,4,0,1,0,1,\n31,F,65,4735,Boston West Toastmasters Club,Active,Y,31,38,7,2,1,0,0,0,0,0,4,3,7,0,1,0,1,\n31,F,65,873714,Point32Health Toastmasters Club,Ineligible,N,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,F,65,4389390,Amazon Boston Toastmasters,Active,Y,9,9,0,2,1,1,0,1,1,1,0,0,6,0,0,0,1,\n31,F,65,28678764,CCC Toastmasters,Active,N,30,30,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,\n31,G,71,854,Ocean State Toastmasters,Active,Y,13,15,2,1,0,0,0,0,0,0,2,0,5,0,1,0,1,\n31,G,71,843267,FM Toastmasters,Active,Y,13,14,1,1,0,0,0,0,0,0,1,0,5,0,1,0,1,\n31,G,71,849200,East Coast Toast,Active,Y,8,8,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,\n31,G,71,1427152,Rhode Island Active Toastmasters,Active,Y,40,45,5,5,1,2,0,0,1,1,4,1,6,0,1,0,1,\n31,G,72,1109,Island Foghorns Toastmasters Club,Active,Y,15,15,0,4,0,0,0,2,1,1,0,0,4,0,1,0,1,\n31,G,72,1172,Whaling City Club,Active,Y,15,15,0,1,0,0,0,0,0,0,0,0,4,0,1,0,1,\n31,G,72,4750180,Fall River Innovators,Active,Y,15,16,1,2,0,1,0,2,0,0,1,0,5,0,1,0,1,\n31,G,72,28675592,Celldex Toastmasters,Active,Y,13,13,0,1,1,0,0,0,0,0,0,0,5,0,1,0,1,\n31,G,73,5288,Mutually Speaking Toastmasters Club,Active,Y,8,8,0,0,0,0,0,0,0,0,0,0,5,0,0,0,1,\n31,G,73,9556,East Bay Toastmasters Club,Active,Y,23,24,1,2,1,1,0,1,1,0,1,0,5,0,1,0,1,\n31,G,73,28677501,Ocean State Orators,Active,Y,19,19,0,1,1,0,0,1,0,0,0,0,0,0,1,0,1,\n31,G,73,28677736,Ocean State Speaking Network,Active,N,16,16,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,\n31,G,74,5464,Voice of Franklin Club,Active,Y,24,26,2,1,0,0,0,0,0,0,2,0,4,0,1,0,1,\n31,G,74,6868,Saturday Brunch Bunch Club,Active,Y,12,12,0,2,0,1,0,0,1,0,0,0,4,0,1,0,1,\n31,G,74,1257890,Franklin 5,Active,Y,10,11,1,1,0,0,0,0,0,0,1,0,3,0,1,0,1,\n31,G,74,7073679,CVS Health Marketing Toastmasters,Active,Y,25,27,2,1,0,0,0,0,0,0,2,0,6,0,1,0,1,\nMonth of Sep, As of 09/30/2025,,,,,,,,,,,,,,,,,,,,,,,","Q2_start":"District,Division,Area,Club Number,Club Name,Club Status,CSP,Mem. Base,Active Members,Net Growth,Goals Met,Level 1s,Level 2s,Add. Level 2s,Level 3s,\"Level 4s, Path Completions, or DTM Awards\",\"Add. Level 4s, Path Completions, or DTM award\",New Members,Add. New Members,Off. Trained Round 1,Off. Trained Round 2,Mem. dues on time Oct,Mem. dues on time Apr,Off. List On Time,Club Distinguished Status\n31,A,11,508,Merrimack Toastmasters Club,Active,Y,12,14,2,0,0,0,0,0,0,0,2,0,3,0,1,0,0,\n31,A,11,8508,Clipper City Club,Active,Y,16,17,1,1,0,0,0,0,0,0,1,0,5,0,1,0,1,\n31,A,11,7675820,EBSCO Toastmasters,Active,Y,10,13,3,0,0,0,0,0,0,0,3,0,1,0,1,0,0,\n31,A,11,7988557,New England Biolabs,Active,Y,20,20,0,1,0,1,0,0,0,0,0,0,6,0,1,0,1,\n31,A,12,1225457,Harold Parker Toastmasters,Active,Y,11,12,1,0,0,0,0,0,0,0,1,0,4,0,0,0,1,\n31,A,12,3785939,Advanced Articulators of Andover,Active,Y,10,11,1,2,0,0,0,0,1,0,1,0,7,0,1,0,1,\n31,A,12,6892975,Analog Orators,Active,Y,10,11,1,0,0,0,0,0,0,0,1,0,6,0,0,0,1,\n31,A,12,28677456,South East Toastmasters,Active,Y,13,13,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,A,13,2779,MITRE  Toastmasters Club,Active,Y,9,9,0,1,0,0,0,0,0,0,0,0,4,0,1,0,1,\n31,A,13,5525,The Last Word,Active,Y,9,9,0,1,0,1,0,0,0,0,0,0,5,0,1,0,1,\n31,A,13,5560447,Toast of the Town,Active,Y,35,37,2,1,0,0,0,0,0,0,2,0,5,0,1,0,1,\n31,A,13,7928167,ToaSTRs,Active,Y,10,13,3,1,0,0,0,0,0,0,3,0,2,0,1,0,1,\n31,A,14,3565,Eastern Middlesex Toastmasters,Active,Y,27,30,3,2,2,2,1,0,0,0,3,0,6,0,1,0,1,\n31,A,14,3908,Northshore Toastmasters Club,Active,Y,30,37,7,4,2,0,0,0,1,1,4,3,7,0,1,0,1,\n31,A,14,735541,Toastmasters Club of Beverly MA,Active,Y,8,8,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,\n31,A,14,7962029,Toastmasters at Abiomed,Active,Y,8,10,2,1,0,0,0,0,0,0,2,0,3,0,1,0,1,\n31,B,21,2193,Isaac Davis Club,Active,Y,15,17,2,1,0,0,0,0,0,0,2,0,5,0,1,0,1,\n31,B,21,4690,Westford Expressions Club,Active,Y,22,23,1,2,1,1,0,0,1,0,1,0,4,0,1,0,1,\n31,B,21,7677,Wachusett Toastmasters #7677,Active,Y,14,15,1,1,0,1,0,0,0,0,1,0,6,0,1,0,1,\n31,B,21,8753,Twin City Club,Active,Y,11,11,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,\n31,B,22,4031,Chelmsford Toastmasters Club,Active,Y,20,20,0,3,1,0,0,0,1,1,0,0,4,0,1,0,1,\n31,B,22,2078400,Mill City Toastmasters,Active,Y,10,11,1,2,0,1,0,1,1,0,1,0,7,0,1,0,1,\n31,B,22,3550659,New Life Toastmasters Club,Active,Y,13,15,2,1,0,0,0,0,0,0,2,0,5,0,1,0,1,\n31,B,22,7958590,Share the Spark,Active,Y,21,21,0,1,0,0,0,0,0,0,0,0,0,0,1,0,1,\n31,B,23,2201,Hanscom Toastmasters Club,Active,Y,16,18,2,3,1,0,0,1,1,1,2,0,7,0,1,0,1,\n31,B,23,3981,Alcott Toastmasters,Active,Y,22,24,2,1,1,0,0,1,0,0,2,0,7,0,1,0,1,\n31,B,23,909842,Lincoln Laboratory Toastmasters Club,Active,Y,13,13,0,2,0,0,0,0,1,0,0,0,4,0,1,0,1,\n31,B,23,1528212,Energy Talks,Active,Y,15,15,0,1,0,0,0,0,0,0,0,0,4,0,1,0,1,\n31,B,24,2288,Minutemen Toastmasters of Waltham,Active,Y,12,12,0,0,0,0,0,0,0,0,0,0,5,0,0,0,1,\n31,B,24,5738,Sales & Marketing Club,Active,Y,20,21,1,1,0,1,0,0,0,0,1,0,4,0,1,0,1,\n31,B,24,6174,AccelOrators Advanced Toastmasters,Active,Y,10,10,0,1,0,0,0,0,0,0,0,0,5,0,1,0,1,\n31,B,24,6272,Lexington Toastmasters,Active,Y,27,29,2,1,0,0,0,0,0,0,2,0,1,0,1,0,1,\n31,B,25,2753,Sylvan Speakers Wednesday Noon Eastern US Time Club,Active,Y,15,16,1,1,0,0,0,0,0,0,1,0,4,0,1,0,1,\n31,B,25,3077435,Broadcasters Toastmasters,Active,Y,16,40,24,3,0,0,0,0,0,0,4,20,5,0,1,0,1,\n31,B,25,3163158,Dassault Systemes Boston Campus Toastmasters Club,Active,Y,33,37,4,4,1,0,0,0,1,1,4,0,7,0,1,0,1,\n31,B,25,7881302,Qlik Orators,Active,Y,16,16,0,2,1,0,0,0,1,0,0,0,2,0,1,0,1,\n31,C,31,977250,Crimson Toastmasters Club,Active,Y,20,23,3,1,0,0,0,0,0,0,3,0,4,0,1,0,1,\n31,C,31,1295807,Somerville Toastmasters,Active,Y,49,54,5,3,1,0,0,0,1,0,4,1,4,0,1,0,1,\n31,C,31,3885194,Winchester Toastmasters,Active,Y,31,36,5,3,0,0,0,0,1,0,4,1,4,0,1,0,1,\n31,C,31,7049346,Saturday Toastmasters of Arlington,Active,Y,14,14,0,1,0,0,0,0,0,0,0,0,5,0,1,0,1,\n31,C,32,1867,Talk Of The Town Club,Active,Y,27,28,1,0,0,0,0,0,0,0,1,0,6,0,1,0,0,\n31,C,32,6670,Speak Up Cambridge,Active,Y,13,16,3,0,1,0,0,0,0,0,3,0,0,0,1,0,0,\n31,C,32,4025968,Toast Wizards,Active,Y,19,21,2,1,1,0,0,0,0,0,2,0,6,0,1,0,1,\n31,C,32,28675787,East Coast Toastmasters,Active,N,13,13,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,\n31,C,33,7831,Humor And Drama Toastmasters,Active,Y,9,9,0,0,1,0,0,0,0,0,0,0,4,0,0,0,1,\n31,C,33,8843,Toastmasters @ MIT,Active,Y,9,9,0,1,0,0,0,0,0,0,0,0,4,0,1,0,1,\n31,C,33,680823,Tuesday Toastmasters at MIT Club,Active,Y,21,25,4,2,0,0,0,0,0,0,4,0,5,0,1,0,1,\n31,C,33,1928495,Novartis Toastmasters @ Cambridge,Low,N,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,C,33,6423576,Takeda Toastmasters,Active,Y,20,23,3,1,2,0,0,0,0,0,3,0,5,0,1,0,1,\n31,C,34,4975343,AKAToasts,Active,Y,19,22,3,1,1,0,0,0,0,0,3,0,3,0,1,0,1,\n31,C,34,7032755,Toastmasters Google Cambridge,Active,N,8,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,C,34,7301975,The Toastologists,Ineligible,N,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,C,34,28676919,Moderna-Cambridge,Active,N,16,16,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,\n31,C,34,28676929,BMS Toastmasters at CMX,Active,N,20,20,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,\n31,C,35,2352,Sun Life Club,Suspended,N,10,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,C,35,2263055,Watertown Saturday Toastmasters,Active,Y,11,12,1,1,2,0,0,0,0,0,1,0,4,0,1,0,1,\n31,C,35,7754658,Newton Voices Toastmasters,Active,Y,20,20,0,1,0,0,0,0,0,0,0,0,6,0,1,0,1,\n31,C,35,28678055,Toast in Common,Active,Y,14,15,1,1,0,0,0,0,0,0,1,0,4,0,1,0,1,\n31,C,35,28678795,Clear Water Communicators,Active,Y,26,26,0,0,0,0,0,0,0,0,0,0,5,0,0,0,1,\n31,D,41,1074,Boston Toastmasters,Active,Y,28,43,15,3,0,0,0,0,0,0,4,11,5,0,1,0,1,\n31,D,41,6454,Copley Square Toastmasters,Active,Y,11,12,1,1,0,0,0,0,0,0,1,0,5,0,1,0,1,\n31,D,41,8387,Boston Speech Party Toastmasters Club,Active,Y,12,12,0,1,0,0,0,0,0,0,0,0,1,0,1,0,1,\n31,D,41,2389888,Northeastern University Toastmasters,Active,N,8,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,D,42,7625,E.P.A. Club,Active,Y,10,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,\n31,D,42,2908808,FactMasters,Active,Y,18,18,0,1,0,0,0,0,0,0,0,0,2,0,1,0,1,\n31,D,42,4340726,Toastmasters General,Active,Y,9,10,1,1,0,0,0,0,0,0,1,0,4,0,1,0,1,\n31,D,42,7057227,LEADA@Liberty Toastmasters,Active,Y,35,35,0,2,2,1,0,0,1,0,0,0,4,0,1,0,1,\n31,D,42,28677354,Beantown Toasters Toastmasters,Active,Y,18,21,3,1,0,0,0,0,0,0,3,0,2,0,1,0,1,\n31,D,43,3757,TM at the FRB - Boston Club,Active,Y,14,14,0,1,1,0,0,0,0,0,0,0,4,0,1,0,1,\n31,D,43,3991,Boston Seaport Toastmasters,Active,Y,12,14,2,1,0,0,0,0,0,0,2,0,4,0,1,0,1,\n31,D,43,7116868,Unified Voices,Active,Y,8,10,2,1,0,0,0,0,0,0,2,0,0,0,1,0,1,\n31,D,43,28676359,Toastmasters@Pier4,Active,Y,12,15,3,1,2,0,0,0,0,0,3,0,2,0,1,0,1,\n31,D,43,28678250,BBH Beantown Articulators,Active,Y,21,21,0,1,0,0,0,0,0,0,0,0,2,0,1,0,1,\n31,D,44,1971671,Boston University Medical Campus,Active,Y,8,8,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1,\n31,D,44,3574270,Advanced Access,Active,Y,16,16,0,1,0,0,0,0,0,0,0,0,5,0,1,0,1,\n31,D,44,3686963,Toast with Friends,Active,Y,20,22,2,2,2,0,0,0,1,0,2,0,6,0,1,0,1,\n31,D,44,6935140,Boston College Toastmasters Club,Active,Y,27,29,2,1,0,0,0,0,0,0,2,0,3,0,1,0,1,\n31,D,44,6943872,Optum Tech Toasts,Active,N,15,15,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,E,51,727120,Village Toastmasters Club,Active,Y,16,16,0,1,0,0,0,0,0,0,0,0,4,0,1,0,1,\n31,E,51,5870865,Unibank Toastmasters,Active,Y,16,17,1,0,0,0,0,0,0,0,1,0,2,0,0,0,1,\n31,E,51,28677455,West Coast/Central Toastmasters,Active,Y,18,18,0,0,0,0,0,0,0,0,0,0,7,0,1,0,0,\n31,E,51,28678135,Wilson Toastmasters,Active,Y,21,21,0,0,0,0,0,0,0,0,0,0,4,0,1,0,0,\n31,E,52,2277,Central Club,Active,Y,11,12,1,2,0,1,0,0,1,0,1,0,5,0,1,0,1,\n31,E,52,5574,Early Risers Toastmasters Club,Active,Y,9,9,0,1,0,0,0,1,0,0,0,0,6,0,1,0,1,\n31,E,52,994078,AbbVie Bioresearch Toastmasters,Active,Y,19,21,2,2,0,0,0,0,1,0,2,0,5,0,1,0,1,\n31,E,52,6978693,Seven Hills Advanced Toastmasters,Active,Y,9,9,0,0,0,0,0,0,0,0,0,0,4,0,0,0,1,\n31,E,53,4495,Paul Revere Toastmasters,Active,Y,14,15,1,1,0,0,0,0,0,0,1,0,5,0,1,0,1,\n31,E,53,5414,Articulators Club,Active,Y,16,16,0,3,1,2,0,2,0,0,0,0,5,0,1,0,1,\n31,E,53,5073971,Shrewsbury Toastmasters,Active,Y,36,43,7,3,1,1,0,1,1,0,4,3,5,0,1,0,1,\n31,E,53,6751480,Otis Street Orators,Active,Y,18,18,0,2,2,1,0,1,1,0,0,0,7,0,1,0,1,\n31,E,54,3555,Staples Club,Active,Y,28,28,0,1,0,0,0,0,0,0,0,0,5,0,1,0,1,\n31,E,54,7163,3Talkers Club,Active,Y,16,17,1,2,0,0,0,0,1,0,1,0,7,0,1,0,1,\n31,E,54,1154970,Speakeasy,Active,Y,14,16,2,1,0,0,0,0,0,0,2,0,3,0,1,0,1,\n31,E,54,5991864,Boroughs Toastmasters,Active,Y,17,17,0,1,0,0,0,0,0,0,0,0,6,0,1,0,1,\n31,E,55,3993,Framingham / Natick Toastmasters,Active,Y,28,32,4,3,2,0,0,0,1,0,4,0,4,0,1,0,1,\n31,E,55,4641,Speech Invaders Club,Active,Y,18,19,1,2,1,0,0,1,1,0,1,0,7,0,1,0,1,\n31,E,55,743989,Dell EMC Hopkinton,Active,Y,12,12,0,1,2,1,0,0,0,0,0,0,4,0,1,0,1,\n31,E,55,6430390,Metrowest Toastmasters,Active,Y,20,20,0,1,1,0,0,0,0,0,0,0,3,0,1,0,1,\n31,F,61,8310,Upper Cape Toastmasters,Active,Y,21,21,0,2,1,1,0,0,1,0,0,0,5,0,1,0,1,\n31,F,61,1174738,South Coast Toastmasters,Active,Y,15,16,1,3,0,0,0,0,1,1,1,0,6,0,1,0,1,\n31,F,61,1329712,Outermost Toast,Active,Y,15,15,0,1,1,0,0,0,0,0,0,0,6,0,1,0,1,\n31,F,61,7959859,V.O.L.U.M.E. Toastmasters,Active,Y,11,11,0,1,0,0,0,0,0,0,0,0,3,0,1,0,1,\n31,F,62,2685,Tri-County Talkers Toastmasters Club,Active,Y,17,17,0,1,0,0,0,0,0,0,0,0,5,0,1,0,1,\n31,F,62,3345,Advanced Orators Club,Active,Y,11,11,0,1,0,0,0,0,0,0,0,0,6,0,1,0,1,\n31,F,62,4652,Network Voice Club,Active,Y,21,22,1,2,2,0,0,0,1,0,1,0,5,0,1,0,1,\n31,F,62,1118652,South Shore Toastmasters,Active,Y,23,24,1,2,1,0,0,2,0,0,1,0,6,0,1,0,1,\n31,F,63,1625,Achievers Toastmasters Club,Active,Y,14,15,1,1,1,0,0,0,0,0,1,0,4,0,1,0,1,\n31,F,63,8612,Spirited Speakers,Active,Y,10,10,0,2,1,0,0,0,1,0,0,0,5,0,1,0,1,\n31,F,63,9771,Fox Vox Club,Active,Y,9,9,0,3,0,0,0,1,1,1,0,0,4,0,1,0,1,\n31,F,63,1576564,Toastmasters in Motion,Active,Y,20,21,1,2,0,1,0,1,1,0,1,0,6,0,1,0,1,\n31,F,64,675,Quincy Toastmasters Club,Active,Y,42,42,0,3,0,1,0,1,1,1,0,0,7,0,1,0,1,\n31,F,64,849,Quannapowitt Toastmasters,Active,Y,9,9,0,1,0,0,0,0,0,0,0,0,0,0,1,0,1,\n31,F,64,8331,Blue Masters Toastmasters Club,Active,Y,10,10,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1,\n31,F,64,5930724,JP Toastmasters,Active,Y,16,16,0,1,0,0,0,0,0,0,0,0,5,0,1,0,1,\n31,F,65,3926,Norwood Toastmasters Club,Active,Y,23,28,5,3,1,0,0,0,1,0,4,1,4,0,1,0,1,\n31,F,65,4735,Boston West Toastmasters Club,Active,Y,31,38,7,2,1,0,0,0,0,0,4,3,7,0,1,0,1,\n31,F,65,873714,Point32Health Toastmasters Club,Ineligible,N,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,F,65,4389390,Amazon Boston Toastmasters,Active,Y,9,9,0,2,1,1,0,1,1,1,0,0,6,0,0,0,1,\n31,F,65,28678764,CCC Toastmasters,Active,N,30,30,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,\n31,G,71,854,Ocean State Toastmasters,Active,Y,13,15,2,1,0,0,0,0,0,0,2,0,5,0,1,0,1,\n31,G,71,843267,FM Toastmasters,Active,Y,13,14,1,1,0,0,0,0,0,0,1,0,5,0,1,0,1,\n31,G,71,849200,East Coast Toast,Active,Y,8,8,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,\n31,G,71,1427152,Rhode Island Active Toastmasters,Active,Y,40,45,5,5,1,2,0,0,1,1,4,1,6,0,1,0,1,\n31,G,72,1109,Island Foghorns Toastmasters Club,Active,Y,15,15,0,4,0,0,0,2,1,1,0,0,4,0,1,0,1,\n31,G,72,1172,Whaling City Club,Active,Y,15,15,0,1,0,0,0,0,0,0,0,0,4,0,1,0,1,\n31,G,72,4750180,Fall River Innovators,Active,Y,15,16,1,2,0,1,0,2,0,0,1,0,5,0,1,0,1,\n31,G,72,28675592,Celldex Toastmasters,Active,Y,13,13,0,1,1,0,0,0,0,0,0,0,5,0,1,0,1,\n31,G,73,5288,Mutually Speaking Toastmasters Club,Active,Y,8,8,0,0,0,0,0,0,0,0,0,0,5,0,0,0,1,\n31,G,73,9556,East Bay Toastmasters Club,Active,Y,23,24,1,2,1,1,0,1,1,0,1,0,5,0,1,0,1,\n31,G,73,28677501,Ocean State Orators,Active,Y,19,19,0,1,1,0,0,1,0,0,0,0,0,0,1,0,1,\n31,G,73,28677736,Ocean State Speaking Network,Active,N,16,16,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,\n31,G,74,5464,Voice of Franklin Club,Active,Y,24,26,2,1,0,0,0,0,0,0,2,0,4,0,1,0,1,\n31,G,74,6868,Saturday Brunch Bunch Club,Active,Y,12,12,0,2,0,1,0,0,1,0,0,0,4,0,1,0,1,\n31,G,74,1257890,Franklin 5,Active,Y,10,11,1,1,0,0,0,0,0,0,1,0,3,0,1,0,1,\n31,G,74,7073679,CVS Health Marketing Toastmasters,Active,Y,25,27,2,1,0,0,0,0,0,0,2,0,6,0,1,0,1,\nMonth of Sep, As of 10/01/2025,,,,,,,,,,,,,,,,,,,,,,,","Q2_end":"District,Division,Area,Club Number,Club Name,Club Status,CSP,Mem. Base,Active Members,Net Growth,Goals Met,Level 1s,Level 2s,Add. Level 2s,Level 3s,\"Level 4s, Path Completions, or DTM Awards\",\"Add. Level 4s, Path Completions, or DTM award\",New Members,Add. New Members,Off. Trained Round 1,Off. Trained Round 2,Mem. dues on time Oct,Mem. dues on time Apr,Off. List On Time,Club Distinguished Status\n31,A,11,508,Merrimack Toastmasters Club,Active,Y,12,15,3,1,0,0,0,0,0,0,4,0,3,1,1,0,0,\n31,A,11,8508,Clipper City Club,Active,Y,16,15,-1,1,0,0,0,0,0,0,2,0,5,1,1,0,1,\n31,A,11,7675820,EBSCO Toastmasters,Active,Y,10,15,5,1,0,0,0,0,0,0,4,3,1,1,1,0,0,\n31,A,11,7988557,New England Biolabs,Active,Y,20,19,-1,1,2,1,0,0,0,0,2,0,6,2,1,0,1,\n31,A,12,1225457,Harold Parker Toastmasters,Active,Y,11,9,-2,0,0,0,0,0,0,0,3,0,4,1,0,0,1,\n31,A,12,3785939,Advanced Articulators Online,Active,Y,10,10,0,5,2,2,0,1,1,3,2,0,7,4,1,0,1,\n31,A,12,6892975,Analog Orators,Active,Y,10,8,-2,0,0,1,0,0,0,0,2,0,6,0,0,0,1,\n31,A,12,28677456,South East Toastmasters,Ineligible,Y,13,18,5,2,0,0,0,0,0,0,4,14,0,0,0,0,0,\n31,A,13,2779,MITRE  Toastmasters Club,Active,Y,9,8,-1,1,0,0,0,0,0,0,0,0,4,3,1,0,1,\n31,A,13,5525,The Last Word,Active,Y,9,10,1,1,0,1,0,0,0,0,2,0,5,1,1,0,1,\n31,A,13,5560447,Toast of the Town,Active,Y,35,26,-9,1,0,0,0,0,0,0,3,0,5,2,1,0,1,\n31,A,13,7928167,ToaSTRs,Active,Y,10,9,-1,1,0,0,0,0,0,0,3,0,2,0,1,0,1,\n31,A,14,3565,Eastern Middlesex Toastmasters,Active,Y,27,28,1,4,2,2,1,1,0,0,4,2,6,7,1,0,1,\n31,A,14,3908,Northshore Toastmasters Club,Active,Y,30,36,6,5,3,0,0,0,1,1,4,11,7,1,1,0,1,\n31,A,14,735541,Toastmasters Club of Beverly MA,Active,Y,8,8,0,0,0,0,0,0,0,0,1,0,1,1,0,0,1,\n31,A,14,7962029,Toastmasters at Abiomed,Active,Y,8,11,3,1,0,0,0,0,0,0,3,0,3,0,1,0,1,\n31,B,21,2193,Isaac Davis Club,Active,Y,15,14,-1,1,1,0,0,0,0,0,3,0,5,3,1,0,1,\n31,B,21,4690,Westford Expressions Club,Active,Y,22,17,-5,4,1,2,0,1,1,1,1,0,4,0,1,0,1,\n31,B,21,7677,Wachusett Toastmasters #7677,Active,Y,14,17,3,3,1,1,0,0,1,0,4,0,6,3,1,0,1,\n31,B,21,8753,Twin City Club,Active,Y,11,11,0,0,0,0,0,0,0,0,1,0,0,1,0,0,1,\n31,B,22,4031,Chelmsford Toastmasters Club,Active,Y,20,18,-2,4,2,1,0,0,1,2,4,0,4,2,1,0,1,\n31,B,22,2078400,Mill City Toastmasters,Active,Y,10,10,0,3,0,1,0,2,1,0,1,0,7,1,1,0,1,\n31,B,22,3550659,New Life Toastmasters Club,Active,Y,13,11,-2,3,0,1,0,0,1,1,3,0,5,2,1,0,1,\n31,B,22,7958590,Share the Spark,Active,Y,21,15,-6,1,0,0,0,0,0,0,2,0,0,0,1,0,1,\n31,B,23,2201,Hanscom Toastmasters Club,Active,Y,16,13,-3,3,1,0,0,1,1,2,2,0,7,2,1,0,1,\n31,B,23,3981,Alcott Toastmasters,Active,Y,22,21,-1,3,2,0,0,1,1,0,4,1,7,2,1,0,1,\n31,B,23,909842,Lincoln Laboratory Toastmasters Club,Active,Y,13,11,-2,2,0,1,0,1,1,0,2,0,4,2,1,0,1,\n31,B,23,1528212,Energy Talks,Active,Y,15,22,7,3,0,0,0,0,0,0,4,4,4,2,1,0,1,\n31,B,24,2288,Minutemen Toastmasters of Waltham,Active,Y,12,8,-4,1,1,0,0,0,1,0,0,0,5,2,0,0,1,\n31,B,24,5738,Sales & Marketing Club,Active,Y,20,21,1,1,1,1,0,0,0,0,1,0,4,0,1,0,1,\n31,B,24,6174,AccelOrators Advanced Toastmasters,Active,Y,10,9,-1,1,0,0,0,0,0,0,1,0,5,2,1,0,1,\n31,B,24,6272,Lexington Toastmasters,Active,Y,27,26,-1,2,1,0,0,0,0,0,4,0,1,1,1,0,1,\n31,B,25,2753,Sylvan Speakers Wednesday Noon Eastern US Time Club,Active,Y,15,13,-2,2,0,1,0,0,0,0,3,0,4,4,1,0,1,\n31,B,25,3077435,Broadcasters Toastmasters,Active,Y,16,39,23,3,0,0,0,0,0,0,4,21,5,3,1,0,1,\n31,B,25,3163158,Dassault Systemes Boston Campus Toastmasters Club,Active,Y,33,28,-5,6,1,2,0,0,1,1,4,2,7,5,1,0,1,\n31,B,25,7881302,Qlik Orators,Active,Y,16,12,-4,2,1,0,0,0,1,0,1,0,2,0,1,0,1,\n31,C,31,977250,Crimson Toastmasters Club,Active,Y,20,22,2,3,1,1,0,0,0,0,4,5,4,1,1,0,1,\n31,C,31,1295807,Somerville Toastmasters,Active,Y,49,43,-6,6,2,2,0,1,1,1,4,5,4,2,1,0,1,\n31,C,31,3885194,Winchester Toastmasters,Active,Y,31,29,-2,3,0,0,0,0,1,0,4,2,4,2,1,0,1,\n31,C,31,7049346,Saturday Toastmasters of Arlington,Active,Y,14,13,-1,3,1,0,0,1,0,0,4,0,5,4,1,0,1,\n31,C,32,1867,Talk Of The Town Club,Active,Y,27,25,-2,2,0,0,0,0,0,0,4,3,6,5,1,0,0,\n31,C,32,6670,Speak Up Cambridge,Active,Y,13,13,0,1,1,0,0,0,0,0,4,2,0,0,1,0,0,\n31,C,32,4025968,Toast Wizards,Active,Y,19,20,1,2,2,0,0,0,0,0,3,0,6,5,1,0,1,\n31,C,32,28675787,East Coast Toastmasters,Active,N,13,12,-1,0,0,0,0,0,0,0,0,0,1,0,1,0,0,\n31,C,33,7831,Humor And Drama Toastmasters,Active,Y,9,8,-1,0,1,0,0,0,0,0,1,0,4,2,0,0,1,\n31,C,33,8843,Toastmasters @ MIT,Active,Y,9,8,-1,1,0,0,0,0,0,0,0,0,4,0,1,0,1,\n31,C,33,680823,Tuesday Toastmasters at MIT Club,Active,Y,21,19,-2,2,1,0,0,0,0,0,4,3,5,3,1,0,1,\n31,C,33,1928495,Novartis Toastmasters @ Cambridge,Suspended,N,5,0,-5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,C,33,6423576,Takeda Toastmasters,Active,Y,20,32,12,4,3,0,0,0,0,0,4,11,5,5,1,0,1,\n31,C,34,4975343,AKAToasts,Active,Y,19,19,0,2,1,0,0,2,0,0,3,0,3,2,1,0,1,\n31,C,34,7032755,Toastmasters Google Cambridge,Active,N,8,8,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,\n31,C,34,7301975,The Toastologists,Suspended,N,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,C,34,28676919,Moderna-Cambridge,Ineligible,N,16,0,-16,0,0,0,0,0,0,0,0,0,0,0,0,0,1,\n31,C,34,28676929,BMS Toastmasters at CMX,Active,N,20,16,-4,0,0,0,0,0,0,0,0,0,0,0,1,0,0,\n31,C,35,2352,Sun Life Club,Suspended,N,10,0,-10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,C,35,2263055,Watertown Saturday Toastmasters,Active,Y,11,14,3,2,3,1,0,0,0,0,4,3,4,2,1,0,1,\n31,C,35,7754658,Newton Voices Toastmasters,Active,Y,20,15,-5,1,0,0,0,0,0,0,2,0,6,2,1,0,1,\n31,C,35,28678055,Toast in Common,Active,Y,14,10,-4,3,0,0,0,0,0,0,4,2,4,4,1,0,1,\n31,C,35,28678795,Clear Water Communicators,Active,Y,26,16,-10,1,1,0,0,0,0,0,1,0,5,4,0,0,1,\n31,C,35,28678864,Boston Mutual Life,Active,N,20,20,0,1,0,0,0,0,0,0,0,0,0,0,1,0,1,\n31,D,41,1074,Boston Toastmasters,Active,Y,28,36,8,3,0,0,0,1,0,0,4,20,5,3,1,0,1,\n31,D,41,6454,Copley Square Toastmasters,Active,Y,11,10,-1,2,0,0,0,1,0,0,1,0,5,5,1,0,1,\n31,D,41,8387,Boston Speech Party Toastmasters Club,Active,Y,12,9,-3,1,0,0,0,0,0,0,0,0,1,1,1,0,1,\n31,D,41,2389888,Northeastern University Toastmasters,Ineligible,Y,8,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,D,42,7625,E.P.A. Club,Low,Y,10,6,-4,0,0,0,0,0,0,0,0,0,0,2,0,0,1,\n31,D,42,2908808,FactMasters,Active,Y,18,14,-4,1,0,0,0,0,0,0,2,0,2,0,1,0,1,\n31,D,42,4340726,Toastmasters General,Active,Y,9,10,1,1,0,0,0,0,0,0,1,0,4,2,1,0,1,\n31,D,42,7057227,LEADA@Liberty Toastmasters,Active,Y,35,31,-4,5,3,1,0,2,1,0,4,5,4,1,1,0,1,\n31,D,42,28677354,Beantown Toasters Toastmasters,Active,Y,18,20,2,2,0,0,0,0,0,0,4,3,2,0,1,0,1,\n31,D,43,3757,TM at the FRB - Boston Club,Active,Y,14,14,0,2,2,0,0,0,1,0,3,0,4,3,1,0,1,\n31,D,43,3991,Boston Seaport Toastmasters,Active,Y,12,12,0,1,0,0,0,1,0,0,3,0,4,3,1,0,1,\n31,D,43,7116868,Unified Voices,Active,Y,8,10,2,1,0,0,0,0,0,0,2,0,0,0,1,0,1,\n31,D,43,28676359,Toastmasters@Pier4,Active,Y,12,19,7,3,2,1,0,0,0,0,4,4,2,0,1,0,1,\n31,D,43,28678250,BBH Beantown Articulators,Active,Y,21,21,0,1,0,0,0,0,0,0,0,0,2,0,1,0,1,\n31,D,44,1971671,Boston University Medical Campus,Low,Y,8,6,-2,0,1,0,0,0,0,0,1,0,1,0,0,0,1,\n31,D,44,3574270,Advanced Access,Active,Y,16,15,-1,2,1,0,0,0,1,0,0,0,5,2,1,0,1,\n31,D,44,3686963,Toast with Friends,Active,Y,20,20,0,4,3,0,0,0,1,1,4,1,6,1,1,0,1,\n31,D,44,6935140,Boston College Toastmasters Club,Active,Y,27,23,-4,3,1,0,0,0,1,1,2,0,3,2,1,0,1,\n31,D,44,6943872,Optum Tech Toasts,Ineligible,N,15,0,-15,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,E,51,727120,Village Toastmasters Club,Active,Y,16,15,-1,1,0,0,0,0,0,0,3,0,4,1,1,0,1,\n31,E,51,5870865,Unibank Toastmasters,Active,Y,16,10,-6,0,1,0,0,0,0,0,1,0,2,0,0,0,1,\n31,E,51,28677455,West Coast/Central Toastmasters,Active,Y,18,18,0,0,0,0,0,0,0,0,0,0,7,1,1,0,0,\n31,E,51,28678135,Wilson Toastmasters,Active,Y,21,16,-5,0,1,0,0,0,0,0,2,0,4,0,1,0,0,\n31,E,52,2277,Central Club,Active,Y,11,9,-2,3,0,1,0,1,1,1,3,0,5,0,1,0,1,\n31,E,52,5574,Early Risers Toastmasters Club,Active,Y,9,9,0,3,0,1,0,1,1,0,1,0,6,5,1,0,2,\n31,E,52,994078,AbbVie Bioresearch Toastmasters,Active,Y,19,22,3,2,0,0,0,0,1,0,3,0,5,1,1,0,1,\n31,E,52,6978693,Seven Hills Advanced Toastmasters,Active,Y,9,9,0,0,0,0,0,0,0,0,1,0,4,2,0,0,1,\n31,E,53,4495,Paul Revere Toastmasters,Active,Y,14,14,0,2,0,0,0,0,0,0,4,2,5,1,1,0,1,\n31,E,53,5414,Articulators Club,Active,Y,16,17,1,3,2,2,1,3,0,0,2,0,5,3,1,0,1,\n31,E,53,5073971,Shrewsbury Toastmasters,Active,Y,36,39,3,5,2,1,0,2,1,0,4,11,5,2,1,0,1,\n31,E,53,6751480,Otis Street Orators,Active,Y,18,16,-2,3,2,1,0,1,1,0,2,0,7,5,1,0,1,\n31,E,54,3555,Staples Club,Active,Y,28,31,3,3,3,1,0,0,0,0,4,3,5,4,1,0,1,\n31,E,54,7163,3Talkers Club,Active,Y,16,14,-2,2,0,0,0,0,1,0,2,0,7,3,1,0,1,\n31,E,54,1154970,Speakeasy,Active,Y,14,11,-3,1,0,0,0,0,0,0,2,0,3,0,1,0,1,\n31,E,54,5991864,Boroughs Toastmasters,Active,Y,17,18,1,1,0,0,0,0,0,0,3,0,6,2,1,0,1,\n31,E,55,3993,Framingham / Natick Toastmasters,Active,Y,28,29,1,5,3,0,0,0,1,1,4,5,4,2,1,0,1,\n31,E,55,4641,Speech Invaders Club,Active,Y,18,24,6,7,1,2,0,2,1,1,4,4,7,1,1,0,1,\n31,E,55,743989,Dell EMC Hopkinton,Active,Y,12,11,-1,3,2,2,0,1,1,0,0,0,4,0,1,0,1,\n31,E,55,6430390,Metrowest Toastmasters,Active,Y,20,17,-3,1,1,1,0,0,0,0,1,0,4,1,1,0,1,\n31,F,61,8310,Upper Cape Toastmasters,Active,Y,21,18,-3,4,2,1,0,0,1,1,1,0,5,4,1,0,1,\n31,F,61,1174738,South Coast Toastmasters,Active,Y,15,14,-1,4,1,0,0,0,1,1,3,0,6,4,1,0,1,\n31,F,61,1329712,Outermost Toast,Active,Y,15,14,-1,2,1,0,0,0,0,0,1,0,6,4,1,0,1,\n31,F,61,7959859,V.O.L.U.M.E. Toastmasters,Active,Y,11,8,-3,1,1,0,0,0,0,0,0,0,3,0,1,0,1,\n31,F,62,2685,Tri-County Talkers Toastmasters Club,Active,Y,17,16,-1,1,0,0,0,0,0,0,2,0,5,0,1,0,1,\n31,F,62,3345,Advanced Orators Club,Active,Y,11,12,1,3,0,2,0,0,0,0,3,0,6,5,1,0,1,\n31,F,62,4652,Network Voice Club,Active,Y,21,20,-1,5,2,1,0,0,1,1,4,1,5,5,1,0,1,\n31,F,62,1118652,South Shore Toastmasters,Active,Y,23,20,-3,2,1,0,0,2,0,0,3,0,6,2,1,0,1,\n31,F,63,1625,Achievers Toastmasters Club,Active,Y,14,11,-3,3,1,0,0,0,1,0,2,0,4,4,1,0,1,\n31,F,63,8612,Spirited Speakers,Active,Y,10,11,1,2,1,0,0,0,1,0,1,0,5,3,1,0,1,\n31,F,63,9771,Fox Vox Club,Active,Y,9,8,-1,3,1,0,0,1,1,1,0,0,4,3,1,0,1,\n31,F,63,1576564,Toastmasters in Motion,Active,Y,20,17,-3,3,1,1,0,1,1,2,1,0,6,2,1,0,1,\n31,F,64,675,Quincy Toastmasters Club,Active,Y,42,43,1,7,1,2,1,2,1,3,4,3,7,7,1,0,1,\n31,F,64,849,Quannapowitt Toastmasters,Active,Y,9,10,1,1,0,0,0,0,0,0,2,0,0,0,1,0,1,\n31,F,64,8331,Blue Masters Toastmasters Club,Active,Y,10,15,5,1,1,0,0,0,0,0,4,1,1,1,0,0,1,\n31,F,64,5930724,JP Toastmasters,Active,Y,16,11,-5,2,0,1,0,0,0,0,0,0,5,4,1,0,1,\n31,F,65,3926,Norwood Toastmasters Club,Active,Y,23,29,6,5,1,0,0,0,1,0,4,6,4,4,1,0,1,\n31,F,65,4735,Boston West Toastmasters Club,Active,Y,31,30,-1,6,3,2,0,1,1,0,4,5,7,7,1,0,1,\n31,F,65,873714,Point32Health Toastmasters Club,Suspended,N,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,F,65,4389390,Amazon Boston Toastmasters,Active,Y,9,9,0,2,1,1,0,1,1,1,3,0,6,1,0,0,1,\n31,F,65,28678764,CCC Toastmasters,Suspended,N,30,0,-30,0,0,0,0,0,0,0,0,0,1,0,0,0,1,\n31,F,65,28679111,Union Capital Boston Toastmasters Club,Active,N,20,21,1,1,0,0,0,0,0,0,1,0,0,1,1,0,1,\n31,G,71,854,Ocean State Toastmasters,Active,Y,13,11,-2,1,0,0,0,0,0,0,2,0,5,3,1,0,1,\n31,G,71,843267,FM Toastmasters,Active,Y,13,15,2,1,0,0,0,0,0,0,2,0,5,0,1,0,1,\n31,G,71,849200,East Coast Toast,Low,Y,8,7,-1,0,0,0,0,1,0,0,0,0,1,4,0,0,1,\n31,G,71,1427152,Rhode Island Active Toastmasters,Active,Y,40,41,1,7,2,2,0,0,1,1,4,8,6,5,1,0,1,\n31,G,72,1109,Island Foghorns Toastmasters Club,Active,Y,15,11,-4,5,2,1,0,2,1,2,1,0,4,5,1,0,1,\n31,G,72,1172,Whaling City Club,Active,Y,15,12,-3,2,2,0,0,0,0,0,0,0,4,4,1,0,1,\n31,G,72,4750180,Fall River Innovators,Active,Y,15,18,3,5,0,1,0,3,1,1,4,2,5,2,1,0,1,\n31,G,72,28675592,Celldex Toastmasters,Active,Y,13,11,-2,1,1,0,0,0,0,0,1,0,5,2,1,0,1,\n31,G,73,5288,Mutually Speaking Toastmasters Club,Active,Y,8,8,0,1,0,0,0,0,0,0,1,0,5,5,0,0,1,\n31,G,73,9556,East Bay Toastmasters Club,Active,Y,23,26,3,5,2,2,0,1,1,0,4,4,5,1,1,0,1,\n31,G,73,28677501,Ocean State Orators,Active,Y,19,13,-6,2,2,0,0,1,1,0,0,0,0,0,1,0,1,\n31,G,73,28677736,Ocean State Speaking Network,Active,N,16,15,-1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,\n31,G,74,5464,Voice of Franklin Club,Active,Y,24,19,-5,2,1,0,0,0,0,0,4,1,4,2,1,0,1,\n31,G,74,6868,Saturday Brunch Bunch Club,Active,Y,12,12,0,2,0,1,0,0,1,0,0,0,4,2,1,0,1,\n31,G,74,1257890,Franklin 5,Active,Y,10,9,-1,1,0,0,0,0,0,0,2,0,3,0,1,0,1,\n31,G,74,7073679,CVS Health Marketing Toastmasters,Active,Y,25,21,-4,3,1,0,0,1,0,0,4,1,6,4,1,0,1,\nMonth of Dec, As of 12/31/2025,,,,,,,,,,,,,,,,,,,,,,,","Q3_start":"District,Division,Area,Club Number,Club Name,Club Status,CSP,Mem. Base,Active Members,Net Growth,Goals Met,Level 1s,Level 2s,Add. Level 2s,Level 3s,\"Level 4s, Path Completions, or DTM Awards\",\"Add. Level 4s, Path Completions, or DTM award\",New Members,Add. New Members,Off. Trained Round 1,Off. Trained Round 2,Mem. dues on time Oct,Mem. dues on time Apr,Off. List On Time,Club Distinguished Status\n31,A,11,508,Merrimack Toastmasters Club,Active,Y,12,15,3,1,0,0,0,0,0,0,4,0,3,1,1,0,0,\n31,A,11,8508,Clipper City Club,Active,Y,16,15,-1,1,0,0,0,0,0,0,2,0,5,1,1,0,1,\n31,A,11,7675820,EBSCO Toastmasters,Active,Y,10,15,5,1,0,0,0,0,0,0,4,3,1,1,1,0,0,\n31,A,11,7988557,New England Biolabs,Active,Y,20,19,-1,1,2,1,0,0,0,0,2,0,6,2,1,0,1,\n31,A,12,1225457,Harold Parker Toastmasters,Active,Y,11,9,-2,0,0,0,0,0,0,0,3,0,4,1,0,0,1,\n31,A,12,3785939,Advanced Articulators Online,Active,Y,10,10,0,5,2,2,0,1,1,3,2,0,7,4,1,0,1,\n31,A,12,6892975,Analog Orators,Active,Y,10,8,-2,0,0,1,0,0,0,0,2,0,6,0,0,0,1,\n31,A,12,28677456,South East Toastmasters,Ineligible,Y,13,18,5,2,0,0,0,0,0,0,4,14,0,0,0,0,0,\n31,A,13,2779,MITRE  Toastmasters Club,Active,Y,9,8,-1,1,0,0,0,0,0,0,0,0,4,3,1,0,1,\n31,A,13,5525,The Last Word,Active,Y,9,10,1,1,0,1,0,0,0,0,2,0,5,1,1,0,1,\n31,A,13,5560447,Toast of the Town,Active,Y,35,26,-9,1,0,0,0,0,0,0,3,0,5,2,1,0,1,\n31,A,13,7928167,ToaSTRs,Active,Y,10,9,-1,1,0,0,0,0,0,0,3,0,2,0,1,0,1,\n31,A,14,3565,Eastern Middlesex Toastmasters,Active,Y,27,28,1,4,2,2,1,1,0,0,4,2,6,7,1,0,1,\n31,A,14,3908,Northshore Toastmasters Club,Active,Y,30,36,6,5,3,0,0,0,1,1,4,11,7,1,1,0,1,\n31,A,14,735541,Toastmasters Club of Beverly MA,Active,Y,8,8,0,0,0,0,0,0,0,0,1,0,1,1,0,0,1,\n31,A,14,7962029,Toastmasters at Abiomed,Active,Y,8,11,3,1,0,0,0,0,0,0,3,0,3,0,1,0,1,\n31,B,21,2193,Isaac Davis Club,Active,Y,15,14,-1,1,1,0,0,0,0,0,3,0,5,3,1,0,1,\n31,B,21,4690,Westford Expressions Club,Active,Y,22,17,-5,4,1,2,0,1,1,1,1,0,4,0,1,0,1,\n31,B,21,7677,Wachusett Toastmasters #7677,Active,Y,14,17,3,3,1,1,0,0,1,0,4,0,6,3,1,0,1,\n31,B,21,8753,Twin City Club,Active,Y,11,11,0,0,0,0,0,0,0,0,1,0,0,1,0,0,1,\n31,B,22,4031,Chelmsford Toastmasters Club,Active,Y,20,18,-2,4,2,1,0,0,1,2,4,0,4,2,1,0,1,\n31,B,22,2078400,Mill City Toastmasters,Active,Y,10,10,0,3,0,1,0,2,1,0,1,0,7,1,1,0,1,\n31,B,22,3550659,New Life Toastmasters Club,Active,Y,13,11,-2,3,0,1,0,0,1,1,3,0,5,2,1,0,1,\n31,B,22,7958590,Share the Spark,Active,Y,21,15,-6,1,0,0,0,0,0,0,2,0,0,0,1,0,1,\n31,B,23,2201,Hanscom Toastmasters Club,Active,Y,16,13,-3,3,1,0,0,1,1,2,2,0,7,2,1,0,1,\n31,B,23,3981,Alcott Toastmasters,Active,Y,22,21,-1,3,2,0,0,1,1,0,4,1,7,2,1,0,1,\n31,B,23,909842,Lincoln Laboratory Toastmasters Club,Active,Y,13,11,-2,2,0,1,0,1,1,0,2,0,4,2,1,0,1,\n31,B,23,1528212,Energy Talks,Active,Y,15,22,7,3,0,0,0,0,0,0,4,4,4,2,1,0,1,\n31,B,24,2288,Minutemen Toastmasters of Waltham,Active,Y,12,8,-4,1,1,0,0,0,1,0,0,0,5,2,0,0,1,\n31,B,24,5738,Sales & Marketing Club,Active,Y,20,21,1,1,1,1,0,0,0,0,1,0,4,0,1,0,1,\n31,B,24,6174,AccelOrators Advanced Toastmasters,Active,Y,10,9,-1,1,0,0,0,0,0,0,1,0,5,2,1,0,1,\n31,B,24,6272,Lexington Toastmasters,Active,Y,27,26,-1,2,1,0,0,0,0,0,4,0,1,1,1,0,1,\n31,B,25,2753,Sylvan Speakers Wednesday Noon Eastern US Time Club,Active,Y,15,13,-2,2,0,1,0,0,0,0,3,0,4,4,1,0,1,\n31,B,25,3077435,Broadcasters Toastmasters,Active,Y,16,39,23,3,0,0,0,0,0,0,4,21,5,3,1,0,1,\n31,B,25,3163158,Dassault Systemes Boston Campus Toastmasters Club,Active,Y,33,28,-5,6,1,2,0,0,1,1,4,2,7,5,1,0,1,\n31,B,25,7881302,Qlik Orators,Active,Y,16,12,-4,2,1,0,0,0,1,0,1,0,2,0,1,0,1,\n31,C,31,977250,Crimson Toastmasters Club,Active,Y,20,22,2,3,1,1,0,0,0,0,4,5,4,1,1,0,1,\n31,C,31,1295807,Somerville Toastmasters,Active,Y,49,43,-6,6,2,2,0,1,1,1,4,5,4,2,1,0,1,\n31,C,31,3885194,Winchester Toastmasters,Active,Y,31,29,-2,3,0,0,0,0,1,0,4,2,4,2,1,0,1,\n31,C,31,7049346,Saturday Toastmasters of Arlington,Active,Y,14,13,-1,3,1,0,0,1,0,0,4,0,5,4,1,0,1,\n31,C,32,1867,Talk Of The Town Club,Active,Y,27,25,-2,2,0,0,0,0,0,0,4,3,6,5,1,0,0,\n31,C,32,6670,Speak Up Cambridge,Active,Y,13,13,0,1,1,0,0,0,0,0,4,2,0,0,1,0,0,\n31,C,32,4025968,Toast Wizards,Active,Y,19,20,1,2,2,0,0,0,0,0,3,0,6,5,1,0,1,\n31,C,32,28675787,East Coast Toastmasters,Active,N,13,12,-1,0,0,0,0,0,0,0,0,0,1,0,1,0,0,\n31,C,33,7831,Humor And Drama Toastmasters,Active,Y,9,8,-1,0,1,0,0,0,0,0,1,0,4,2,0,0,1,\n31,C,33,8843,Toastmasters @ MIT,Active,Y,9,8,-1,1,0,0,0,0,0,0,0,0,4,0,1,0,1,\n31,C,33,680823,Tuesday Toastmasters at MIT Club,Active,Y,21,19,-2,2,1,0,0,0,0,0,4,3,5,3,1,0,1,\n31,C,33,1928495,Novartis Toastmasters @ Cambridge,Suspended,N,5,0,-5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,C,33,6423576,Takeda Toastmasters,Active,Y,20,32,12,4,3,0,0,0,0,0,4,11,5,5,1,0,1,\n31,C,34,4975343,AKAToasts,Active,Y,19,19,0,2,1,0,0,2,0,0,3,0,3,2,1,0,1,\n31,C,34,7032755,Toastmasters Google Cambridge,Active,N,8,8,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,\n31,C,34,7301975,The Toastologists,Suspended,N,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,C,34,28676919,Moderna-Cambridge,Ineligible,N,16,0,-16,0,0,0,0,0,0,0,0,0,0,0,0,0,1,\n31,C,34,28676929,BMS Toastmasters at CMX,Active,N,20,16,-4,0,0,0,0,0,0,0,0,0,0,0,1,0,0,\n31,C,35,2352,Sun Life Club,Suspended,N,10,0,-10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,C,35,2263055,Watertown Saturday Toastmasters,Active,Y,11,14,3,2,3,1,0,0,0,0,4,3,4,2,1,0,1,\n31,C,35,7754658,Newton Voices Toastmasters,Active,Y,20,15,-5,1,0,0,0,0,0,0,2,0,6,2,1,0,1,\n31,C,35,28678055,Toast in Common,Active,Y,14,10,-4,3,0,0,0,0,0,0,4,2,4,4,1,0,1,\n31,C,35,28678795,Clear Water Communicators,Active,Y,26,16,-10,1,1,0,0,0,0,0,1,0,5,4,0,0,1,\n31,C,35,28678864,Boston Mutual Life,Active,N,20,20,0,1,0,0,0,0,0,0,0,0,0,0,1,0,1,\n31,D,41,1074,Boston Toastmasters,Active,Y,28,36,8,3,0,0,0,1,0,0,4,20,5,3,1,0,1,\n31,D,41,6454,Copley Square Toastmasters,Active,Y,11,10,-1,2,0,0,0,1,0,0,1,0,5,5,1,0,1,\n31,D,41,8387,Boston Speech Party Toastmasters Club,Active,Y,12,9,-3,1,0,0,0,0,0,0,0,0,1,1,1,0,1,\n31,D,41,2389888,Northeastern University Toastmasters,Ineligible,Y,8,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,D,42,7625,E.P.A. Club,Low,Y,10,6,-4,0,0,0,0,0,0,0,0,0,0,2,0,0,1,\n31,D,42,2908808,FactMasters,Active,Y,18,14,-4,1,0,0,0,0,0,0,2,0,2,0,1,0,1,\n31,D,42,4340726,Toastmasters General,Active,Y,9,10,1,1,0,0,0,0,0,0,1,0,4,2,1,0,1,\n31,D,42,7057227,LEADA@Liberty Toastmasters,Active,Y,35,31,-4,5,3,1,0,2,1,0,4,5,4,1,1,0,1,\n31,D,42,28677354,Beantown Toasters Toastmasters,Active,Y,18,20,2,2,0,0,0,0,0,0,4,3,2,0,1,0,1,\n31,D,43,3757,TM at the FRB - Boston Club,Active,Y,14,14,0,2,2,0,0,0,1,0,3,0,4,3,1,0,1,\n31,D,43,3991,Boston Seaport Toastmasters,Active,Y,12,12,0,1,0,0,0,1,0,0,3,0,4,3,1,0,1,\n31,D,43,7116868,Unified Voices,Active,Y,8,10,2,1,0,0,0,0,0,0,2,0,0,0,1,0,1,\n31,D,43,28676359,Toastmasters@Pier4,Active,Y,12,19,7,3,2,1,0,0,0,0,4,4,2,0,1,0,1,\n31,D,43,28678250,BBH Beantown Articulators,Active,Y,21,21,0,1,0,0,0,0,0,0,0,0,2,0,1,0,1,\n31,D,44,1971671,Boston University Medical Campus,Low,Y,8,6,-2,0,1,0,0,0,0,0,1,0,1,0,0,0,1,\n31,D,44,3574270,Advanced Access,Active,Y,16,15,-1,2,1,0,0,0,1,0,0,0,5,2,1,0,1,\n31,D,44,3686963,Toast with Friends,Active,Y,20,20,0,4,3,0,0,0,1,1,4,1,6,1,1,0,1,\n31,D,44,6935140,Boston College Toastmasters Club,Active,Y,27,23,-4,3,1,0,0,0,1,1,2,0,3,2,1,0,1,\n31,D,44,6943872,Optum Tech Toasts,Ineligible,N,15,0,-15,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,E,51,727120,Village Toastmasters Club,Active,Y,16,15,-1,1,0,0,0,0,0,0,3,0,4,1,1,0,1,\n31,E,51,5870865,Unibank Toastmasters,Active,Y,16,10,-6,0,1,0,0,0,0,0,1,0,2,0,0,0,1,\n31,E,51,28677455,West Coast/Central Toastmasters,Active,Y,18,18,0,0,0,0,0,0,0,0,0,0,7,1,1,0,0,\n31,E,51,28678135,Wilson Toastmasters,Active,Y,21,16,-5,0,1,0,0,0,0,0,2,0,4,0,1,0,0,\n31,E,52,2277,Central Club,Active,Y,11,9,-2,3,0,1,0,1,1,1,3,0,5,0,1,0,1,\n31,E,52,5574,Early Risers Toastmasters Club,Active,Y,9,9,0,3,0,1,0,1,1,0,1,0,6,5,1,0,2,\n31,E,52,994078,AbbVie Bioresearch Toastmasters,Active,Y,19,22,3,2,0,0,0,0,1,0,3,0,5,1,1,0,1,\n31,E,52,6978693,Seven Hills Advanced Toastmasters,Active,Y,9,9,0,0,0,0,0,0,0,0,1,0,4,2,0,0,1,\n31,E,53,4495,Paul Revere Toastmasters,Active,Y,14,14,0,2,0,0,0,0,0,0,4,2,5,1,1,0,1,\n31,E,53,5414,Articulators Club,Active,Y,16,17,1,3,2,2,1,3,0,0,2,0,5,3,1,0,1,\n31,E,53,5073971,Shrewsbury Toastmasters,Active,Y,36,39,3,5,2,1,0,2,1,0,4,11,5,2,1,0,1,\n31,E,53,6751480,Otis Street Orators,Active,Y,18,16,-2,3,2,1,0,1,1,0,2,0,7,5,1,0,1,\n31,E,54,3555,Staples Club,Active,Y,28,31,3,3,3,1,0,0,0,0,4,3,5,4,1,0,1,\n31,E,54,7163,3Talkers Club,Active,Y,16,14,-2,2,0,0,0,0,1,0,2,0,7,3,1,0,1,\n31,E,54,1154970,Speakeasy,Active,Y,14,11,-3,1,0,0,0,0,0,0,2,0,3,0,1,0,1,\n31,E,54,5991864,Boroughs Toastmasters,Active,Y,17,18,1,1,0,0,0,0,0,0,3,0,6,2,1,0,1,\n31,E,55,3993,Framingham / Natick Toastmasters,Active,Y,28,29,1,5,3,0,0,0,1,1,4,5,4,2,1,0,1,\n31,E,55,4641,Speech Invaders Club,Active,Y,18,24,6,7,1,2,0,2,1,1,4,4,7,1,1,0,1,\n31,E,55,743989,Dell EMC Hopkinton,Active,Y,12,11,-1,3,2,2,0,1,1,0,0,0,4,0,1,0,1,\n31,E,55,6430390,Metrowest Toastmasters,Active,Y,20,17,-3,1,1,1,0,0,0,0,1,0,4,1,1,0,1,\n31,F,61,8310,Upper Cape Toastmasters,Active,Y,21,18,-3,4,2,1,0,0,1,1,1,0,5,4,1,0,1,\n31,F,61,1174738,South Coast Toastmasters,Active,Y,15,14,-1,4,1,0,0,0,1,1,3,0,6,4,1,0,1,\n31,F,61,1329712,Outermost Toast,Active,Y,15,14,-1,2,1,0,0,0,0,0,1,0,6,4,1,0,1,\n31,F,61,7959859,V.O.L.U.M.E. Toastmasters,Active,Y,11,8,-3,1,1,0,0,0,0,0,0,0,3,0,1,0,1,\n31,F,62,2685,Tri-County Talkers Toastmasters Club,Active,Y,17,16,-1,1,0,0,0,0,0,0,2,0,5,0,1,0,1,\n31,F,62,3345,Advanced Orators Club,Active,Y,11,12,1,3,0,2,0,0,0,0,3,0,6,5,1,0,1,\n31,F,62,4652,Network Voice Club,Active,Y,21,20,-1,5,2,1,0,0,1,1,4,1,5,5,1,0,1,\n31,F,62,1118652,South Shore Toastmasters,Active,Y,23,20,-3,2,1,0,0,2,0,0,3,0,6,2,1,0,1,\n31,F,63,1625,Achievers Toastmasters Club,Active,Y,14,11,-3,3,1,0,0,0,1,0,2,0,4,4,1,0,1,\n31,F,63,8612,Spirited Speakers,Active,Y,10,11,1,2,1,0,0,0,1,0,1,0,5,3,1,0,1,\n31,F,63,9771,Fox Vox Club,Active,Y,9,8,-1,3,1,0,0,1,1,1,0,0,4,3,1,0,1,\n31,F,63,1576564,Toastmasters in Motion,Active,Y,20,17,-3,3,1,1,0,1,1,2,1,0,6,2,1,0,1,\n31,F,64,675,Quincy Toastmasters Club,Active,Y,42,43,1,7,1,2,1,2,1,3,4,3,7,7,1,0,1,\n31,F,64,849,Quannapowitt Toastmasters,Active,Y,9,10,1,1,0,0,0,0,0,0,2,0,0,0,1,0,1,\n31,F,64,8331,Blue Masters Toastmasters Club,Active,Y,10,15,5,1,1,0,0,0,0,0,4,1,1,1,0,0,1,\n31,F,64,5930724,JP Toastmasters,Active,Y,16,11,-5,2,0,1,0,0,0,0,0,0,5,4,1,0,1,\n31,F,65,3926,Norwood Toastmasters Club,Active,Y,23,29,6,5,1,0,0,0,1,0,4,6,4,4,1,0,1,\n31,F,65,4735,Boston West Toastmasters Club,Active,Y,31,30,-1,6,3,2,0,1,1,0,4,5,7,7,1,0,1,\n31,F,65,873714,Point32Health Toastmasters Club,Suspended,N,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,F,65,4389390,Amazon Boston Toastmasters,Active,Y,9,9,0,2,1,1,0,1,1,1,3,0,6,1,0,0,1,\n31,F,65,28678764,CCC Toastmasters,Suspended,N,30,0,-30,0,0,0,0,0,0,0,0,0,1,0,0,0,1,\n31,F,65,28679111,Union Capital Boston Toastmasters Club,Active,N,20,21,1,1,0,0,0,0,0,0,1,0,0,1,1,0,1,\n31,G,71,854,Ocean State Toastmasters,Active,Y,13,11,-2,1,0,0,0,0,0,0,2,0,5,3,1,0,1,\n31,G,71,843267,FM Toastmasters,Active,Y,13,15,2,1,0,0,0,0,0,0,2,0,5,0,1,0,1,\n31,G,71,849200,East Coast Toast,Low,Y,8,7,-1,0,0,0,0,1,0,0,0,0,1,4,0,0,1,\n31,G,71,1427152,Rhode Island Active Toastmasters,Active,Y,40,41,1,7,2,2,0,0,1,1,4,8,6,5,1,0,1,\n31,G,72,1109,Island Foghorns Toastmasters Club,Active,Y,15,11,-4,5,2,1,0,2,1,2,1,0,4,5,1,0,1,\n31,G,72,1172,Whaling City Club,Active,Y,15,12,-3,2,2,0,0,0,0,0,0,0,4,4,1,0,1,\n31,G,72,4750180,Fall River Innovators,Active,Y,15,18,3,5,0,1,0,3,1,1,4,2,5,2,1,0,1,\n31,G,72,28675592,Celldex Toastmasters,Active,Y,13,11,-2,1,1,0,0,0,0,0,1,0,5,2,1,0,1,\n31,G,73,5288,Mutually Speaking Toastmasters Club,Active,Y,8,8,0,1,0,0,0,0,0,0,1,0,5,5,0,0,1,\n31,G,73,9556,East Bay Toastmasters Club,Active,Y,23,26,3,5,2,2,0,1,1,0,4,4,5,1,1,0,1,\n31,G,73,28677501,Ocean State Orators,Active,Y,19,13,-6,2,2,0,0,1,1,0,0,0,0,0,1,0,1,\n31,G,73,28677736,Ocean State Speaking Network,Active,N,16,15,-1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,\n31,G,74,5464,Voice of Franklin Club,Active,Y,24,19,-5,2,1,0,0,0,0,0,4,1,4,2,1,0,1,\n31,G,74,6868,Saturday Brunch Bunch Club,Active,Y,12,12,0,2,0,1,0,0,1,0,0,0,4,2,1,0,1,\n31,G,74,1257890,Franklin 5,Active,Y,10,9,-1,1,0,0,0,0,0,0,2,0,3,0,1,0,1,\n31,G,74,7073679,CVS Health Marketing Toastmasters,Active,Y,25,21,-4,3,1,0,0,1,0,0,4,1,6,4,1,0,1,\nMonth of Dec, As of 01/01/2026,,,,,,,,,,,,,,,,,,,,,,,","Q3_current":"District,Division,Area,Club Number,Club Name,Club Status,CSP,Mem. Base,Active Members,Net Growth,Goals Met,Level 1s,Level 2s,Add. Level 2s,Level 3s,\"Level 4s, Path Completions, or DTM Awards\",\"Add. Level 4s, Path Completions, or DTM award\",New Members,Add. New Members,Off. Trained Round 1,Off. Trained Round 2,Mem. dues on time Oct,Mem. dues on time Apr,Off. List On Time,Club Distinguished Status\n31,A,11,508,Merrimack Toastmasters Club,Active,Y,12,20,8,2,0,0,0,0,0,0,4,4,3,2,1,0,0,\n31,A,11,8508,Clipper City Club,Active,Y,16,16,0,2,0,0,0,0,0,0,3,0,5,4,1,0,1,\n31,A,11,7675820,EBSCO Toastmasters,Active,Y,10,16,6,3,0,0,0,2,0,0,4,4,1,1,1,0,0,\n31,A,11,7988557,New England Biolabs,Active,Y,20,20,0,3,2,2,0,0,0,0,3,0,6,6,1,1,1,\n31,A,12,1225457,Harold Parker Toastmasters,Active,Y,11,12,1,2,0,0,0,0,0,0,4,2,4,5,0,0,1,\n31,A,12,3785939,Advanced Articulators Online,Active,Y,10,14,4,7,2,2,0,2,1,3,4,2,7,7,1,0,1,\n31,A,12,6892975,Analog Orators,Active,Y,10,8,-2,0,0,1,0,0,0,0,2,0,6,0,0,0,1,\n31,A,12,28677456,South East Toastmasters,Ineligible,Y,13,18,5,2,0,0,0,0,0,0,4,14,0,0,0,0,0,\n31,A,13,2779,MITRE  Toastmasters Club,Active,Y,9,9,0,2,0,0,0,0,0,0,1,0,4,4,1,0,1,\n31,A,13,5525,The Last Word,Active,Y,9,10,1,2,0,1,0,0,0,0,2,0,5,4,1,0,1,\n31,A,13,5560447,Toast of the Town,Active,Y,35,26,-9,2,0,0,0,0,0,0,3,0,5,4,1,0,1,\n31,A,13,7928167,ToaSTRs,Active,Y,10,9,-1,1,0,0,0,0,0,0,3,0,2,0,1,0,1,\n31,A,14,3565,Eastern Middlesex Toastmasters,Active,Y,27,29,2,6,2,2,2,2,0,0,4,3,6,7,1,0,1,\n31,A,14,3908,Northshore Toastmasters Club,Active,Y,30,36,6,6,3,0,0,0,1,1,4,11,7,7,1,0,1,\n31,A,14,735541,Toastmasters Club of Beverly MA,Active,Y,8,9,1,0,0,0,0,0,0,0,2,0,1,4,0,0,1,\n31,A,14,7962029,Toastmasters at Abiomed,Active,Y,8,13,5,2,0,0,0,0,0,0,4,1,3,2,1,0,1,\n31,B,21,2193,Isaac Davis Club,Active,Y,15,14,-1,2,1,0,0,0,0,0,3,0,5,4,1,0,1,\n31,B,21,4690,Westford Expressions Club,Active,Y,22,19,-3,4,1,2,1,1,1,1,3,0,4,3,1,0,1,\n31,B,21,7677,Wachusett Toastmasters #7677,Active,Y,14,17,3,6,1,2,0,0,1,1,4,0,6,5,1,0,1,\n31,B,21,8753,Twin City Club,Active,Y,11,11,0,0,0,0,0,0,0,0,1,0,0,1,0,0,1,\n31,B,22,4031,Chelmsford Toastmasters Club,Active,Y,20,22,2,6,2,1,0,0,1,2,4,4,4,4,1,0,1,\n31,B,22,2078400,Mill City Toastmasters,Active,Y,10,11,1,4,0,1,0,2,1,0,2,0,7,7,1,0,1,\n31,B,22,3550659,New Life Toastmasters Club,Active,Y,13,13,0,5,2,1,0,0,1,1,4,1,5,4,1,0,1,\n31,B,22,7958590,Share the Spark,Active,Y,21,15,-6,1,0,0,0,0,0,0,2,0,0,0,1,0,1,\n31,B,23,2201,Hanscom Toastmasters Club,Active,Y,16,13,-3,4,1,0,0,1,1,2,2,0,7,6,1,0,1,\n31,B,23,3981,Alcott Toastmasters,Active,Y,22,22,0,5,3,2,0,1,1,0,4,2,7,4,1,0,1,\n31,B,23,909842,Lincoln Laboratory Toastmasters Club,Active,Y,13,11,-2,3,0,1,0,1,1,0,2,0,4,4,1,0,1,\n31,B,23,1528212,Energy Talks,Active,Y,15,25,10,4,0,0,0,0,0,0,4,7,4,6,1,1,1,\n31,B,24,2288,Minutemen Toastmasters of Waltham,Active,Y,12,9,-3,3,1,0,0,1,1,1,1,0,5,6,0,0,1,\n31,B,24,5738,Sales & Marketing Club,Active,Y,20,24,4,2,1,1,0,0,0,0,4,0,4,1,1,0,1,\n31,B,24,6174,AccelOrators Advanced Toastmasters,Active,Y,10,9,-1,2,0,0,0,0,0,0,1,0,5,4,1,0,1,\n31,B,24,6272,Lexington Toastmasters,Active,Y,27,27,0,4,2,2,0,0,1,0,4,0,1,1,1,0,1,\n31,B,25,2753,Sylvan Speakers Wednesday Noon Eastern US Time Club,Active,Y,15,13,-2,2,0,1,0,0,0,0,3,0,4,4,1,0,1,\n31,B,25,3077435,Broadcasters Toastmasters,Active,Y,16,39,23,4,1,0,0,0,0,0,4,21,5,5,1,1,1,\n31,B,25,3163158,Dassault Systemes Boston Campus Toastmasters Club,Active,Y,33,30,-3,6,1,2,0,0,1,1,4,3,7,6,1,1,1,\n31,B,25,7881302,Qlik Orators,Active,Y,16,12,-4,2,1,0,0,0,1,0,1,0,2,1,1,0,1,\n31,C,31,977250,Crimson Toastmasters Club,Active,Y,20,22,2,6,2,2,0,1,1,0,4,5,4,5,1,0,1,\n31,C,31,1295807,Somerville Toastmasters,Active,Y,49,44,-5,8,2,2,0,2,1,1,4,6,4,4,1,0,1,\n31,C,31,3885194,Winchester Toastmasters,Active,Y,31,31,0,3,1,0,0,0,1,0,4,3,4,2,1,0,1,\n31,C,31,7049346,Saturday Toastmasters of Arlington,Active,Y,14,13,-1,4,2,1,0,1,1,0,4,0,5,7,1,0,1,\n31,C,32,1867,Talk Of The Town Club,Active,Y,27,30,3,3,1,1,0,0,0,0,4,8,6,5,1,0,0,\n31,C,32,6670,Speak Up Cambridge,Active,Y,13,15,2,2,1,0,0,0,0,0,4,4,0,0,1,0,0,\n31,C,32,4025968,Toast Wizards,Active,Y,19,21,2,3,2,0,0,0,0,0,4,0,6,6,1,0,1,\n31,C,32,28675787,East Coast Toastmasters,Active,N,13,12,-1,0,0,0,0,0,0,0,0,0,1,0,1,0,0,\n31,C,33,7831,Humor And Drama Toastmasters,Active,Y,9,8,-1,1,1,0,0,0,0,0,1,0,4,4,0,0,1,\n31,C,33,8843,Toastmasters @ MIT,Active,Y,9,8,-1,2,0,0,0,0,0,0,0,0,4,4,1,0,1,\n31,C,33,680823,Tuesday Toastmasters at MIT Club,Active,Y,21,23,2,3,1,1,0,0,0,0,4,7,5,3,1,0,1,\n31,C,33,1928495,Novartis Toastmasters @ Cambridge,Suspended,N,5,0,-5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,C,33,6423576,Takeda Toastmasters,Active,Y,20,32,12,5,3,0,0,0,1,0,4,11,5,5,1,1,1,\n31,C,34,4975343,AKAToasts,Active,Y,19,25,6,4,1,0,0,2,0,0,4,5,3,5,1,0,1,\n31,C,34,7032755,Toastmasters Google Cambridge,Active,N,8,9,1,0,0,0,0,0,0,0,3,0,0,0,0,0,0,\n31,C,34,7301975,The Toastologists,Suspended,N,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,C,34,28676919,Moderna-Cambridge,Ineligible,N,16,0,-16,0,0,0,0,0,0,0,0,0,0,0,0,0,1,\n31,C,34,28676929,BMS Toastmasters at CMX,Active,N,20,17,-3,0,0,0,0,0,0,0,1,0,0,0,1,0,0,\n31,C,35,2352,Sun Life Club,Suspended,N,10,0,-10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,C,35,2263055,Watertown Saturday Toastmasters,Active,Y,11,15,4,5,3,2,0,0,0,0,4,4,4,4,1,0,1,\n31,C,35,7754658,Newton Voices Toastmasters,Active,Y,20,15,-5,3,1,0,0,0,1,0,2,0,6,5,1,0,1,\n31,C,35,28678055,Toast in Common,Active,Y,14,23,9,4,2,0,0,0,0,0,4,15,4,5,1,1,1,\n31,C,35,28678795,Clear Water Communicators,Active,Y,26,17,-9,1,1,0,0,0,0,0,2,0,5,7,0,0,1,\n31,C,35,28678864,Boston Mutual Life,Active,N,20,20,0,1,0,0,0,0,0,0,0,0,0,0,1,0,1,\n31,D,41,1074,Boston Toastmasters,Active,Y,28,38,10,4,1,1,0,1,0,0,4,22,5,5,1,1,1,\n31,D,41,6454,Copley Square Toastmasters,Active,Y,11,12,1,3,1,1,0,2,0,0,3,0,5,5,1,0,1,\n31,D,41,8387,Boston Speech Party Toastmasters Club,Active,Y,12,9,-3,1,0,0,0,0,0,0,0,0,1,1,1,0,1,\n31,D,41,2389888,Northeastern University Toastmasters,Ineligible,Y,8,0,-8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,D,42,7625,E.P.A. Club,Low,Y,10,7,-3,0,0,0,0,0,0,0,1,0,0,4,0,0,1,\n31,D,42,2908808,FactMasters,Active,Y,18,19,1,2,0,0,0,0,0,0,4,3,2,0,1,0,1,\n31,D,42,4340726,Toastmasters General,Active,Y,9,11,2,2,0,0,0,0,0,0,2,0,4,4,1,0,1,\n31,D,42,7057227,LEADA@Liberty Toastmasters,Active,Y,35,31,-4,6,3,1,0,2,1,0,4,5,4,4,1,0,1,\n31,D,42,28677354,Beantown Toasters Toastmasters,Active,Y,18,24,6,3,0,0,0,0,0,0,4,6,2,0,1,1,1,\n31,D,43,3757,TM at the FRB - Boston Club,Active,Y,14,15,1,4,3,0,0,0,1,0,4,0,4,6,1,0,1,\n31,D,43,3991,Boston Seaport Toastmasters,Active,Y,12,13,1,3,0,0,0,1,0,0,4,0,4,4,1,0,1,\n31,D,43,7116868,Unified Voices,Active,Y,8,13,5,2,0,1,0,0,0,0,4,1,0,4,1,0,1,\n31,D,43,28676359,Toastmasters@Pier4,Active,Y,12,20,8,3,3,1,0,0,0,0,4,5,2,0,1,0,1,\n31,D,43,28678250,BBH Beantown Articulators,Active,Y,21,21,0,1,0,0,0,0,0,0,0,0,2,1,1,0,1,\n31,D,44,1971671,Boston University Medical Campus,Active,Y,8,8,0,0,1,0,0,0,0,0,3,0,1,5,0,0,1,\n31,D,44,3574270,Advanced Access,Active,Y,16,16,0,4,1,0,0,0,1,2,1,0,5,5,1,0,1,\n31,D,44,3686963,Toast with Friends,Active,Y,20,24,4,6,3,0,0,0,1,1,4,5,6,5,1,0,1,\n31,D,44,6935140,Boston College Toastmasters Club,Active,Y,27,29,2,4,1,0,0,0,1,1,4,1,3,5,1,0,1,\n31,D,44,6943872,Optum Tech Toasts,Ineligible,N,15,0,-15,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,E,51,727120,Village Toastmasters Club,Active,Y,16,17,1,2,0,0,0,0,0,0,4,1,4,3,1,0,1,\n31,E,51,5870865,Unibank Toastmasters,Active,Y,16,10,-6,0,1,0,0,0,0,0,1,0,2,3,0,0,1,\n31,E,51,28677455,West Coast/Central Toastmasters,Active,Y,18,18,0,1,0,0,0,0,0,0,0,0,7,7,1,0,0,\n31,E,51,28678135,Wilson Toastmasters,Active,Y,21,16,-5,0,1,0,0,0,0,0,2,0,4,1,1,0,0,\n31,E,52,2277,Central Club,Active,Y,11,9,-2,3,0,1,0,1,1,1,3,0,5,1,1,0,1,\n31,E,52,5574,Early Risers Toastmasters Club,Active,Y,9,9,0,3,1,1,0,1,1,0,1,0,6,7,1,0,2,\n31,E,52,994078,AbbVie Bioresearch Toastmasters,Active,Y,19,22,3,3,0,0,0,0,1,0,3,0,5,4,1,0,1,\n31,E,52,6978693,Seven Hills Advanced Toastmasters,Active,Y,9,9,0,1,0,0,0,0,0,0,1,0,4,4,0,0,1,\n31,E,53,4495,Paul Revere Toastmasters,Active,Y,14,14,0,3,0,0,0,0,0,0,4,2,5,5,1,0,1,\n31,E,53,5414,Articulators Club,Active,Y,16,17,1,5,3,2,1,3,1,0,2,0,5,5,1,0,1,\n31,E,53,5073971,Shrewsbury Toastmasters,Active,Y,36,39,3,6,3,1,0,2,1,0,4,11,5,5,1,0,1,\n31,E,53,6751480,Otis Street Orators,Active,Y,18,16,-2,3,3,1,0,1,1,0,2,0,7,6,1,0,1,\n31,E,54,3555,Staples Club,Active,Y,28,35,7,5,3,2,0,0,0,0,4,7,5,4,1,0,1,\n31,E,54,7163,3Talkers Club,Active,Y,16,14,-2,3,0,0,0,0,1,0,2,0,7,5,1,0,1,\n31,E,54,1154970,Speakeasy,Active,Y,14,11,-3,1,0,0,0,0,0,0,2,0,3,0,1,0,1,\n31,E,54,5991864,Boroughs Toastmasters,Active,Y,17,18,1,2,0,0,0,0,0,0,3,0,6,4,1,0,1,\n31,E,55,3993,Framingham / Natick Toastmasters,Active,Y,28,33,5,8,3,2,0,2,1,3,4,9,4,7,1,0,1,\n31,E,55,4641,Speech Invaders Club,Active,Y,18,25,7,8,2,2,0,2,1,4,4,5,7,6,1,1,1,\n31,E,55,743989,Dell EMC Hopkinton,Active,Y,12,11,-1,4,2,2,0,1,1,0,0,0,4,5,1,0,1,\n31,E,55,6430390,Metrowest Toastmasters,Active,Y,20,18,-2,3,2,2,0,0,0,0,2,0,4,5,1,0,1,\n31,F,61,8310,Upper Cape Toastmasters,Active,Y,21,19,-2,4,2,1,0,1,1,1,2,0,5,6,1,0,1,\n31,F,61,1174738,South Coast Toastmasters,Active,Y,15,14,-1,4,1,0,0,0,1,1,3,0,6,6,1,0,1,\n31,F,61,1329712,Outermost Toast,Active,Y,15,14,-1,2,1,1,0,0,0,0,1,0,6,6,1,0,1,\n31,F,61,7959859,V.O.L.U.M.E. Toastmasters,Active,Y,11,8,-3,1,1,0,0,1,0,0,0,0,3,1,1,0,1,\n31,F,62,2685,Tri-County Talkers Toastmasters Club,Active,Y,17,17,0,1,0,0,0,0,0,0,3,0,5,3,1,0,1,\n31,F,62,3345,Advanced Orators Club,Active,Y,11,12,1,3,0,2,0,1,0,0,3,0,6,6,1,0,1,\n31,F,62,4652,Network Voice Club,Active,Y,21,22,1,6,2,2,0,0,1,1,4,3,5,5,1,1,1,\n31,F,62,1118652,South Shore Toastmasters,Active,Y,23,24,1,4,1,0,0,2,0,0,4,3,6,6,1,0,1,\n31,F,63,1625,Achievers Toastmasters Club,Active,Y,14,11,-3,3,1,0,0,0,1,0,2,0,4,5,1,0,1,\n31,F,63,8612,Spirited Speakers,Active,Y,10,11,1,3,1,0,0,0,1,0,1,0,5,4,1,0,1,\n31,F,63,9771,Fox Vox Club,Active,Y,9,8,-1,5,2,1,0,2,1,1,0,0,4,4,1,0,1,\n31,F,63,1576564,Toastmasters in Motion,Active,Y,20,17,-3,5,2,1,0,2,1,2,1,0,6,6,1,0,1,\n31,F,64,675,Quincy Toastmasters Club,Active,Y,42,44,2,9,2,2,2,2,1,3,4,4,7,7,1,0,1,\n31,F,64,849,Quannapowitt Toastmasters,Active,Y,9,10,1,1,0,0,0,0,0,0,2,0,0,2,1,0,1,\n31,F,64,8331,Blue Masters Toastmasters Club,Active,Y,10,15,5,1,1,0,0,0,0,0,4,1,1,1,0,0,1,\n31,F,64,5930724,JP Toastmasters,Active,Y,16,12,-4,2,1,1,0,0,0,0,1,0,5,5,1,0,1,\n31,F,65,3926,Norwood Toastmasters Club,Active,Y,23,34,11,6,1,2,0,1,1,0,4,11,4,4,1,0,1,\n31,F,65,4735,Boston West Toastmasters Club,Active,Y,31,32,1,8,4,2,1,1,1,1,4,7,7,7,1,1,1,\n31,F,65,873714,Point32Health Toastmasters Club,Suspended,N,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\n31,F,65,4389390,Amazon Boston Toastmasters,Active,Y,9,13,4,4,1,1,0,1,1,1,4,3,6,5,0,0,1,\n31,F,65,28678764,CCC Toastmasters,Suspended,N,30,0,-30,0,0,0,0,0,0,0,0,0,1,0,0,0,1,\n31,F,65,28679111,Union Capital Boston Toastmasters Club,Active,N,20,24,4,3,0,0,0,0,0,0,4,0,0,5,1,0,1,\n31,G,71,854,Ocean State Toastmasters,Active,Y,13,12,-1,2,0,0,0,0,0,0,3,0,5,6,1,0,1,\n31,G,71,843267,FM Toastmasters,Active,Y,13,17,4,4,1,0,0,0,1,0,4,0,5,4,1,0,1,\n31,G,71,849200,East Coast Toast,Low,Y,8,7,-1,0,0,0,0,1,0,0,0,0,1,4,0,0,1,\n31,G,71,1427152,Rhode Island Active Toastmasters,Active,Y,40,45,5,8,2,2,1,2,1,1,4,12,6,7,1,1,1,\n31,G,72,1109,Island Foghorns Toastmasters Club,Active,Y,15,12,-3,6,2,2,0,2,1,2,2,0,4,7,1,0,1,\n31,G,72,1172,Whaling City Club,Active,Y,15,12,-3,2,2,1,0,0,0,0,0,0,4,4,1,0,1,\n31,G,72,4750180,Fall River Innovators,Active,Y,15,19,4,6,0,1,0,3,1,2,4,3,5,4,1,0,1,\n31,G,72,28675592,Celldex Toastmasters,Active,Y,13,12,-1,2,1,0,0,0,0,0,2,0,5,4,1,0,1,\n31,G,73,5288,Mutually Speaking Toastmasters Club,Active,Y,8,8,0,1,0,0,0,0,0,0,1,0,5,6,0,0,1,\n31,G,73,9556,East Bay Toastmasters Club,Active,Y,23,27,4,6,2,2,1,1,1,0,4,5,5,5,1,0,1,\n31,G,73,28677501,Ocean State Orators,Active,Y,19,13,-6,3,2,0,0,1,1,1,0,0,0,0,1,0,1,\n31,G,73,28677736,Ocean State Speaking Network,Active,N,16,15,-1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,\n31,G,74,5464,Voice of Franklin Club,Active,Y,24,19,-5,2,1,0,0,0,0,0,4,1,4,3,1,0,1,\n31,G,74,6868,Saturday Brunch Bunch Club,Active,Y,12,13,1,2,0,1,0,0,1,0,1,0,4,3,1,0,1,\n31,G,74,1257890,Franklin 5,Active,Y,10,9,-1,1,0,0,0,0,0,0,2,0,3,0,1,0,1,\n31,G,74,7073679,CVS Health Marketing Toastmasters,Active,Y,25,21,-4,4,1,0,0,2,0,0,4,1,6,5,1,0,1,\nMonth of Feb, As of 02/27/2026,,,,,,,,,,,,,,,,,,,,,,,"};
+
+// Quarter definitions
+const QUARTERS = [
+  { key:'Q1', label:'Q1 (Jul–Sep 2025)', startKey:'Q1_start', endKey:'Q1_end',   startLabel:'Jul 1, 2025',  endLabel:'Sep 30, 2025', complete:true  },
+  { key:'Q2', label:'Q2 (Oct–Dec 2025)', startKey:'Q2_start', endKey:'Q2_end',   startLabel:'Oct 1, 2025',  endLabel:'Dec 31, 2025', complete:true  },
+  { key:'Q3', label:'Q3 (Jan–Mar 2026)', startKey:'Q3_start', endKey:'Q3_current', startLabel:'Jan 1, 2026', endLabel:'Feb 27, 2026 ★', complete:false },
+  { key:'Q4', label:'Q4 (Apr–Jun 2026)', startKey:'Q4_start', endKey:'Q4_current', startLabel:'Apr 1, 2026', endLabel:'(not yet loaded)', complete:false, future:true },
+];
+
+// Live CSV store (starts with originals, updated on upload)
+let csvStore = { ...ORIGINAL_CSV };
+
+// Pending uploads (before Apply)
+let pendingUploads = {};
+
+// Computed state
+let ALL_CLUBS = [];
+let LEVEL_UP_WINNERS = {};
+let sortCol = 'total', sortDir = -1, currentPage = 1, earnersOnly = false;
+
+// ══════════════════════════════════════════════
+// CSV PARSING
+// ══════════════════════════════════════════════
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = splitCSVLine(lines[0]);
+  return lines.slice(1).map(line => {
+    const vals = splitCSVLine(line);
+    const obj = {};
+    headers.forEach((h, i) => obj[h.trim()] = (vals[i] || '').trim());
+    return obj;
+  }).filter(r => r['Club Number']);
+}
+
+function splitCSVLine(line) {
+  const result = []; let cur = ''; let inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    if (line[i] === '"') { inQ = !inQ; continue; }
+    if (line[i] === ',' && !inQ) { result.push(cur); cur = ''; continue; }
+    cur += line[i];
+  }
+  result.push(cur);
+  return result;
+}
+
+// ══════════════════════════════════════════════
+// DATA PROCESSING
+// ══════════════════════════════════════════════
+function getLevelCounts(row) {
+  // Returns [l1, l2, al2, l3, l4, al4]
+  if (!row) return [0,0,0,0,0,0];
+  const l1  = parseInt(row['Level 1s'] || 0);
+  const l2  = parseInt(row['Level 2s'] || 0);
+  const al2 = parseInt(row['Add. Level 2s'] || 0);
+  const l3  = parseInt(row['Level 3s'] || 0);
+  let l4 = 0, al4 = 0;
+  for (const k of Object.keys(row)) {
+    if (k.includes('Level 4') && !k.includes('Add')) l4 = parseInt(row[k] || 0);
+    if (k.includes('Level 4') &&  k.includes('Add')) al4 = parseInt(row[k] || 0);
+  }
+  return [l1, l2, al2, l3, l4, al4];
+}
+
+function eduDcpPoints(counts) {
+  // Each column has its own threshold to earn 1 education DCP point:
+  //   Level 1s:           need >= 4  → 1 pt
+  //   Level 2s:           need >= 2  → 1 pt
+  //   Add. Level 2s:      need >= 2  → 1 pt
+  //   Level 3s:           need >= 2  → 1 pt
+  //   Level 4s/Path/DTM:  need >= 1  → 1 pt
+  //   Add. Level 4s/Path: need >= 1  → 1 pt
+  const [l1, l2, al2, l3, l4, al4] = counts;
+  let pts = 0;
+  if (l1  >= 4) pts++;
+  if (l2  >= 2) pts++;
+  if (al2 >= 2) pts++;
+  if (l3  >= 2) pts++;
+  if (l4  >= 1) pts++;
+  if (al4 >= 1) pts++;
+  return pts;
+}
+
+function deltaCounts(endRow, startRow) {
+  const e = getLevelCounts(endRow);
+  const s = getLevelCounts(startRow);
+  return e.map((v, i) => Math.max(0, v - s[i]));
+}
+
+function totalLevels(row) {
+  // Legacy helper — kept for Level Up! ranking (total completions)
+  if (!row) return 0;
+  return getLevelCounts(row).reduce((a,b) => a+b, 0);
+}
+
+function newMembers(row) {
+  if (!row) return 0;
+  return parseInt(row['New Members'] || 0) + parseInt(row['Add. New Members'] || 0);
+}
+
+function isGoodStanding(row) {
+  return row && row['Club Status'] === 'Active';
+}
+
+function processData() {
+  const parsed = {};
+  for (const q of QUARTERS) {
+    if (csvStore[q.startKey]) parsed[q.startKey] = indexBy(parseCSV(csvStore[q.startKey]), 'Club Number');
+    if (csvStore[q.endKey])   parsed[q.endKey]   = indexBy(parseCSV(csvStore[q.endKey]),   'Club Number');
+  }
+
+  const allNums = new Set();
+  for (const d of Object.values(parsed)) Object.keys(d).forEach(k => allNums.add(k));
+
+  const results = {};
+  for (const cn of allNums) {
+    let name = '', division = '', area = '';
+    for (const d of Object.values(parsed)) {
+      if (d[cn]) { name = d[cn]['Club Name']; division = d[cn]['Division'] || ''; area = d[cn]['Area'] || ''; break; }
+    }
+
+    const qData = {};
+    let uyg = 0, consec = 0;
+    const uyg_per_q = {}, mb_per_q = {};
+    const payouts = [25, 50, 75, 100];
+
+    for (const q of QUARTERS) {
+      if (q.future && !csvStore[q.startKey] && !csvStore[q.endKey]) {
+        qData[q.key] = null;
+        uyg_per_q[q.key] = 0; mb_per_q[q.key] = 0;
+        continue;
+      }
+      const startRow = (parsed[q.startKey] || {})[cn];
+      const endRow   = (parsed[q.endKey]   || {})[cn];
+      // Q1 is special: the TI report resets at the program year start (Jul 1),
+      // but the Jul 1 snapshot contains prior-year cumulative totals.
+      // So Q1 counts = Q1_end values directly (treat start as zero baseline).
+      // For Q2+: compute delta counts between end and start snapshots.
+      const isQ1 = q.key === 'Q1';
+      const counts = isQ1
+        ? getLevelCounts(endRow)
+        : deltaCounts(endRow, startRow || {});
+      const eduDcp = endRow ? eduDcpPoints(counts) : 0;
+      const levels = counts.reduce((a,b)=>a+b,0); // total completions (for Level Up! ranking)
+      const nm     = endRow ? (isQ1 ? newMembers(endRow) : Math.max(0, newMembers(endRow) - newMembers(startRow || {}))) : 0;
+      const good     = isGoodStanding(endRow || startRow);
+      const memBase  = parseInt((startRow || {})['Active Members'] || 0);
+
+      qData[q.key] = { levels, new_mem: nm, good, mem_base: memBase };
+
+      // UYG — requires at least 1 education DCP point earned in the quarter
+      if (eduDcp >= 1) {
+        const payout = payouts[Math.min(consec, 3)];
+        uyg += payout; uyg_per_q[q.key] = payout; consec++;
+      } else {
+        uyg_per_q[q.key] = 0; consec = 0;
+      }
+
+      // Membership Building
+      if (nm >= 5) { mb_per_q[q.key] = 50; }
+      else { mb_per_q[q.key] = 0; }
+    }
+
+    const mbTotal = Object.values(mb_per_q).reduce((a, b) => a + b, 0);
+    const latestRow = parsed['Q3_current']?.[cn] || parsed['Q2_end']?.[cn] || {};
+
+    const confirmedBucks = (uyg_per_q['Q1']||0) + (uyg_per_q['Q2']||0) + (mb_per_q['Q1']||0) + (mb_per_q['Q2']||0);
+    const prelimBucks    = (uyg_per_q['Q3']||0) + (mb_per_q['Q3']||0) + (uyg_per_q['Q4']||0) + (mb_per_q['Q4']||0);
+    results[cn] = {
+      club_num: cn, name, division, area,
+      current_active: parseInt(latestRow['Active Members'] || 0),
+      current_status: latestRow['Club Status'] || '',
+      dist_status: latestRow['Club Distinguished Status'] || '',
+      qData, uyg, uyg_per_q, mb: mbTotal, mb_per_q,
+      total_bucks: uyg + mbTotal,
+      confirmed_bucks: confirmedBucks,
+      prelim_bucks: prelimBucks,
+    };
+  }
+
+  // Level Up winners per quarter
+  const luw = {};
+  for (const q of QUARTERS) {
+    if (q.future && !csvStore[q.endKey]) continue;
+    const eligible = Object.values(results).filter(c => c.qData[q.key]?.good && c.qData[q.key]?.levels > 0);
+    eligible.sort((a, b) => {
+      const ld = b.qData[q.key].levels - a.qData[q.key].levels;
+      if (ld !== 0) return ld;
+      return b.qData[q.key].mem_base - a.qData[q.key].mem_base;
+    });
+    luw[q.key] = eligible.slice(0, 5).map(c => c.club_num);
+  }
+
+  ALL_CLUBS = Object.values(results).sort((a, b) => b.total_bucks - a.total_bucks);
+  LEVEL_UP_WINNERS = luw;
+}
+
+function indexBy(arr, key) {
+  const m = {};
+  arr.forEach(r => { if (r[key]) m[r[key]] = r; });
+  return m;
+}
+
+// ══════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════
+function render() {
+  renderKPIs();
+  renderNote();
+  renderLevelUp();
+  renderDist();
+  populateDivFilter();
+  applyFilters();
+  renderDataStatus();
+  renderUploadGrid();
+  updateHeaderPill();
+  toggleQ4Columns();
+}
+
+function updateHeaderPill() {
+  const hasQ4 = csvStore['Q4_current'] || csvStore['Q4_start'];
+  const q3partial = !QUARTERS[2].complete;
+  let text = hasQ4 ? 'Q4 in progress' : (q3partial ? 'Q3 in progress — data thru <span>Feb 27, 2026</span>' : 'Q3 complete');
+  document.getElementById('headerDatePill').innerHTML = text;
+}
+
+function toggleQ4Columns() {
+  const hasQ4 = csvStore['Q4_start'] || csvStore['Q4_current'];
+  ['q4uygHeader','q4mbHeader'].forEach(id => {
+    document.getElementById(id).style.display = hasQ4 ? '' : 'none';
+  });
+  document.getElementById('q4luTab').style.display = hasQ4 ? '' : 'none';
+}
+
+function renderKPIs() {
+  const earners = ALL_CLUBS.filter(c => c.total_bucks > 0);
+  const totalBucks = ALL_CLUBS.reduce((s, c) => s + c.total_bucks, 0);
+  const confirmedBucks = ALL_CLUBS.reduce((s, c) => s + (c.confirmed_bucks||0), 0);
+  const prelimBucks    = ALL_CLUBS.reduce((s, c) => s + (c.prelim_bucks||0), 0);
+  const uyg3 = ALL_CLUBS.filter(c => Object.values(c.uyg_per_q).filter(v => v > 0).length >= 3).length;
+  const active = ALL_CLUBS.filter(c => c.current_status === 'Active').length;
+  const kpis = [
+    { label:'Total Clubs',            value: ALL_CLUBS.length,  sub:`${active} Active`, color:'var(--gold)' },
+    { label:'Clubs Earning Bucks',    value: earners.length,    sub:`${Math.round(earners.length/ALL_CLUBS.length*100)}% of clubs`, color:'var(--gold)' },
+    { label:'Total Bucks Awarded',    value:`$${totalBucks.toLocaleString()}`, sub:'Q1 + Q2 + Q3 combined', color:'var(--gold)' },
+    { label:'✓ Confirmed (Q1+Q2)',    value:`$${confirmedBucks.toLocaleString()}`, sub:'Final · quarters closed', color:'var(--green)' },
+    { label:'⏳ Preliminary (Q3)',    value:`$${prelimBucks.toLocaleString()}`, sub:`${Math.round(prelimBucks/totalBucks*100)}% of total · Q3 in progress`, color:'var(--gold-light)' },
+    { label:'3+ Quarter UYG Earners', value: uyg3, sub:'Consecutive or spread', color:'var(--gold)' },
+  ];
+  document.getElementById('kpiGrid').innerHTML = kpis.map(k => `
+    <div class="kpi-card">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value" style="color:${k.color||'var(--gold)'}">${k.value}</div>
+      <div class="kpi-sub">${k.sub}</div>
+    </div>`).join('');
+}
+
+function renderNote() {
+  const hasQ4 = csvStore['Q4_current'];
+  const confB = ALL_CLUBS.reduce((s,c)=>s+(c.confirmed_bucks||0),0);
+  const prelB  = ALL_CLUBS.reduce((s,c)=>s+(c.prelim_bucks||0),0);
+  let msg = `<strong>⚠️ Q3 in progress:</strong> Data through Feb 27, 2026. <strong style="color:var(--green)">$${confB.toLocaleString()} confirmed</strong> (Q1+Q2 final) + <strong style="color:var(--gold-light)">$${prelB.toLocaleString()} preliminary</strong> (Q3 closes Mar 31). Q3 Level Up rankings also preliminary. <em>Early Membership Renewals</em> data not yet available.`;
+  if (hasQ4) msg = `<strong>ℹ️ Q4 in progress:</strong> Q1–Q3 confirmed. <strong style="color:var(--gold-light)">$${prelB.toLocaleString()} preliminary</strong> from Q4 (in progress). <em>Early Membership Renewals</em> data not yet available.`;
+  document.getElementById('dashNote').innerHTML = msg;
+}
+
+let currentLUQ = 'Q1';
+function showLevelUpQ(q, el) {
+  currentLUQ = q;
+  document.querySelectorAll('.qtab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderLevelUp();
+}
+function renderLevelUp() {
+  const winners = LEVEL_UP_WINNERS[currentLUQ] || [];
+  const trophies = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+  const lookup = Object.fromEntries(ALL_CLUBS.map(c => [c.club_num, c]));
+  document.getElementById('levelUpList').innerHTML = winners.length
+    ? winners.map((cn, i) => {
+        const c = lookup[cn] || {};
+        const qd = c.qData?.[currentLUQ] || {};
+        return `<div class="winner-row">
+          <div class="winner-rank" style="color:${i===0?'var(--gold)':i===1?'#94A3B8':i===2?'#B47850':'var(--muted)'}">${trophies[i]}</div>
+          <div class="winner-info">
+            <div class="winner-name">${c.name || cn}</div>
+            <div class="winner-detail">${qd.levels || 0} levels · Div ${c.division || '?'} · Area ${c.area || '?'}</div>
+          </div>
+        </div>`;
+      }).join('')
+    : `<div style="color:var(--muted);font-size:12px;padding:10px 0">No data available for this quarter yet.</div>`;
+}
+
+function renderDist() {
+  const uyg_only = ALL_CLUBS.filter(c => c.uyg > 0 && c.mb === 0).length;
+  const mb_only  = ALL_CLUBS.filter(c => c.mb > 0 && c.uyg === 0).length;
+  const both     = ALL_CLUBS.filter(c => c.uyg > 0 && c.mb > 0).length;
+  const neither  = ALL_CLUBS.filter(c => c.total_bucks === 0).length;
+  const total    = ALL_CLUBS.length || 1;
+  const totalUYG = ALL_CLUBS.reduce((s,c) => s+c.uyg, 0);
+  const totalMB  = ALL_CLUBS.reduce((s,c) => s+c.mb, 0);
+  const bars = [
+    { label:'UYG Only',        val:uyg_only, color:'var(--blue)' },
+    { label:'Membership Only', val:mb_only,  color:'var(--purple)' },
+    { label:'Both Incentives', val:both,     color:'var(--green)' },
+    { label:'No Bucks Yet',    val:neither,  color:'var(--muted)' },
+  ];
+  document.getElementById('distPanel').innerHTML = `
+    <div style="margin-bottom:18px">
+      ${bars.map(b => `
+        <div style="margin-bottom:11px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+            <span style="font-size:11px;color:var(--muted)">${b.label}</span>
+            <span style="font-size:11px;color:var(--text)">${b.val} clubs (${Math.round(b.val/total*100)}%)</span>
+          </div>
+          <div style="background:var(--bg3);border-radius:4px;height:7px;overflow:hidden">
+            <div style="background:${b.color};height:100%;width:${Math.round(b.val/total*100)}%;border-radius:4px"></div>
+          </div>
+        </div>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div style="background:var(--bg3);border-radius:8px;padding:11px 13px;border:1px solid var(--border)">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px">UYG Total</div>
+        <div style="font-family:'Syne',sans-serif;font-size:21px;font-weight:800;color:var(--blue)">$${totalUYG}</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:11px 13px;border:1px solid var(--border)">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px">Membership Total</div>
+        <div style="font-family:'Syne',sans-serif;font-size:21px;font-weight:800;color:var(--purple)">$${totalMB}</div>
+      </div>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════
+// LEADERBOARD
+// ══════════════════════════════════════════════
+function populateDivFilter() {
+  const divs = [...new Set(ALL_CLUBS.map(c => c.division).filter(Boolean))].sort();
+  const sel = document.getElementById('divFilter');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">All Divisions</option>';
+  divs.forEach(d => {
+    const o = document.createElement('option');
+    o.value = d; o.textContent = `Division ${d}`;
+    if (d === cur) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+function sortBy(col) {
+  sortCol === col ? sortDir *= -1 : (sortCol = col, sortDir = -1);
+  applyFilters();
+}
+
+function setEarnersFilter(type) {
+  earnersOnly = type === 'earners';
+  document.getElementById('allBtn').classList.toggle('active', !earnersOnly);
+  document.getElementById('earnersBtn').classList.toggle('active', earnersOnly);
+  currentPage = 1; applyFilters();
+}
+
+function qBadge(val) {
+  return val > 0
+    ? `<span class="q-badge q-earned">$${val}</span>`
+    : `<span class="q-badge q-zero">—</span>`;
+}
+
+function applyFilters() {
+  const search   = (document.getElementById('searchInput')?.value || '').toLowerCase();
+  const divF     = document.getElementById('divFilter')?.value || '';
+  const statF    = document.getElementById('statusFilter')?.value || '';
+  const pageSize = parseInt(document.getElementById('pageSize')?.value || 25);
+  const hasQ4    = csvStore['Q4_start'] || csvStore['Q4_current'];
+
+  let filtered = ALL_CLUBS.filter(c => {
+    if (search && !c.name.toLowerCase().includes(search) && !c.club_num.includes(search)) return false;
+    if (divF && c.division !== divF) return false;
+    if (statF && c.current_status !== statF) return false;
+    if (earnersOnly && c.total_bucks === 0) return false;
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    let av, bv;
+    if (sortCol==='total') { av=a.total_bucks; bv=b.total_bucks; }
+    else if (sortCol==='name') { av=a.name.toLowerCase(); bv=b.name.toLowerCase(); }
+    else if (sortCol==='active') { av=a.current_active; bv=b.current_active; }
+    else { av=-a.total_bucks; bv=-b.total_bucks; }
+    return av < bv ? sortDir : av > bv ? -sortDir : 0;
+  });
+
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  if (currentPage > totalPages) currentPage = 1;
+  const start = (currentPage - 1) * pageSize;
+  const page  = filtered.slice(start, start + pageSize);
+
+  document.getElementById('tableBody').innerHTML = page.map((c, i) => {
+    const gr = start + i + 1;
+    const rankEl = gr===1 ? `<span class="rank-badge rank-1">1</span>`
+                 : gr===2 ? `<span class="rank-badge rank-2">2</span>`
+                 : gr===3 ? `<span class="rank-badge rank-3">3</span>`
+                 : `<span class="rank-badge rank-other">${gr}</span>`;
+    const statusEl = c.current_status === 'Active'
+      ? `<span class="status-badge s-active">Active</span>`
+      : `<span class="status-badge s-other">${c.current_status || '—'}</span>`;
+    const q4cells = hasQ4
+      ? `<td>${qBadge(c.uyg_per_q.Q4||0)}</td><td>${qBadge(c.mb_per_q.Q4||0)}</td>` : '';
+    return `<tr>
+      <td>${rankEl}</td>
+      <td><div class="club-name">${c.name}</div><div class="club-meta">Div ${c.division} · Area ${c.area} · #${c.club_num}</div></td>
+      <td>
+        <span class="bucks-total">$${c.total_bucks}</span>
+        ${c.prelim_bucks > 0 ? `<div style="font-size:10px;margin-top:2px">
+          <span style="color:var(--green)">$${c.confirmed_bucks} confirmed</span>
+          <span style="color:var(--muted)"> + </span>
+          <span style="color:var(--gold-light)">$${c.prelim_bucks} prelim</span>
+        </div>` : `<div style="font-size:10px;margin-top:2px;color:var(--green)">fully confirmed</div>`}
+      </td>
+      <td>${qBadge(c.uyg_per_q.Q1||0)}</td>
+      <td>${qBadge(c.uyg_per_q.Q2||0)}</td>
+      <td>${qBadge(c.uyg_per_q.Q3||0)}</td>
+      <td>${qBadge(c.mb_per_q.Q1||0)}</td>
+      <td>${qBadge(c.mb_per_q.Q2||0)}</td>
+      <td>${qBadge(c.mb_per_q.Q3||0)}</td>
+      ${q4cells}
+      <td>${c.current_active}</td>
+      <td>${statusEl}</td>
+    </tr>`;
+  }).join('');
+
+  // Pagination
+  let pagHtml = `<span class="page-info">Showing ${start+1}–${Math.min(start+pageSize,total)} of ${total} clubs</span>`;
+  if (currentPage > 1) pagHtml += `<button class="page-btn" onclick="goPage(${currentPage-1})">← Prev</button>`;
+  for (let p = Math.max(1, currentPage-2); p <= Math.min(totalPages, currentPage+2); p++)
+    pagHtml += `<button class="page-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
+  if (currentPage < totalPages) pagHtml += `<button class="page-btn" onclick="goPage(${currentPage+1})">Next →</button>`;
+  document.getElementById('pagination').innerHTML = pagHtml;
+}
+
+function goPage(p) { currentPage = p; applyFilters(); }
+
+// ══════════════════════════════════════════════
+// UPDATE TAB
+// ══════════════════════════════════════════════
+const SLOT_DEFS = [
+  { key:'Q1_start',   label:'Q1 Start',   desc:'Jul 1, 2025 snapshot',    hint:'Club_Performance_7-1-2025.csv' },
+  { key:'Q1_end',     label:'Q1 End',     desc:'Sep 30, 2025 snapshot',   hint:'Club_Performance_9-30-2025.csv' },
+  { key:'Q2_start',   label:'Q2 Start',   desc:'Oct 1, 2025 snapshot',    hint:'Club_Performance_10-1-2025.csv' },
+  { key:'Q2_end',     label:'Q2 End',     desc:'Dec 31, 2025 snapshot',   hint:'Club_Performance_12-31-2025.csv' },
+  { key:'Q3_start',   label:'Q3 Start',   desc:'Jan 1, 2026 snapshot',    hint:'Club_Performance_1-1-2026.csv' },
+  { key:'Q3_current', label:'Q3 Current', desc:'Latest Q3 snapshot',      hint:'Club_Performance_MM-DD-2026.csv' },
+  { key:'Q4_start',   label:'Q4 Start',   desc:'Apr 1, 2026 snapshot',    hint:'Club_Performance_4-1-2026.csv' },
+  { key:'Q4_current', label:'Q4 Current', desc:'Latest Q4 snapshot',      hint:'Club_Performance_MM-DD-2026.csv' },
+];
+
+function renderDataStatus() {
+  document.getElementById('dataStatusGrid').innerHTML = SLOT_DEFS.map(s => {
+    const loaded = !!csvStore[s.key];
+    return `<div class="data-status-card">
+      <div class="ds-dot ${loaded?'loaded':'missing'}"></div>
+      <div class="ds-info">
+        <div class="ds-label">${s.label}</div>
+        <div class="ds-detail">${loaded ? '✓ Loaded · ' + s.desc : 'Not loaded · ' + s.desc}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderUploadGrid() {
+  document.getElementById('uploadGrid').innerHTML = SLOT_DEFS.map(s => {
+    const loaded = !!csvStore[s.key];
+    const pending = !!pendingUploads[s.key];
+    return `<div class="upload-card ${loaded?'loaded':''}" id="card-${s.key}"
+      ondragover="event.preventDefault();this.classList.add('drag-over')"
+      ondragleave="this.classList.remove('drag-over')"
+      ondrop="handleDrop(event,'${s.key}')">
+      <input type="file" accept=".csv" onchange="handleFileInput(event,'${s.key}')">
+      <div class="upload-icon">${loaded ? '✅' : '📄'}</div>
+      <div class="upload-label">${s.label}</div>
+      <div class="upload-desc">${s.desc}<br><span style="color:var(--border)">${s.hint}</span></div>
+      <div class="upload-status ${loaded?'ok':''}" id="status-${s.key}">
+        ${pending ? '⏳ Pending upload' : loaded ? '✓ Data loaded' : 'Drop CSV here or click to browse'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function handleFileInput(event, key) {
+  const file = event.target.files[0];
+  if (!file) return;
+  readFile(file, key);
+}
+
+function handleDrop(event, key) {
+  event.preventDefault();
+  document.getElementById('card-'+key).classList.remove('drag-over');
+  const file = event.dataTransfer.files[0];
+  if (file) readFile(file, key);
+}
+
+function readFile(file, key) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text = e.target.result;
+    // Quick validation
+    if (!text.includes('Club Number') && !text.includes('Club Name')) {
+      document.getElementById('status-'+key).innerHTML = '❌ Invalid file — must be a Club Performance CSV';
+      document.getElementById('status-'+key).className = 'upload-status err';
+      return;
+    }
+    pendingUploads[key] = text;
+    document.getElementById('status-'+key).innerHTML = `⏳ Pending: ${file.name}`;
+    document.getElementById('status-'+key).className = 'upload-status ok';
+    document.getElementById('card-'+key).classList.add('loaded');
+  };
+  reader.readAsText(file);
+}
+
+function applyUploads() {
+  if (Object.keys(pendingUploads).length === 0) {
+    alert('No new files uploaded. Drop CSV files onto the cards above first.');
+    return;
+  }
+  Object.assign(csvStore, pendingUploads);
+  pendingUploads = {};
+  processData();
+  render();
+  alert(`✅ Data updated! ${ALL_CLUBS.length} clubs recalculated.`);
+}
+
+function resetToOriginal() {
+  if (!confirm('Reset all data to the original 6 uploaded snapshots?')) return;
+  csvStore = { ...ORIGINAL_CSV };
+  pendingUploads = {};
+  processData();
+  render();
+}
+
+// ══════════════════════════════════════════════
+// TAB NAVIGATION
+// ══════════════════════════════════════════════
+function showTab(id, el) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  el.classList.add('active');
+}
+
+// ══════════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════════
+processData();
+render();
+</script>
+</body>
+</html>
