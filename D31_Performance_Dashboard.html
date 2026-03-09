@@ -228,6 +228,46 @@
   .badge-blue { background: rgba(91,156,246,0.15); color: var(--accent2); }
   .badge-gray { background: rgba(139,148,158,0.15); color: var(--muted); }
   .badge-orange { background: rgba(232,164,74,0.15); color: var(--accent); }
+  .badge-smedley { background: rgba(255,215,0,0.18); color: #ffd700; border: 1px solid rgba(255,215,0,0.35); }
+
+  /* ── Clickable KPI cards ── */
+  .kpi.clickable { cursor: pointer; transition: border-color 0.18s, background 0.18s, transform 0.12s; }
+  .kpi.clickable:hover { border-color: var(--kpi-color, var(--accent2)); background: color-mix(in srgb, var(--kpi-color, var(--accent2)) 8%, var(--surface)); transform: translateY(-1px); }
+  .kpi.clickable:hover .kpi-value { color: var(--accent); }
+
+  /* ── Club Drill Modal ── */
+  .drill-modal {
+    position: fixed; inset: 0;
+    background: rgba(13,17,23,0.88);
+    backdrop-filter: blur(5px);
+    z-index: 600;
+    display: none; align-items: center; justify-content: center; padding: 24px;
+  }
+  .drill-modal.open { display: flex; }
+  .drill-modal-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    max-width: 820px; width: 100%;
+    max-height: 80vh;
+    display: flex; flex-direction: column;
+    box-shadow: 0 28px 80px rgba(0,0,0,0.6);
+    overflow: hidden;
+  }
+  .drill-modal-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .drill-modal-title { font-family: var(--serif); font-size: 20px; font-weight: 400; }
+  .drill-modal-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .drill-modal-close {
+    font-size: 22px; color: var(--muted); cursor: pointer; line-height: 1;
+    padding: 4px 8px; border-radius: 4px; transition: color 0.15s, background 0.15s;
+  }
+  .drill-modal-close:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+  .drill-modal-body { overflow-y: auto; padding: 16px 24px 24px; }
 
   /* ── Progress Bar ── */
   .progress-bar {
@@ -564,29 +604,29 @@
         <li>
           <div class="inst-num">1</div>
           <div class="inst-text">
-            <strong>Upload your CSV</strong>
-            <span>Drag and drop your Division_Performance export from Toastmasters International onto the upload bar. You can drop multiple files at once to build trend history.</span>
+            <strong>Data loads automatically</strong>
+            <span>The dashboard fetches the latest club performance data from GitHub on every page load — no upload needed. Just open and explore.</span>
           </div>
         </li>
         <li>
           <div class="inst-num">2</div>
           <div class="inst-text">
             <strong>Explore the four views</strong>
-            <span>District Summary shows district-wide KPIs. Division and Area views let you drill down by leadership level. Trend &amp; History charts progress over time.</span>
+            <span>District Summary shows district-wide KPIs — click any stat card to see the clubs behind the number. Division and Area views let you drill down by leadership level. Trend &amp; History charts progress over time.</span>
           </div>
         </li>
         <li>
           <div class="inst-num">3</div>
           <div class="inst-text">
-            <strong>Refresh anytime</strong>
-            <span>Drop a new CSV whenever TI publishes updated data. Your snapshot history and latest data are saved automatically — no data is lost on refresh.</span>
+            <strong>Distinguished status tiers</strong>
+            <span>Clubs are ranked from At-Risk (0–1 goals) through Distinguished, Select, President's, up to Smedley Distinguished (10 goals + 25+ members).</span>
           </div>
         </li>
         <li>
           <div class="inst-num">4</div>
           <div class="inst-text">
-            <strong>Tag your snapshots (optional)</strong>
-            <span>Use the date picker next to the upload bar to manually label a snapshot if the file's date needs overriding.</span>
+            <strong>Manual override (Glenn only)</strong>
+            <span>Use the upload bar to drag in a new CSV if you need to override GitHub data. A date picker lets you manually label the snapshot.</span>
           </div>
         </li>
       </ul>
@@ -598,18 +638,38 @@
   </div>
 </div>
 
+<!-- Club Drill Modal -->
+<div class="drill-modal" id="drill-modal">
+  <div class="drill-modal-card">
+    <div class="drill-modal-header">
+      <div>
+        <div class="drill-modal-title" id="drill-modal-title">Clubs</div>
+        <div class="drill-modal-sub" id="drill-modal-sub"></div>
+      </div>
+      <span class="drill-modal-close" onclick="closeDrillModal()">×</span>
+    </div>
+    <div class="drill-modal-body">
+      <div class="table-wrap"><table id="drill-table">
+        <thead><tr><th>Club Name</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Apr Renewed</th><th>Status</th></tr></thead>
+        <tbody id="drill-body"></tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+
 <!-- Help Modal -->
 <div class="help-modal" id="help-modal">
   <div class="help-modal-card">
     <span class="help-modal-close" onclick="document.getElementById('help-modal').classList.remove('open')">×</span>
     <h3>Dashboard Guide</h3>
     <ul class="instructions-list">
-      <li><div class="inst-num">1</div><div class="inst-text"><strong>Upload CSV</strong><span>Drag one or multiple Division_Performance CSVs onto the upload bar. The most recent file becomes the live view; all files are saved as trend snapshots.</span></div></li>
-      <li><div class="inst-num">2</div><div class="inst-text"><strong>District Summary</strong><span>Top-level KPIs, division rankings, goals distribution, top 10 clubs, and suspended clubs.</span></div></li>
+      <li><div class="inst-num">1</div><div class="inst-text"><strong>Auto-loaded data</strong><span>Data is fetched automatically from GitHub on every page load. No upload needed for leaders — just open the dashboard and it's ready.</span></div></li>
+      <li><div class="inst-num">2</div><div class="inst-text"><strong>District Summary</strong><span>Top-level KPIs with clickable stat cards — click any card (Active Clubs, Distinguished, At-Risk, April Renewed, etc.) to see the exact clubs behind that number.</span></div></li>
       <li><div class="inst-num">3</div><div class="inst-text"><strong>Division View</strong><span>Select a division to see area summaries and a full club breakdown with goal status.</span></div></li>
       <li><div class="inst-num">4</div><div class="inst-text"><strong>Area View</strong><span>Select a division and area for club-level coaching priorities and goals-to-Distinguished tracking.</span></div></li>
       <li><div class="inst-num">5</div><div class="inst-text"><strong>Trend &amp; History</strong><span>Charts show Distinguished clubs, at-risk clubs, April renewals %, and total members over time across all saved snapshots.</span></div></li>
-      <li><div class="inst-num">6</div><div class="inst-text"><strong>Duplicate protection</strong><span>Uploading the same data under a different filename is detected automatically — no duplicate snapshots will be created.</span></div></li>
+      <li><div class="inst-num">6</div><div class="inst-text"><strong>Distinguished tiers</strong><span>Clubs are classified from At-Risk (0–1 goals) through Distinguished (5+), Select (7+), President's (9+), up to Smedley Distinguished (10 goals + 25+ members).</span></div></li>
+      <li><div class="inst-num">7</div><div class="inst-text"><strong>Manual override (Glenn only)</strong><span>Drag a new CSV onto the upload bar to push fresh data. Duplicate uploads are detected automatically — no duplicate snapshots will be created.</span></div></li>
     </ul>
   </div>
 </div>
@@ -680,13 +740,14 @@
     <div class="section-sub" id="summary-sub">Upload a CSV to populate this dashboard.</div>
 
     <div class="kpi-grid" id="kpi-grid">
-      <div class="kpi" style="--kpi-color:#5b9cf6"><div class="kpi-label">Active Clubs</div><div class="kpi-value" id="kpi-active">—</div><div class="kpi-sub">of <span id="kpi-total">—</span> total</div></div>
-      <div class="kpi" style="--kpi-color:#3fb950"><div class="kpi-label">Distinguished</div><div class="kpi-value" id="kpi-dist">—</div><div class="kpi-sub">5+ goals met</div></div>
-      <div class="kpi" style="--kpi-color:#e8a44a"><div class="kpi-label">Select Dist.</div><div class="kpi-value" id="kpi-select">—</div><div class="kpi-sub">7+ goals met</div></div>
-      <div class="kpi" style="--kpi-color:#a371f7"><div class="kpi-label">Pres. Dist.</div><div class="kpi-value" id="kpi-pres">—</div><div class="kpi-sub">9+ goals met</div></div>
-      <div class="kpi" style="--kpi-color:#f85149"><div class="kpi-label">At-Risk Clubs</div><div class="kpi-value" id="kpi-risk">—</div><div class="kpi-sub">0–1 goals</div></div>
-      <div class="kpi" style="--kpi-color:#3fb950"><div class="kpi-label">April Renewed</div><div class="kpi-value" id="kpi-renewed">—</div><div class="kpi-sub" id="kpi-renewed-pct">—</div></div>
-      <div class="kpi" style="--kpi-color:#8b949e"><div class="kpi-label">Suspended</div><div class="kpi-value" id="kpi-susp">—</div><div class="kpi-sub">this season</div></div>
+      <div class="kpi clickable" style="--kpi-color:#5b9cf6" onclick="drillDown('active')" title="Click to see active clubs"><div class="kpi-label">Active Clubs</div><div class="kpi-value" id="kpi-active">—</div><div class="kpi-sub">of <span id="kpi-total">—</span> total</div></div>
+      <div class="kpi clickable" style="--kpi-color:#3fb950" onclick="drillDown('dist')" title="Click to see distinguished clubs"><div class="kpi-label">Distinguished</div><div class="kpi-value" id="kpi-dist">—</div><div class="kpi-sub">5+ goals met</div></div>
+      <div class="kpi clickable" style="--kpi-color:#e8a44a" onclick="drillDown('select')" title="Click to see Select Distinguished clubs"><div class="kpi-label">Select Dist.</div><div class="kpi-value" id="kpi-select">—</div><div class="kpi-sub">7+ goals met</div></div>
+      <div class="kpi clickable" style="--kpi-color:#a371f7" onclick="drillDown('pres')" title="Click to see President's Distinguished clubs"><div class="kpi-label">Pres. Dist.</div><div class="kpi-value" id="kpi-pres">—</div><div class="kpi-sub">9+ goals met</div></div>
+      <div class="kpi clickable" style="--kpi-color:#ffd700" onclick="drillDown('smedley')" title="Click to see Smedley Distinguished clubs"><div class="kpi-label">Smedley Dist.</div><div class="kpi-value" id="kpi-smedley">—</div><div class="kpi-sub">10 goals + 25+ members</div></div>
+      <div class="kpi clickable" style="--kpi-color:#f85149" onclick="drillDown('risk')" title="Click to see at-risk clubs"><div class="kpi-label">At-Risk Clubs</div><div class="kpi-value" id="kpi-risk">—</div><div class="kpi-sub">0–1 goals</div></div>
+      <div class="kpi clickable" style="--kpi-color:#3fb950" onclick="drillDown('renewed')" title="Click to see April renewed clubs"><div class="kpi-label">April Renewed</div><div class="kpi-value" id="kpi-renewed">—</div><div class="kpi-sub" id="kpi-renewed-pct">—</div></div>
+      <div class="kpi clickable" style="--kpi-color:#8b949e" onclick="drillDown('susp')" title="Click to see suspended &amp; inactive clubs"><div class="kpi-label">Suspended &amp; Inactive</div><div class="kpi-value" id="kpi-susp">—</div><div class="kpi-sub">this season</div></div>
       <div class="kpi" style="--kpi-color:#5b9cf6"><div class="kpi-label">Total Members</div><div class="kpi-value" id="kpi-members">—</div><div class="kpi-sub">active clubs</div></div>
     </div>
 
@@ -708,7 +769,8 @@
           <span><span class="badge badge-yellow">2–4</span> Building</span>
           <span><span class="badge badge-green">5–6</span> Distinguished</span>
           <span><span class="badge badge-orange">7–8</span> Select</span>
-          <span><span class="badge" style="background:rgba(163,113,247,0.15);color:#a371f7">9+</span> President's</span>
+          <span><span class="badge" style="background:rgba(163,113,247,0.15);color:#a371f7">9</span> President's</span>
+          <span><span class="badge badge-smedley">10+25mem</span> Smedley</span>
         </div>
       </div>
     </div>
@@ -1051,7 +1113,8 @@ function isActive(r) {
 function isSuspended(r) { return (r['Charter Date/Suspend Date'] || '').includes('Susp'); }
 function goals(r) { return parseInt(r['Club Goals Met']) || 0; }
 function members(r) { return parseInt(r['Membership to date']) || 0; }
-function goalStatus(g) {
+function goalStatus(g, mem) {
+  if (g >= 10 && (mem || 0) >= 25) return { label: "Smedley Dist.", cls: "badge badge-smedley" };
   if (g >= 9) return { label: "Pres. Dist.", cls: "badge", style: "background:rgba(163,113,247,0.15);color:#a371f7" };
   if (g >= 7) return { label: "Select Dist.", cls: "badge badge-orange" };
   if (g >= 5) return { label: "Distinguished", cls: "badge badge-green" };
@@ -1064,6 +1127,93 @@ function priorityLabel(g) {
   if (g <= 3) return '<span class="badge badge-yellow">🟡 Medium</span>';
   if (g <= 4) return '<span class="badge badge-blue">🔵 Watch</span>';
   return '<span class="badge badge-green">✅ On Track</span>';
+}
+
+// ══════════════════════════════════════════════
+// DRILL-DOWN MODAL
+// ══════════════════════════════════════════════
+function closeDrillModal() {
+  document.getElementById('drill-modal').classList.remove('open');
+}
+
+document.getElementById('drill-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeDrillModal();
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeDrillModal();
+});
+
+function drillDown(type) {
+  if (!allRows.length) return;
+  const active = allRows.filter(isActive);
+  let clubs = [], title = '', sub = '';
+
+  switch(type) {
+    case 'active':
+      clubs = active;
+      title = 'Active Clubs';
+      sub = `${clubs.length} clubs with active membership this season`;
+      break;
+    case 'dist':
+      clubs = active.filter(r => goals(r) >= 5 && !(goals(r) >= 10 && members(r) >= 25));
+      title = 'Distinguished Clubs';
+      sub = `${clubs.length} clubs with 5+ goals met (excl. higher tiers)`;
+      break;
+    case 'select':
+      clubs = active.filter(r => goals(r) >= 7 && !(goals(r) >= 10 && members(r) >= 25));
+      title = 'Select Distinguished Clubs';
+      sub = `${clubs.length} clubs with 7+ goals met (excl. higher tiers)`;
+      break;
+    case 'pres':
+      clubs = active.filter(r => goals(r) >= 9 && !(goals(r) >= 10 && members(r) >= 25));
+      title = "President's Distinguished Clubs";
+      sub = `${clubs.length} clubs with 9+ goals met (excl. Smedley)`;
+      break;
+    case 'smedley':
+      clubs = active.filter(r => goals(r) >= 10 && members(r) >= 25);
+      title = 'Smedley Distinguished Clubs';
+      sub = `${clubs.length} clubs with 10 goals met and 25+ members`;
+      break;
+    case 'risk':
+      clubs = active.filter(r => goals(r) <= 1);
+      title = 'At-Risk Clubs';
+      sub = `${clubs.length} clubs with 0–1 goals met — need coaching attention`;
+      break;
+    case 'renewed':
+      clubs = active.filter(r => r['April Renewals'] === '1');
+      title = 'April Renewed Clubs';
+      sub = `${clubs.length} clubs that have renewed April dues`;
+      break;
+    case 'susp':
+      clubs = allRows.filter(r => isSuspended(r) || (parseInt(r['Membership to date'])||0) === 0);
+      title = 'Suspended & Inactive Clubs';
+      sub = `${clubs.length} clubs currently suspended or with no active members`;
+      break;
+  }
+
+  const sorted = [...clubs].sort((a, b) => {
+    if (goals(b) !== goals(a)) return goals(b) - goals(a);
+    return members(b) - members(a);
+  });
+
+  document.getElementById('drill-modal-title').textContent = title;
+  document.getElementById('drill-modal-sub').textContent = sub;
+  document.getElementById('drill-body').innerHTML = sorted.map(r => {
+    const st = goalStatus(goals(r), members(r));
+    const stStyle = st.style ? `class="${st.cls}" style="${st.style}"` : `class="${st.cls}"`;
+    return `<tr>
+      <td style="font-weight:500">${r['Club Name'] || r['Club'] || '—'}</td>
+      <td><span class="badge badge-blue">${r['Division']}</span></td>
+      <td style="font-family:var(--mono)">${r['Area']}</td>
+      <td style="font-family:var(--mono);font-weight:600;color:var(--text)">${goals(r)}</td>
+      <td style="font-family:var(--mono)">${members(r)}</td>
+      <td>${r['April Renewals']==='1' ? '<span class="dot dot-green"></span>Yes' : '<span class="dot dot-red"></span>No'}</td>
+      <td><span ${stStyle}>${st.label}</span></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No clubs in this category</td></tr>`;
+
+  document.getElementById('drill-modal').classList.add('open');
 }
 
 // ══════════════════════════════════════════════
@@ -1081,11 +1231,12 @@ function renderAll() {
 // ══════════════════════════════════════════════
 function renderSummary() {
   const active = allRows.filter(isActive);
-  const susp = allRows.filter(isSuspended);
+  const susp = allRows.filter(r => isSuspended(r) || (parseInt(r['Membership to date'])||0) === 0);
   const total = allRows.length;
   const dist = active.filter(r => goals(r) >= 5).length;
   const sel = active.filter(r => goals(r) >= 7).length;
   const pres = active.filter(r => goals(r) >= 9).length;
+  const smedley = active.filter(r => goals(r) >= 10 && members(r) >= 25).length;
   const risk = active.filter(r => goals(r) <= 1).length;
   const renewed = active.filter(r => r['April Renewals'] === '1').length;
   const totalMem = active.reduce((s, r) => s + members(r), 0);
@@ -1095,6 +1246,7 @@ function renderSummary() {
   document.getElementById('kpi-dist').textContent = dist;
   document.getElementById('kpi-select').textContent = sel;
   document.getElementById('kpi-pres').textContent = pres;
+  document.getElementById('kpi-smedley').textContent = smedley;
   document.getElementById('kpi-risk').textContent = risk;
   document.getElementById('kpi-renewed').textContent = renewed;
   document.getElementById('kpi-renewed-pct').textContent = `${(renewed/active.length*100).toFixed(1)}% of active clubs`;
@@ -1154,7 +1306,7 @@ function renderSummary() {
   }).slice(0, 10);
   const s = goalStatus;
   document.getElementById('top-clubs-body').innerHTML = top10.map((r, i) => {
-    const st = goalStatus(goals(r));
+    const st = goalStatus(goals(r), members(r));
     const stStyle = st.style ? `class="${st.cls}" style="${st.style}"` : `class="${st.cls}"`;
     return `<tr>
       <td style="color:var(--muted);font-family:var(--mono)">${i+1}</td>
@@ -1240,7 +1392,7 @@ function renderDivisionView() {
   // Clubs table
   const sorted = [...active].sort((a, b) => goals(b) - goals(a));
   document.getElementById('div-clubs-body').innerHTML = sorted.map(r => {
-    const st = goalStatus(goals(r));
+    const st = goalStatus(goals(r), members(r));
     const stStyle = st.style ? `class="${st.cls}" style="${st.style}"` : `class="${st.cls}"`;
     return `<tr>
       <td style="font-family:var(--mono)">${r['Area']}</td>
@@ -1288,7 +1440,7 @@ function renderAreaView() {
   document.getElementById('area-clubs-body').innerHTML = sorted.map(r => {
     const g = goals(r);
     const needed = Math.max(0, 5 - g);
-    const st = goalStatus(g);
+    const st = goalStatus(g, members(r));
     const stStyle = st.style ? `class="${st.cls}" style="${st.style}"` : `class="${st.cls}"`;
     return `<tr>
       <td style="font-weight:500">${r['Club Name']}</td>
@@ -1529,7 +1681,7 @@ function clearAllData() {
   document.getElementById('upload-status').textContent = 'Upload one or multiple CSVs · date tag applies to single-file uploads';
   renderSnapshotList();
   // Clear all rendered views
-  ['kpi-active','kpi-total','kpi-dist','kpi-select','kpi-pres','kpi-risk',
+  ['kpi-active','kpi-total','kpi-dist','kpi-select','kpi-pres','kpi-smedley','kpi-risk',
    'kpi-renewed','kpi-members','kpi-susp'].forEach(id => {
     const el = document.getElementById(id); if (el) el.textContent = '—';
   });
