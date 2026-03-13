@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>District 31 · District Momentum Index</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy:    #0a1628;
+  --navy2:   #0f2040;
+  --blue:    #1a3a6b;
+  --accent:  #e8a020;
+  --gold:    #f5c842;
+  --silver:  #8fa8c8;
+  --white:   #f0f4f8;
+  --dim:     #6b829a;
+  --green:   #2ecc87;
+  --red:     #e85555;
+  --champion:#f5c842;
+  --leader:  #4cb8ff;
+  --builder: #7dd87d;
+  --card-bg: rgba(255,255,255,0.04);
+  --border:  rgba(255,255,255,0.08);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--navy);
+  color: var(--white);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 300;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Background texture */
+body::before {
+  content:'';
+  position:fixed; inset:0; z-index:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(26,58,107,0.5) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 85% 80%, rgba(232,160,32,0.08) 0%, transparent 50%);
+  pointer-events:none;
+}
+
+.container { position:relative; z-index:1; max-width:1100px; margin:0 auto; padding:40px 24px 80px; }
+
+/* ── HEADER ── */
+header {
+  display:flex; align-items:flex-start; justify-content:space-between;
+  margin-bottom:48px; gap:24px; flex-wrap:wrap;
+}
+.header-left {}
+.district-eyebrow {
+  font-family:'DM Mono', monospace;
+  font-size:11px; letter-spacing:3px; text-transform:uppercase;
+  color:var(--accent); margin-bottom:8px;
+}
+.header-title {
+  font-family:'Bebas Neue', sans-serif;
+  font-size:clamp(36px,6vw,64px); line-height:0.9;
+  color:var(--white); letter-spacing:1px;
+}
+.header-title span { color:var(--accent); }
+.header-sub {
+  font-size:13px; color:var(--silver); margin-top:10px; font-weight:300;
+}
+.header-right { text-align:right; }
+.as-of-label { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--dim); margin-bottom:4px; }
+.as-of-date { font-family:'DM Mono',monospace; font-size:14px; color:var(--silver); }
+
+/* ── YEAR SELECTOR ── */
+.year-tabs {
+  display:flex; gap:8px; margin-bottom:40px; flex-wrap:wrap;
+}
+.year-tab {
+  font-family:'DM Mono',monospace; font-size:12px; letter-spacing:1px;
+  padding:8px 20px; border-radius:4px; cursor:pointer;
+  border:1px solid var(--border); background:var(--card-bg);
+  color:var(--silver); transition:all .2s; text-transform:uppercase;
+}
+.year-tab:hover { border-color:rgba(255,255,255,0.2); color:var(--white); }
+.year-tab.active { background:var(--accent); border-color:var(--accent); color:var(--navy); font-weight:500; }
+.year-tab.in-progress::after { content:' ●'; color:var(--green); font-size:8px; vertical-align:middle; }
+
+/* ── DMI HERO ── */
+.dmi-hero {
+  display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;
+  margin-bottom:40px;
+}
+@media(max-width:640px){ .dmi-hero { grid-template-columns:1fr; } }
+
+.dmi-score-card {
+  background:var(--card-bg); border:1px solid var(--border);
+  border-radius:12px; padding:32px 28px;
+  position:relative; overflow:hidden;
+  transition:transform .2s;
+}
+.dmi-score-card:hover { transform:translateY(-2px); }
+.dmi-score-card.primary {
+  grid-column: span 1;
+  border-color: rgba(232,160,32,0.3);
+  background: linear-gradient(135deg, rgba(232,160,32,0.08) 0%, rgba(10,22,40,0.5) 100%);
+}
+.dmi-score-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background: var(--bar-color, var(--accent));
+}
+.score-label {
+  font-size:10px; letter-spacing:3px; text-transform:uppercase;
+  color:var(--dim); margin-bottom:16px;
+  font-family:'DM Mono',monospace;
+}
+.score-number {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:72px; line-height:1; color:var(--white);
+  margin-bottom:4px;
+}
+.score-denom { font-size:24px; color:var(--dim); }
+.score-tier {
+  display:inline-block; padding:4px 12px; border-radius:100px;
+  font-size:11px; font-weight:500; letter-spacing:1px; text-transform:uppercase;
+  margin-top:12px;
+}
+.tier-champion { background:rgba(245,200,66,0.15); color:var(--champion); border:1px solid rgba(245,200,66,0.3); }
+.tier-leader   { background:rgba(76,184,255,0.15); color:var(--leader);   border:1px solid rgba(76,184,255,0.3); }
+.tier-builder  { background:rgba(125,216,125,0.15); color:var(--builder);  border:1px solid rgba(125,216,125,0.3); }
+.tier-below    { background:rgba(107,130,154,0.15); color:var(--dim);      border:1px solid rgba(107,130,154,0.3); }
+.tier-pending  { background:rgba(107,130,154,0.1);  color:var(--dim);      border:1px solid rgba(107,130,154,0.2); }
+
+.score-change {
+  font-size:12px; margin-top:8px; color:var(--dim);
+}
+.score-change.up   { color:var(--green); }
+.score-change.down { color:var(--red); }
+
+/* ── CONTEXT STRIP ── */
+.context-strip {
+  display:grid; grid-template-columns:repeat(6,1fr); gap:12px;
+  margin-bottom:40px;
+}
+@media(max-width:900px){ .context-strip { grid-template-columns:repeat(3,1fr); } }
+@media(max-width:540px){ .context-strip { grid-template-columns:1fr 1fr; } }
+
+.ctx-card {
+  background:var(--card-bg); border:1px solid var(--border);
+  border-radius:8px; padding:16px 18px;
+}
+.ctx-label { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--dim); margin-bottom:6px; font-family:'DM Mono',monospace; }
+.ctx-value { font-family:'Bebas Neue',sans-serif; font-size:28px; color:var(--white); line-height:1; }
+.ctx-sub   { font-size:11px; color:var(--dim); margin-top:3px; }
+
+/* ── SECTION HEADER ── */
+.section-header {
+  display:flex; align-items:center; gap:16px; margin-bottom:20px;
+}
+.section-title {
+  font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:1px; color:var(--white);
+}
+.section-line { flex:1; height:1px; background:var(--border); }
+
+/* ── METRICS TABLE ── */
+.metrics-block { margin-bottom:40px; }
+.metrics-category {
+  font-size:10px; letter-spacing:3px; text-transform:uppercase;
+  color:var(--accent); margin-bottom:12px; font-family:'DM Mono',monospace;
+  padding-left:4px;
+}
+.metric-row {
+  display:grid;
+  grid-template-columns: 32px 1fr 100px 110px 110px 56px;
+  gap:0; align-items:center;
+  border-bottom:1px solid var(--border);
+  padding:10px 4px;
+  transition:background .15s;
+}
+.metric-row:hover { background:rgba(255,255,255,0.02); }
+.metric-row.header-row {
+  font-size:10px; letter-spacing:2px; text-transform:uppercase;
+  color:var(--dim); font-family:'DM Mono',monospace;
+  padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.12);
+}
+@media(max-width:720px){
+  .metric-row { grid-template-columns: 28px 1fr 80px 90px 90px 44px; font-size:12px; }
+}
+@media(max-width:520px){
+  .metric-row { grid-template-columns: 24px 1fr 80px 90px 44px; }
+  .metric-row .col-prev { display:none; }
+}
+
+.col-dmi   { font-family:'DM Mono',monospace; font-size:11px; color:var(--dim); }
+.col-name  { font-size:13px; color:var(--white); font-weight:400; padding-right:8px; }
+.col-name small { display:block; font-size:10px; color:var(--dim); margin-top:1px; font-family:'DM Mono',monospace; }
+.col-val   { font-family:'DM Mono',monospace; font-size:13px; text-align:right; padding-right:16px; }
+.col-val.dim { color:var(--dim); }
+.col-prev  { font-family:'DM Mono',monospace; font-size:12px; text-align:right; padding-right:16px; color:var(--dim); }
+.col-curr  { font-family:'DM Mono',monospace; font-size:13px; text-align:right; padding-right:16px; font-weight:500; }
+.col-next  { font-family:'DM Mono',monospace; font-size:12px; text-align:right; padding-right:16px; color:var(--dim); }
+.col-score {
+  display:flex; align-items:center; justify-content:center;
+  width:32px; height:24px; border-radius:4px;
+  font-size:12px; font-weight:500;
+}
+.col-score.pass { background:rgba(46,204,135,0.15); color:var(--green); }
+.col-score.fail { background:rgba(232,85,85,0.12);  color:var(--red); }
+.col-score.na   { background:transparent; color:var(--dim); }
+
+/* ── TREND CHART ── */
+.trend-section { margin-bottom:40px; }
+.chart-wrap {
+  background:var(--card-bg); border:1px solid var(--border);
+  border-radius:12px; padding:28px 24px;
+}
+#trendChart { width:100%; height:220px; }
+
+/* ── LEGEND ── */
+.dmi-legend {
+  display:flex; gap:20px; flex-wrap:wrap; margin-top:16px;
+  font-size:11px; color:var(--dim);
+}
+.legend-item { display:flex; align-items:center; gap:6px; }
+.legend-dot  { width:8px; height:8px; border-radius:50%; }
+
+/* ── FOOTER ── */
+.dash-footer {
+  margin-top:60px; padding-top:24px; border-top:1px solid var(--border);
+  display:flex; justify-content:space-between; align-items:center;
+  font-size:11px; color:var(--dim); flex-wrap:wrap; gap:8px;
+}
+.footer-logo { font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:2px; color:var(--silver); }
+
+/* ── LOADING ── */
+#loading {
+  position:fixed; inset:0; background:var(--navy); z-index:100;
+  display:flex; align-items:center; justify-content:center;
+  flex-direction:column; gap:16px;
+}
+.loading-title { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:4px; color:var(--white); }
+.loading-sub { font-size:12px; color:var(--dim); letter-spacing:2px; text-transform:uppercase; }
+.loading-bar { width:200px; height:2px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden; margin-top:8px; }
+.loading-fill { height:100%; background:var(--accent); border-radius:2px; animation:loadfill 1.2s ease-out forwards; }
+@keyframes loadfill { from{width:0} to{width:100%} }
+
+/* ── ANIMATIONS ── */
+.fade-in { animation:fadeIn .4s ease both; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+.stagger-1 { animation-delay:.05s }
+.stagger-2 { animation-delay:.1s }
+.stagger-3 { animation-delay:.15s }
+.stagger-4 { animation-delay:.2s }
+
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="loading-title">District 31</div>
+  <div class="loading-sub">Loading Momentum Data</div>
+  <div class="loading-bar"><div class="loading-fill"></div></div>
+</div>
+
+<div class="container" id="app" style="display:none">
+
+  <header class="fade-in">
+    <div class="header-left">
+      <div class="district-eyebrow">Toastmasters International · District 31</div>
+      <div class="header-title">District<br><span>Momentum</span><br>Index</div>
+      <div class="header-sub">New England — Massachusetts &amp; Rhode Island</div>
+    </div>
+    <div class="header-right">
+      <div class="as-of-label">Data as of</div>
+      <div class="as-of-date" id="asOfDate">—</div>
+        <div style="margin-top:12px">
+          <div class="as-of-label">DMI Scale · Dec 31</div>
+          <div style="font-size:11px;color:var(--dim);line-height:1.8;font-family:'DM Mono',monospace;text-align:right">
+            7–8 = Leader · 5–6 = Builder
+          </div>
+          <div class="as-of-label" style="margin-top:8px">DMI Scale · Jun 30</div>
+          <div style="font-size:11px;color:var(--dim);line-height:1.8;font-family:'DM Mono',monospace;text-align:right">
+            10 = Champion · 8–9 = Leader · 6–7 = Builder
+          </div>
+        </div>
+    </div>
+  </header>
+
+  <!-- Year tabs -->
+  <div class="year-tabs fade-in stagger-1" id="yearTabs"></div>
+
+  <!-- DMI Hero Cards -->
+  <div class="dmi-hero fade-in stagger-2" id="dmiHero"></div>
+
+  <!-- Context Strip -->
+  <div class="context-strip fade-in stagger-3" id="contextStrip"></div>
+
+  <!-- Metrics Table -->
+  <div class="metrics-block fade-in stagger-4">
+    <div class="section-header">
+      <div class="section-title">DMI Metric Detail</div>
+      <div class="section-line"></div>
+    </div>
+    <div id="metricsTable"></div>
+  </div>
+
+  <!-- Trend Chart -->
+  <div class="trend-section fade-in stagger-4">
+    <div class="section-header">
+      <div class="section-title">DMI Score Trend</div>
+      <div class="section-line"></div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="trendChart"></canvas>
+      <div class="dmi-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--champion)"></div>Momentum Champion (YTD: 10)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--leader)"></div>Momentum Leader (YTD: 8+ · Dec: 7+)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--builder)"></div>Momentum Builder (YTD: 6+ · Dec: 5+)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--dim)"></div>Mid-year estimate</div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="dash-footer">
+    <div class="footer-logo">District 31 · DMI Dashboard</div>
+    <div>Data source: Toastmasters International Reports · Built for D31 Leadership</div>
+  </footer>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// ─────────────────────────────────────────────
+// DATA  (seed from CSV computation + spreadsheet ground truth)
+// In production this would be fetched from Google Sheets
+// ─────────────────────────────────────────────
+const DMI_DATA = {
+  district: "31",
+  district_name: "District 31",
+  region: "New England (MA & RI)",
+  payment_bases: { "23-24": 5253, "24-25": 4817, "25-26": 4905 },
+
+  years: {
+    "23-24": {
+      label: "2023–24",
+      complete: true,
+      context: { club_base: 142, paid_clubs_dec: 128, paid_clubs_jun: 130, payment_base: 5253, membership_payments: 4850, dist_clubs: 37, dist_status: "Not Distinguished" },
+      dec: {
+        // Numerators (spreadsheet ground truth)
+        clubs_20plus: 34,        clubs_20plus_pct: 0.265625,   // ÷ paid_clubs_dec (128)
+        off_r1_clubs: 57,        off_r1_pct:       0.401408,   // ÷ club_base (142)
+        level1_total: 118,       level1_per_club:  0.830986,   // ÷ club_base (142)
+        higher_total: 236,       higher_per_club:  1.661972,   // ÷ club_base (142)
+        new_members:  386,       new_members_per_club: 2.718310, // ÷ club_base (142)
+        new_clubs:    3,         new_clubs_pct:    0.021127,   // ÷ club_base (142)
+        early_dist_clubs: 7,     early_dist_pct:   0.054688,   // ÷ paid_clubs_dec (128)
+        smedley_clubs: 0,        smedley_pct:      0,
+      },
+      jun: {
+        // Numerators (spreadsheet ground truth)
+        clubs_20plus: 40,        clubs_20plus_pct: 0.307692,   // ÷ paid_clubs_jun (130)
+        off_r2_clubs: 66,        off_r2_pct:       0.464789,   // ÷ club_base (142)
+        level1_total: 244,       level1_per_club:  1.876923,   // ÷ paid_clubs_jun (130)
+        higher_total: 457,       higher_per_club:  3.515385,   // ÷ paid_clubs_jun (130)
+        new_members:  948,       new_members_per_club: 6.676056, // ÷ club_base (142)
+        new_clubs:    7,         new_clubs_pct:    0.049296,   // ÷ club_base (142)
+        early_dist_clubs: null,  early_dist_pct:   null,
+        smedley_clubs: 3,        smedley_pct:      0.021127,   // ÷ club_base (142)
+        oct_renewals: 1901,      oct_ren_pct:      0.723639,   // ÷ sep_active (2627)
+        apr_renewals: 1814,      apr_ren_pct:      0.760268,   // ÷ mar_active (2386)
+        talk_up_pct:  null,
+      }
+    },
+    "24-25": {
+      label: "2024–25",
+      complete: true,
+      context: { club_base: 132, paid_clubs_dec: 127, paid_clubs_jun: 132, payment_base: 4817, membership_payments: 4898, dist_clubs: 43, dist_status: "Not Distinguished" },
+      dec: {
+        clubs_20plus: 40,        clubs_20plus_pct: 0.314961,   // ÷ paid_clubs_dec (127)
+        off_r1_clubs: 87,        off_r1_pct:       0.659091,   // ÷ club_base (132)
+        level1_total: 79,        level1_per_club:  0.598485,   // ÷ club_base (132)
+        higher_total: 181,       higher_per_club:  1.371212,   // ÷ club_base (132)
+        new_members:  414,       new_members_per_club: 3.136364, // ÷ club_base (132)
+        new_clubs:    5,         new_clubs_pct:    0.037879,   // ÷ club_base (132)
+        early_dist_clubs: 8,     early_dist_pct:   0.062992,   // ÷ paid_clubs_dec (127)
+        smedley_clubs: 0,        smedley_pct:      0,
+      },
+      jun: {
+        clubs_20plus: 42,        clubs_20plus_pct: 0.318182,   // ÷ club_base (132) [same as paid_jun]
+        off_r2_clubs: 86,        off_r2_pct:       0.651515,   // ÷ club_base (132)
+        level1_total: 205,       level1_per_club:  1.553030,   // ÷ club_base (132) [same as paid_jun]
+        higher_total: 452,       higher_per_club:  3.424242,   // ÷ club_base (132)
+        new_members:  986,       new_members_per_club: 7.469697, // ÷ club_base (132)
+        new_clubs:    8,         new_clubs_pct:    0.060606,   // ÷ club_base (132)
+        early_dist_clubs: null,  early_dist_pct:   null,
+        smedley_clubs: 5,        smedley_pct:      0.037879,   // ÷ club_base (132)
+        oct_renewals: 1866,      oct_ren_pct:      0.757613,   // ÷ sep_active (2463)
+        apr_renewals: 1836,      apr_ren_pct:      0.766597,   // ÷ mar_active (2395)
+        talk_up_pct:  null,  // source unknown — manual entry TBD
+      }
+    },
+    "25-26": {
+      label: "2025–26",
+      complete: false,
+      asOf: "December 31, 2025",
+      context: { club_base: 132, paid_clubs_dec: 132, paid_clubs_jun: null, payment_base: 4905, membership_payments: null, dist_clubs: null, dist_status: "In Progress" },
+      dec: {
+        // CSV-computed (no spreadsheet yet for this year)
+        clubs_20plus: 36,        clubs_20plus_pct: 0.272727,   // ÷ paid_clubs_dec (132)
+        off_r1_clubs: 92,        off_r1_pct:       0.696970,   // ÷ club_base (132)
+        level1_total: 102,       level1_per_club:  0.772727,   // ÷ club_base (132)
+        higher_total: 179,       higher_per_club:  1.356061,   // ÷ club_base (132)
+        new_members:  481,       new_members_per_club: 3.643939, // ÷ club_base (132)
+        new_clubs:    2,         new_clubs_pct:    0.015152,   // ÷ club_base (132)
+        early_dist_clubs: 13,    early_dist_pct:   0.098485,   // ÷ paid_clubs_dec (132)
+        smedley_clubs: 0,        smedley_pct:      0,
+      },
+      jun: null  // year in progress
+    }
+  },
+
+  // DMI scores — spreadsheet uses different metric subsets by season:
+  // Mid-year (Dec 31): metrics 1, 3a, 4, 6a, 7a, 8, 9a, 10a, 11  (9 metrics)
+  // End-of-year (YTD): metrics 1, 2, 3b, 4, 5, 6b, 7b, 9b, 10b, 11, 12  (11 metrics)
+  // Note: 9a uses >1.5% benchmark; 9b uses >3% benchmark (not YoY comparison)
+  // Note: 8 (Early Dist) included in mid-year set only; NOT in YTD set
+  dmi_scores: {
+    "24-25": {
+      total: 9,
+      subset: "ytd",   // post-April, uses YTD metric set (10 metrics, Talk Up excluded)
+      scores: {
+        // YTD set: 1,2,3b,4,5,6b,7b,9b,10b,11,12
+        "1_oct_ren":        1,    // 0.7576 > 0.7236 ✅
+        "2_apr_ren":        1,    // 0.7666 > 0.7603 ✅
+        "3b_20plus_jun":    1,    // 0.3182 > 0.3077 ✅
+        "4_off_r1":         1,    // 0.6591 > 0.4014 ✅
+        "5_off_r2":         1,    // 0.6515 > 0.4648 ✅
+        "6b_l1_ytd":        0,    // 1.5530 < 1.8769 ❌
+        "7b_higher_ytd":    0,    // 3.4242 < 3.5154 ❌
+        "9b_new_clubs_ytd": 1,    // 0.0606 > 0.03 benchmark ✅
+        "10b_new_mem_ytd":  1,    // 7.4697 > 6.6761 ✅
+        "11_smedley":       1,    // 0.0379 > 0.0211 ✅
+        "12_talk_up":       null, // source unknown — excluded from total
+        // Dec-only metrics (not counted in YTD total):
+        "3a_20plus_dec":    null,
+        "6a_l1_dec":        null,
+        "7a_higher_dec":    null,
+        "8_early_dist":     null,
+        "9a_new_clubs_dec": null,
+        "10a_new_mem_dec":  null,
+        "2_apr_ren_dec":    null,
+      }
+    },
+    "25-26": {
+      total: 5,
+      subset: "dec",   // mid-year, uses Dec metric set (9 metrics)
+      mid_year: true,
+      scores: {
+        // Dec set: 1, 3a, 4, 6a, 7a, 8, 9a, 10a, 11
+        "1_oct_ren":        0,    // 0.7484 < 0.7576 ❌
+        "3a_20plus_dec":    0,    // 0.2880 < 0.3150 ❌
+        "4_off_r1":         1,    // 0.7121 > 0.6591 ✅
+        "6a_l1_dec":        1,    // 0.7727 > 0.5985 ✅
+        "7a_higher_dec":    0,    // 1.3561 < 1.3712 ❌
+        "8_early_dist":     1,    // 0.1120 > 0.0630 ✅
+        "9a_new_clubs_dec": 1,    // 0.0152 > 0.015 benchmark ✅
+        "10a_new_mem_dec":  1,    // 3.6439 > 3.1364 ✅
+        "11_smedley":       0,    // 0 Smedley clubs at Dec 31 ❌
+        // YTD metrics (pending end of year):
+        "2_apr_ren":        null,
+        "3b_20plus_jun":    null,
+        "5_off_r2":         null,
+        "6b_l1_ytd":        null,
+        "7b_higher_ytd":    null,
+        "9b_new_clubs_ytd": null,
+        "10b_new_mem_ytd":  null,
+        "12_talk_up":       null,
+      }
+    }
+  }
+};
+
+// ─────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────
+function tierInfo(score, pending, subset) {
+  // Thresholds differ by season (from spreadsheet D3/D4):
+  // Dec 31 (9 metrics):        Builder=5, Leader=7, Champion=n/a
+  // Jun 30 YTD (10 metrics):   Builder=6, Leader=8, Champion=10
+  if (pending) return { label:'In Progress', cls:'tier-pending', color:'var(--dim)', barColor:'var(--dim)' };
+  const isDec = (subset === 'dec');
+  if (!isDec && score >= 10) return { label:'Momentum Champion', cls:'tier-champion', color:'var(--champion)', barColor:'var(--champion)' };
+  if (score >= (isDec ? 7 : 8)) return { label:'Momentum Leader',   cls:'tier-leader',   color:'var(--leader)',   barColor:'var(--leader)'   };
+  if (score >= (isDec ? 5 : 6)) return { label:'Momentum Builder',  cls:'tier-builder',  color:'var(--builder)',  barColor:'var(--builder)'  };
+  return                         { label:'Below Builder',           cls:'tier-below',    color:'var(--dim)',      barColor:'var(--red)'      };
+}
+
+function fmt(n, decimals=1, isPercent=false) {
+  if (n === null || n === undefined) return '—';
+  if (isPercent) return (n*100).toFixed(decimals)+'%';
+  return typeof n==='number' ? n.toFixed(decimals) : n;
+}
+
+function fmtInt(n) { return n === null || n === undefined ? '—' : Math.round(n).toLocaleString(); }
+
+// ─────────────────────────────────────────────
+// RENDER
+// ─────────────────────────────────────────────
+let activeYear = "25-26";
+
+function renderYearTabs() {
+  const el = document.getElementById('yearTabs');
+  el.innerHTML = Object.entries(DMI_DATA.years).map(([yr, d]) => `
+    <button class="year-tab ${yr===activeYear?'active':''} ${!d.complete?'in-progress':''}"
+      onclick="setYear('${yr}')">
+      ${d.label}${!d.complete?' (Current)':''}
+    </button>
+  `).join('');
+}
+
+function setYear(yr) {
+  activeYear = yr;
+  renderYearTabs();
+  renderHero();
+  renderContext();
+  renderMetrics();
+}
+
+function renderHero() {
+  const el = document.getElementById('dmiHero');
+  const yr  = DMI_DATA.years[activeYear];
+  const dmi = DMI_DATA.dmi_scores[activeYear];
+  const prev_yr = activeYear === '24-25' ? '23-24' : activeYear === '25-26' ? '24-25' : null;
+  const prev_dmi = prev_yr ? DMI_DATA.dmi_scores[prev_yr] : null;
+
+  // Current year score
+  const hasDmi = !!dmi;
+  const score  = hasDmi ? dmi.total : null;
+  const tier   = tierInfo(score, !hasDmi || (activeYear==='23-24'), dmi?.subset);
+  const isMidYear = hasDmi && dmi.mid_year;
+
+  // Prior year score
+  const prevScore = prev_dmi ? prev_dmi.total : null;
+  const change    = (score !== null && prevScore !== null) ? score - prevScore : null;
+
+  // Dec checkpoint (for current year)
+  const decScore = activeYear === '25-26' ? 5 : null;
+
+  // Cards
+  const cards = [];
+
+  // Main DMI score card
+  if (activeYear === '23-24') {
+    // 23-24 is the baseline year — no prior year to compare
+    cards.push(`
+      <div class="dmi-score-card primary" style="--bar-color:var(--dim)">
+        <div class="score-label">DMI Score · ${yr.label}</div>
+        <div class="score-number" style="color:var(--dim)">—<span class="score-denom">/12</span></div>
+        <span class="score-tier tier-pending">Baseline Year</span>
+        <div class="score-change" style="margin-top:16px;font-size:12px;color:var(--dim)">
+          This is the reference year.<br>DMI measures improvement over 2023–24.
+        </div>
+      </div>
+    `);
+  } else {
+    // YTD year — show out of 11
+    const denomLabel = dmi?.subset === 'ytd' ? '/11' : '/9';
+    cards.push(`
+      <div class="dmi-score-card primary" style="--bar-color:${tier.barColor}">
+        <div class="score-label">DMI Score · ${yr.label}${isMidYear?' (Mid-Year)':''}</div>
+        <div class="score-number">${score}<span class="score-denom">${denomLabel}</span></div>
+        <span class="score-tier ${tier.cls}">${tier.label}</span>
+        ${change!==null ? `<div class="score-change ${change>0?'up':change<0?'down':''}">
+          ${change>0?'▲':change<0?'▼':'='} ${Math.abs(change)} vs ${DMI_DATA.years[prev_yr].label}
+        </div>` : ''}
+        ${isMidYear?`<div class="score-change" style="margin-top:8px;font-size:11px">Based on December 31 data · Year in progress</div>`:''}
+      </div>
+    `);
+  }
+
+  // Dec checkpoint card
+  if (activeYear === '25-26') {
+    cards.push(`
+      <div class="dmi-score-card" style="--bar-color:var(--builder)">
+        <div class="score-label">Dec 31 Checkpoint</div>
+        <div class="score-number">${decScore}<span class="score-denom">/9</span></div>
+        <span class="score-tier ${tierInfo(decScore, false, 'dec').cls}">${tierInfo(decScore, false, 'dec').label}</span>
+        <div class="score-change" style="margin-top:12px;font-size:11px;color:var(--dim)">
+          8 metrics pending end-of-year data
+        </div>
+      </div>
+    `);
+  } else if (activeYear === '24-25') {
+    // Show Dec checkpoint for 24-25 too
+    cards.push(`
+      <div class="dmi-score-card" style="--bar-color:var(--dim)">
+        <div class="score-label">Dec 31 Checkpoint · 24-25</div>
+        <div class="score-number">6<span class="score-denom">/9</span></div>
+        <span class="score-tier ${tierInfo(6, false, 'dec').cls}">Builder pace at Dec</span>
+        <div class="score-change" style="margin-top:12px;font-size:11px;color:var(--dim)">
+          Finished 9/11 by year-end — Momentum Leader
+        </div>
+      </div>
+    `);
+  } else {
+    cards.push(`
+      <div class="dmi-score-card" style="--bar-color:var(--dim)">
+        <div class="score-label">DMI Threshold Guide</div>
+        <div style="margin-top:16px">
+          ${[
+            ['Dec 31 (9 metrics)', null, null],
+            ['Champion','#6b829a','n/a'],
+            ['Leader','#4cb8ff','7–8'],
+            ['Builder','#7dd87d','5–6'],
+            ['Jun 30 (10 metrics)', null, null],
+            ['Champion','#f5c842','10'],
+            ['Leader','#4cb8ff','8–9'],
+            ['Builder','#7dd87d','6–7'],
+          ].map(([t,c,v])=> c ? `
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="width:6px;height:6px;border-radius:50%;background:${c}"></div>
+                <span style="color:var(--white)">${t}</span>
+              </div>
+              <span style="font-family:'DM Mono',monospace;color:var(--dim)">${v}</span>
+            </div>
+          ` : `<div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);padding:8px 0 4px;font-family:'DM Mono',monospace">${t}</div>`
+          ).join('')}
+        </div>
+      </div>
+    `);
+  }
+
+  // Trend mini-card
+  const allScores = [
+    { yr:'23-24', label:'23-24', score: null, note:'Baseline' },
+    { yr:'24-25', label:'24-25', score: DMI_DATA.dmi_scores['24-25']?.total },
+    { yr:'25-26', label:'25-26', score: DMI_DATA.dmi_scores['25-26']?.total, mid:true },
+  ];
+  cards.push(`
+    <div class="dmi-score-card" style="--bar-color:var(--accent)">
+      <div class="score-label">3-Year Trend</div>
+      <div style="margin-top:12px">
+        ${allScores.map(s=>`
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+            <div>
+              <div style="font-size:12px;color:var(--white);font-family:'DM Mono',monospace">${s.label}</div>
+              ${s.mid?`<div style="font-size:10px;color:var(--dim)">mid-year</div>`:''}
+            </div>
+            ${s.score !== null && s.score !== undefined ? `
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="width:${(s.score/12)*80}px;height:4px;background:${s.score>=10?'var(--leader)':s.score>=7?'var(--builder)':'var(--dim)'};border-radius:2px;transition:width .4s"></div>
+                <span style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--white)">${s.score}</span>
+              </div>
+            ` : `<span style="color:var(--dim);font-size:12px">${s.note||'—'}</span>`}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `);
+
+  el.innerHTML = cards.join('');
+}
+
+function renderContext() {
+  const el  = document.getElementById('contextStrip');
+  const ctx = DMI_DATA.years[activeYear].context;
+
+  const distStatusColor = ctx.dist_status === 'Presidents Distinguished' ? 'var(--champion)'
+                        : ctx.dist_status === 'Select Distinguished'     ? 'var(--leader)'
+                        : ctx.dist_status === 'Distinguished'   ? 'var(--builder)'
+                        : ctx.dist_status === 'In Progress'     ? 'var(--dim)'
+                        : 'var(--red)';
+
+  const paidClubs = ctx.paid_clubs_jun ?? ctx.paid_clubs_dec ?? '—';
+  const paidSub   = ctx.paid_clubs_jun ? 'Jun 30 active+low' : ctx.paid_clubs_dec ? 'Dec 31 (mid-year)' : '';
+
+  el.innerHTML = `
+    <div class="ctx-card">
+      <div class="ctx-label">Club Base</div>
+      <div class="ctx-value">${fmtInt(ctx.club_base)}</div>
+      <div class="ctx-sub">Jul 1 active+low clubs</div>
+    </div>
+    <div class="ctx-card">
+      <div class="ctx-label">Paid Clubs</div>
+      <div class="ctx-value">${fmtInt(paidClubs)}</div>
+      <div class="ctx-sub">${paidSub}</div>
+    </div>
+    <div class="ctx-card">
+      <div class="ctx-label">Payment Base</div>
+      <div class="ctx-value">${fmtInt(ctx.payment_base)}</div>
+      <div class="ctx-sub">Prior year members</div>
+    </div>
+    <div class="ctx-card">
+      <div class="ctx-label">Membership Payments</div>
+      <div class="ctx-value">${fmtInt(ctx.membership_payments)}</div>
+      <div class="ctx-sub">Members paid Jun 30</div>
+    </div>
+    <div class="ctx-card">
+      <div class="ctx-label">Distinguished Clubs</div>
+      <div class="ctx-value">${fmtInt(ctx.dist_clubs)}</div>
+      <div class="ctx-sub">5+ DCP goals at Jun 30</div>
+    </div>
+    <div class="ctx-card">
+      <div class="ctx-label">Distinguished Status</div>
+      <div class="ctx-value" style="font-size:16px;color:${distStatusColor};font-family:'DM Sans',sans-serif;font-weight:500;padding-top:4px">
+        ${ctx.dist_status || '—'}
+      </div>
+      <div class="ctx-sub">District achievement</div>
+    </div>
+  `;
+}
+
+function renderMetrics() {
+  const el  = document.getElementById('metricsTable');
+  const yr  = DMI_DATA.years[activeYear];
+  const dmi = DMI_DATA.dmi_scores[activeYear];
+
+  // Determine prev / selected / next year keys
+  const yearKeys  = Object.keys(DMI_DATA.years);          // ['23-24','24-25','25-26']
+  const selIdx    = yearKeys.indexOf(activeYear);
+  const prevKey   = selIdx > 0 ? yearKeys[selIdx - 1] : null;
+  const nextKey   = selIdx < yearKeys.length - 1 ? yearKeys[selIdx + 1] : null;
+
+  const prevYr    = prevKey ? DMI_DATA.years[prevKey] : null;
+  const nextYr    = nextKey ? DMI_DATA.years[nextKey] : null;
+  const nextDmi   = nextKey ? DMI_DATA.dmi_scores[nextKey] : null;
+
+  // Short display labels  e.g. "23–24"
+  const labelOf = (key) => key ? DMI_DATA.years[key].label : null;
+  const prevLbl = labelOf(prevKey) || '—';
+  const selLbl  = labelOf(activeYear);
+  const nextLbl = labelOf(nextKey) || '—';
+
+  // Score cell: show ✓/✗ only for metrics included in this year's DMI subset
+  // null = metric not counted in this year's total (show as ·)
+  const scoreCell = (key) => {
+    if (!dmi) return `<div class="col-score na">—</div>`;
+    const v = dmi.scores[key];
+    if (v === null || v === undefined) return `<div class="col-score na" title="Not counted / Pending">·</div>`;
+    return `<div class="col-score ${v?'pass':'fail'}">${v?'✓':'✗'}</div>`;
+  };
+
+  // Data shortcuts
+  const pp = prevYr;   // previous year data
+  const cy = yr;       // selected (current tab) year data
+  const ny = nextYr;   // next year data
+
+  const headerRow = `
+    <div class="metric-row header-row">
+      <div class="col-dmi">#</div>
+      <div class="col-name">Metric</div>
+      <div class="col-prev">${prevKey ? prevLbl : ''}</div>
+      <div class="col-curr">${selLbl}</div>
+      <div class="col-next">${nextKey ? nextLbl : ''}</div>
+      <div class="col-score" style="color:var(--dim);font-size:10px;text-align:center">▲▼</div>
+    </div>`;
+
+  // row: prevVal = prior year, selVal = selected year, nextVal = next year
+  // DMI score shown is always: did selVal improve over prevVal?
+  // (When viewing 23-24 there's no prior, so score is blank)
+  const row = (dmiKey, name, sub, prevVal, selVal, nextVal, key, isPercent=false, decimals=1) => {
+    const fv = (v) => (v !== null && v !== undefined) ? fmt(v, decimals, isPercent) : '—';
+
+    // Color for selected year: green if improved over prev, red if declined
+    const selColor = (selVal !== null && selVal !== undefined && prevVal !== null && prevVal !== undefined)
+      ? (selVal >= prevVal ? 'var(--green)' : 'var(--red)')
+      : 'var(--white)';
+
+    // Color for next year: green if improved over selected, red if declined
+    const nextColor = (nextVal !== null && nextVal !== undefined && selVal !== null && selVal !== undefined)
+      ? (nextVal >= selVal ? 'var(--green)' : 'var(--red)')
+      : 'var(--dim)';
+
+    return `
+    <div class="metric-row">
+      <div class="col-dmi">${dmiKey}</div>
+      <div class="col-name">${name}${sub?`<small>${sub}</small>`:''}</div>
+      <div class="col-prev">${fv(prevVal)}</div>
+      <div class="col-curr" style="color:${selColor}">${fv(selVal)}</div>
+      <div class="col-next" style="color:${nextColor}">${fv(nextVal)}</div>
+      ${scoreCell(key)}
+    </div>`;
+  };
+
+  el.innerHTML = `
+    <div style="font-size:11px;color:var(--dim);margin-bottom:12px;font-family:'DM Mono',monospace;padding-left:4px">
+      DMI score (▲▼) reflects improvement of <span style="color:var(--white)">${selLbl}</span>
+      ${prevKey ? `over ${prevLbl}` : '— baseline year, no prior comparison'}
+    </div>
+
+    ${headerRow}
+
+    <div class="metrics-category" style="margin-top:20px">Club Health</div>
+    ${row('1','Oct Renewals','% of member dues paid in October',
+      pp?.jun?.oct_ren_pct,
+      cy.jun?.oct_ren_pct ?? cy.dec?.oct_ren_pct,
+      ny?.jun?.oct_ren_pct ?? ny?.dec?.oct_ren_pct,
+      '1_oct_ren', true)}
+    ${row('2','Apr Renewals','% of member dues paid in April',
+      pp?.jun?.apr_ren_pct,
+      cy.jun?.apr_ren_pct,
+      ny?.jun?.apr_ren_pct,
+      '2_apr_ren', true)}
+    ${row('3a','20+ Member Clubs · Dec 31','% of paid clubs with 20+ active members',
+      pp?.dec?.clubs_20plus_pct,
+      cy.dec?.clubs_20plus_pct,
+      ny?.dec?.clubs_20plus_pct,
+      '3a_20plus_dec', true)}
+    ${row('3b','20+ Member Clubs · Jun 30','% of paid clubs with 20+ active members',
+      pp?.jun?.clubs_20plus_pct,
+      cy.jun?.clubs_20plus_pct,
+      ny?.jun?.clubs_20plus_pct,
+      '3b_20plus_jun', true)}
+
+    <div class="metrics-category" style="margin-top:20px">Club Excellence</div>
+    ${row('4','Officers Trained · Round 1','% of clubs with 4+ officers trained (Oct)',
+      pp?.dec?.off_r1_pct,
+      cy.dec?.off_r1_pct,
+      ny?.dec?.off_r1_pct,
+      '4_off_r1', true)}
+    ${row('5','Officers Trained · Round 2','% of clubs with 4+ officers trained (May)',
+      pp?.jun?.off_r2_pct,
+      cy.jun?.off_r2_pct,
+      ny?.jun?.off_r2_pct,
+      '5_off_r2', true)}
+    ${row('6a','Level 1 per Club · Dec 31','Pathways Level 1 completions per paid club',
+      pp?.dec?.level1_per_club,
+      cy.dec?.level1_per_club,
+      ny?.dec?.level1_per_club,
+      '6a_l1_dec', false, 3)}
+    ${row('6b','Level 1 per Club · YTD','Pathways Level 1 completions per paid club',
+      pp?.jun?.level1_per_club,
+      cy.jun?.level1_per_club,
+      ny?.jun?.level1_per_club,
+      '6b_l1_ytd', false, 3)}
+    ${row('7a','Levels 2-5 / DTM per Club · Dec 31','Higher education completions per paid club',
+      pp?.dec?.higher_per_club,
+      cy.dec?.higher_per_club,
+      ny?.dec?.higher_per_club,
+      '7a_higher_dec', false, 3)}
+    ${row('7b','Levels 2-5 / DTM per Club · YTD','Higher education completions per paid club',
+      pp?.jun?.higher_per_club,
+      cy.jun?.higher_per_club,
+      ny?.jun?.higher_per_club,
+      '7b_higher_ytd', false, 3)}
+    ${row('8','Early Distinguished · Dec 31','% of clubs: 20+ members AND 5+ DCP goals',
+      pp?.dec?.early_dist_pct,
+      cy.dec?.early_dist_pct,
+      ny?.dec?.early_dist_pct,
+      '8_early_dist', true)}
+
+    <div class="metrics-category" style="margin-top:20px">Growth</div>
+    ${row('9a','New Clubs Chartered · Dec 31','% of club base chartered this year',
+      pp?.dec?.new_clubs_pct,
+      cy.dec?.new_clubs_pct,
+      ny?.dec?.new_clubs_pct,
+      '9a_new_clubs_dec', true, 2)}
+    ${row('9b','New Clubs Chartered · YTD','% of club base chartered this year',
+      pp?.jun?.new_clubs_pct,
+      cy.jun?.new_clubs_pct,
+      ny?.jun?.new_clubs_pct,
+      '9b_new_clubs_ytd', true, 2)}
+    ${row('10a','New Members per Club · Dec 31','New member additions per paid club',
+      pp?.dec?.new_members_per_club,
+      cy.dec?.new_members_per_club,
+      ny?.dec?.new_members_per_club,
+      '10a_new_mem_dec', false, 2)}
+    ${row('10b','New Members per Club · YTD','New member additions per paid club',
+      pp?.jun?.new_members_per_club,
+      cy.jun?.new_members_per_club,
+      ny?.jun?.new_members_per_club,
+      '10b_new_mem_ytd', false, 2)}
+    ${row('11','Smedley Award %','% of clubs with 25+ members and 10 DCP goals',
+      pp?.jun?.smedley_pct,
+      cy.jun?.smedley_pct,
+      ny?.jun?.smedley_pct,
+      '11_smedley', true, 2)}
+    ${row('12','Talk Up Toastmasters %','Campaign participation (manual entry)',
+      pp?.jun?.talk_up_pct,
+      cy.jun?.talk_up_pct,
+      ny?.jun?.talk_up_pct,
+      '12_talk_up', true, 2)}
+  `;
+}
+
+// ─────────────────────────────────────────────
+// TREND CHART
+// ─────────────────────────────────────────────
+function renderChart() {
+  const ctx = document.getElementById('trendChart').getContext('2d');
+
+  const labels = ['2023–24', '2024–25', '2025–26 (Mid)'];
+  const scores = [null, 9, 5];
+  const thresholds = {
+    champion: [null, 10, null],   // YTD only, n/a for baseline and mid-year
+    leader:   [null, 8,  7],      // YTD=8, Dec=7
+    builder:  [null, 6,  5],      // YTD=6, Dec=5
+  };
+
+  Chart.defaults.color = '#6b829a';
+  Chart.defaults.font.family = "'DM Mono', monospace";
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'DMI Score',
+          data: scores,
+          borderColor: '#e8a020',
+          backgroundColor: 'rgba(232,160,32,0.08)',
+          pointBackgroundColor: scores.map((s,i) =>
+            i===2 ? '#6b829a' : s>=12?'#f5c842':s>=10?'#4cb8ff':s>=7?'#7dd87d':'#e85555'),
+          pointBorderColor: '#0a1628',
+          pointRadius: 7,
+          pointHoverRadius: 9,
+          borderWidth: 2.5,
+          tension: 0.35,
+          fill: true,
+          spanGaps: false,
+        },
+        {
+          label: 'Champion (YTD: 10)',
+          data: thresholds.champion,
+          borderColor: 'rgba(245,200,66,0.2)',
+          borderDash: [4,4], borderWidth: 1, pointRadius: 0, fill: false,
+        },
+        {
+          label: 'Leader (YTD: 8 · Dec: 7)',
+          data: thresholds.leader,
+          borderColor: 'rgba(76,184,255,0.2)',
+          borderDash: [4,4], borderWidth: 1, pointRadius: 0, fill: false,
+        },
+        {
+          label: 'Builder (YTD: 6 · Dec: 5)',
+          data: thresholds.builder,
+          borderColor: 'rgba(125,216,125,0.2)',
+          borderDash: [4,4], borderWidth: 1, pointRadius: 0, fill: false,
+        },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => ctx.datasetIndex===0
+              ? ` DMI: ${ctx.raw ?? 'Baseline'}`
+              : ` ${ctx.dataset.label}`,
+          }
+        }
+      },
+      scales: {
+        y: {
+          min: 0, max: 13,
+          ticks: { stepSize: 2, color: '#6b829a', font: { size: 11 } },
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          border: { display: false },
+        },
+        x: {
+          ticks: { color: '#6b829a', font: { size: 11 } },
+          grid: { display: false },
+          border: { display: false },
+        }
+      }
+    }
+  });
+}
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  // Set as-of date
+  const asOf = DMI_DATA.years[activeYear].asOf || 'June 30, 2025';
+  document.getElementById('asOfDate').textContent =
+    activeYear === '25-26' ? 'December 31, 2025' :
+    activeYear === '24-25' ? 'June 30, 2025' : 'June 30, 2024';
+
+  renderYearTabs();
+  renderHero();
+  renderContext();
+  renderMetrics();
+
+  setTimeout(() => {
+    renderChart();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+  }, 1200);
+});
+</script>
+</body>
+</html>
