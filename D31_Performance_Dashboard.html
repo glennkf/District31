@@ -370,7 +370,39 @@
     pointer-events: none;
   }
 
-  /* ── Snapshot history ── */
+  /* ── Distinguished tab sections ── */
+  .dist-section-heading {
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--text);
+    margin: 28px 0 6px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .dist-section-heading:first-of-type { margin-top: 0; }
+  .dist-section-sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+
+  /* ── Gap chips ── */
+  .gap-chip {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: var(--mono);
+    white-space: nowrap;
+    margin: 1px 2px;
+  }
+  .gap-goals  { background: rgba(248,81,73,0.12);  color: #f85149; }
+  .gap-mem    { background: rgba(210,153,34,0.12);  color: #d29922; }
+  .gap-csp    { background: rgba(248,81,73,0.18);   color: #ff8080; border: 1px solid rgba(248,81,73,0.3); }
+  .gap-ok     { background: rgba(63,185,80,0.12);   color: var(--green); }
+  .gap-inelig { background: rgba(139,148,158,0.12); color: var(--muted); }
+
+  /* ── Club perf status strip ── */
+  .cp-loaded { font-size: 11px; color: var(--green); font-family: var(--mono); margin-left: 8px; }
+  .cp-missing { font-size: 11px; color: var(--yellow); font-family: var(--mono); margin-left: 8px; }
   .snapshot-list { display: flex; flex-direction: column; gap: 8px; }
   .snapshot-item {
     background: var(--surface2);
@@ -726,6 +758,7 @@
   <div class="tab active" data-view="summary">District Summary</div>
   <div class="tab" data-view="division">Division View</div>
   <div class="tab" data-view="area">Area View</div>
+  <div class="tab" data-view="distinguished">Distinguished</div>
   <div class="tab" data-view="trend">Trend &amp; History</div>
 </div>
 
@@ -868,6 +901,89 @@
   </div>
 
   <!-- ═══════════════════════════════════════════════
+       VIEW 5 — DISTINGUISHED
+  ════════════════════════════════════════════════ -->
+  <div class="view" id="view-distinguished">
+    <div class="section-title">Distinguished Club Tracker</div>
+    <div class="section-sub" id="dist-view-sub">Tracks Distinguished status using Club Performance data (CSP, membership base, net growth) joined with Division Performance goals.</div>
+
+    <!-- KPI cards -->
+    <div class="kpi-grid" id="dist-kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:28px">
+      <div class="kpi" style="--kpi-color:#ffd700"><div class="kpi-label">Smedley Dist.</div><div class="kpi-value" id="dist-kpi-smedley">—</div><div class="kpi-sub">10 goals · 25+ members</div></div>
+      <div class="kpi" style="--kpi-color:#a371f7"><div class="kpi-label">Pres. Distinguished</div><div class="kpi-value" id="dist-kpi-pres">—</div><div class="kpi-sub">9 goals · 20+ members</div></div>
+      <div class="kpi" style="--kpi-color:#e8a44a"><div class="kpi-label">Select Distinguished</div><div class="kpi-value" id="dist-kpi-select">—</div><div class="kpi-sub">7–8 goals · mem threshold</div></div>
+      <div class="kpi" style="--kpi-color:#3fb950"><div class="kpi-label">Distinguished</div><div class="kpi-value" id="dist-kpi-dist">—</div><div class="kpi-sub">5–6 goals · mem threshold</div></div>
+      <div class="kpi" style="--kpi-color:#5b9cf6"><div class="kpi-label">Almost There</div><div class="kpi-value" id="dist-kpi-almost">—</div><div class="kpi-sub">CSP ✓ · needs goals/mem</div></div>
+      <div class="kpi" style="--kpi-color:#8b949e"><div class="kpi-label">Ineligible (CSP)</div><div class="kpi-value" id="dist-kpi-inelig">—</div><div class="kpi-sub">CSP not submitted</div></div>
+    </div>
+
+    <div id="dist-no-cp" class="alert" style="display:none">
+      <span class="alert-icon">⚠️</span>
+      <span>No Club Performance data loaded yet. Add Club_Performance CSV files to the GitHub manifest to enable full Distinguished tracking. Distinguished tiers below are estimated from goals only.</span>
+    </div>
+
+    <!-- Section 1: Already Distinguished -->
+    <div class="dist-section-heading">🏆 Already Distinguished</div>
+    <div class="dist-section-sub">Clubs that fully meet all criteria — goals, membership, and CSP submitted by Sep 30.</div>
+
+    <div class="card wide-card">
+      <div class="card-title">Smedley Distinguished — 10 goals &amp; 25+ members &amp; CSP</div>
+      <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>CSP</th></tr></thead>
+      <tbody id="dist-body-smedley"></tbody></table></div>
+    </div>
+
+    <div class="card wide-card">
+      <div class="card-title">President's Distinguished — 9 goals &amp; 20+ members &amp; CSP</div>
+      <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>CSP</th></tr></thead>
+      <tbody id="dist-body-pres"></tbody></table></div>
+    </div>
+
+    <div class="card wide-card">
+      <div class="card-title">Select Distinguished — 7–8 goals &amp; (20+ members or net growth ≥ 5) &amp; CSP</div>
+      <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>CSP</th></tr></thead>
+      <tbody id="dist-body-select"></tbody></table></div>
+    </div>
+
+    <div class="card wide-card">
+      <div class="card-title">Distinguished — 5–6 goals &amp; (20+ members or net growth ≥ 3) &amp; CSP</div>
+      <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>CSP</th></tr></thead>
+      <tbody id="dist-body-dist"></tbody></table></div>
+    </div>
+
+    <!-- Section 2: Almost Distinguished -->
+    <div class="dist-section-heading">🎯 Almost Distinguished <span style="font-family:var(--sans);font-size:13px;color:var(--muted);font-weight:400">(CSP submitted · still needs goals or membership)</span></div>
+    <div class="dist-section-sub">These clubs have submitted their CSP and are within reach. Each row shows exactly what's still needed.</div>
+
+    <div class="card wide-card">
+      <div class="card-title">Just Need Goals — membership threshold met, 3–4 goals</div>
+      <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>What's Needed</th></tr></thead>
+      <tbody id="dist-body-need-goals"></tbody></table></div>
+    </div>
+
+    <div class="card wide-card">
+      <div class="card-title">Just Need Members — 4+ goals, membership threshold not met</div>
+      <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>What's Needed</th></tr></thead>
+      <tbody id="dist-body-need-mem"></tbody></table></div>
+    </div>
+
+    <div class="card wide-card">
+      <div class="card-title">Needs Both — 3 goals &amp; membership threshold not met</div>
+      <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>What's Needed</th></tr></thead>
+      <tbody id="dist-body-need-both"></tbody></table></div>
+    </div>
+
+    <!-- Section 3: Ineligible -->
+    <div class="dist-section-heading">🚫 Ineligible — CSP Not Submitted</div>
+    <div class="dist-section-sub">These clubs did not submit their Club Success Plan by Sep 30 and cannot achieve Distinguished status this season. Shown for coaching awareness — ensure they submit early next year.</div>
+
+    <div class="card wide-card">
+      <div class="card-title">Would Otherwise Qualify or Be Close — but blocked by missing CSP</div>
+      <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>Would Need (excl. CSP)</th></tr></thead>
+      <tbody id="dist-body-inelig"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
        VIEW 4 — TREND & HISTORY
   ════════════════════════════════════════════════ -->
   <div class="view" id="view-trend">
@@ -911,6 +1027,7 @@
 // STATE
 // ══════════════════════════════════════════════
 let allRows = [];
+let clubPerfRows = []; // Latest Club Performance CSV rows, keyed by Club Number
 let snapshots = JSON.parse(localStorage.getItem('d31_snapshots') || '[]');
 
 // ══════════════════════════════════════════════
@@ -980,11 +1097,40 @@ function extractDateFromText(text) {
   return m2 ? m2[1] : null;
 }
 
+function isClubPerfText(text) {
+  // Club Performance CSVs have 'Mem. Base' and 'CSP' columns; Division Performance does not
+  const firstLine = text.split('\n')[0] || '';
+  return firstLine.includes('Mem. Base') || firstLine.includes('CSP');
+}
+
 function processAllTexts(texts, total) {
   const status = document.getElementById('upload-status');
 
-  // Step 1: Parse all file contents into rows + date
-  const parsed = texts.map(text => {
+  // Separate Club Performance from Division Performance files
+  const divTexts = texts.filter(t => !isClubPerfText(t));
+  const cpTexts  = texts.filter(t =>  isClubPerfText(t));
+
+  // Process Club Performance — keep only the latest (highest date)
+  if (cpTexts.length > 0) {
+    const cpParsed = cpTexts.map(text => {
+      const dateStr = extractDateFromText(text);
+      const dateObj = dateStr ? parseSnapDate(dateStr) : new Date(0);
+      return { text, dateStr, dateObj };
+    }).sort((a, b) => b.dateObj - a.dateObj);
+    const latestCP = parseRowsFromText(cpParsed[0].text);
+    clubPerfRows = latestCP;
+    try { localStorage.setItem('d31_cp_rows', JSON.stringify(latestCP)); } catch(e) {}
+  }
+
+  if (divTexts.length === 0) {
+    // Only CP files uploaded — still re-render
+    renderAll();
+    status.textContent = `✓ Loaded ${cpTexts.length} Club Performance file${cpTexts.length !== 1 ? 's' : ''}`;
+    return;
+  }
+
+  // Step 1: Parse all Division Performance file contents into rows + date
+  const parsed = divTexts.map(text => {
     const dateStr = extractDateFromText(text);
     const dateObj = dateStr ? parseSnapDate(dateStr) : new Date(0);
     return { text, dateStr, dateObj };
@@ -998,14 +1144,11 @@ function processAllTexts(texts, total) {
   const newCount = snapshots.length - countBefore;
 
   // Step 3: Live view = latest snapshot across ALL saved snapshots (not just this batch)
-  // Find the snapshot with the latest date, then find its matching rows from the batch
-  // or fall back to existing allRows if the latest snapshot predates this batch
   const latestDateLabel = latestSnapshotDate();
   const latestParsed = parsed
     .filter(p => p.dateStr)
-    .sort((a, b) => b.dateObj - a.dateObj)[0]; // newest in this batch
+    .sort((a, b) => b.dateObj - a.dateObj)[0];
 
-  // Use latest from batch only if it matches the overall latest snapshot date
   if (latestParsed && latestParsed.dateStr === latestDateLabel) {
     const latestRows = parseRowsFromText(latestParsed.text);
     allRows = latestRows;
@@ -1014,14 +1157,13 @@ function processAllTexts(texts, total) {
       localStorage.setItem('d31_latest_date', latestParsed.dateStr);
     } catch(e) { console.warn('localStorage quota exceeded:', e); }
   }
-  // If the overall latest snapshot is older than what was previously loaded
-  // (e.g. March was already loaded, now July-Feb batch added), keep existing allRows
 
   document.getElementById('data-date').textContent = latestDateLabel || '—';
   renderAll();
   updateBanner(latestDateLabel || '—');
 
-  status.textContent = `✓ Loaded ${total} files · ${newCount} new snapshot${newCount !== 1 ? 's' : ''} saved`;
+  const cpNote = cpTexts.length > 0 ? ` + ${cpTexts.length} Club Performance` : '';
+  status.textContent = `✓ Loaded ${divTexts.length} Division Performance${cpNote} · ${newCount} new snapshot${newCount !== 1 ? 's' : ''} saved`;
   renderTrendCharts();
 }
 
@@ -1061,7 +1203,16 @@ function readCSV(file, manualDate) {
 // CSV PARSE
 // ══════════════════════════════════════════════
 function parseCSV(text, manualDate) {
-  // Single-file upload path — always sets the live view
+  // Route Club Performance files separately
+  if (isClubPerfText(text)) {
+    clubPerfRows = parseRowsFromText(text);
+    try { localStorage.setItem('d31_cp_rows', JSON.stringify(clubPerfRows)); } catch(e) {}
+    renderAll();
+    document.getElementById('upload-status').textContent = '✓ Club Performance data loaded';
+    return;
+  }
+
+  // Single Division Performance file upload path — always sets the live view
   const rows = parseRowsFromText(text);
 
   // Resolve the snapshot date label
@@ -1077,10 +1228,8 @@ function parseCSV(text, manualDate) {
   const saved = saveSnapshotFromRows(rows, dataDate, false);
 
   // Always set live view to the latest snapshot across ALL snapshots
-  // For a single file upload, if this file is newer than what's already loaded, use it
-  // If it's older, keep existing allRows but still update the display date
   const overallLatestDate = latestSnapshotDate();
-  const thisFileIsLatest = !overallLatestDate || 
+  const thisFileIsLatest = !overallLatestDate ||
     parseSnapDate(dataDate) >= parseSnapDate(overallLatestDate);
 
   if (thisFileIsLatest) {
@@ -1103,6 +1252,77 @@ function parseCSV(text, manualDate) {
 }
 
 // ══════════════════════════════════════════════
+// CLUB PERFORMANCE HELPERS
+// ══════════════════════════════════════════════
+
+// Build a lookup map from Club Number → CP row
+function buildCPMap() {
+  const map = {};
+  clubPerfRows.forEach(r => {
+    const num = (r['Club Number'] || r['Club'] || '').trim();
+    if (num) map[num] = r;
+  });
+  return map;
+}
+
+// Get CP data for a Division Performance row (join on Club Number)
+function getCPData(divRow, cpMap) {
+  const num = (divRow['Club'] || '').trim();
+  return cpMap[num] || null;
+}
+
+// Membership threshold check for a given tier
+// Returns { met: bool, reason: string }
+function memThresholdMet(cp, tier) {
+  if (!cp) return { met: false, reason: 'No CP data' };
+  const active = parseInt(cp['Active Members']) || 0;
+  const netGrowth = parseInt(cp['Net Growth']) || 0;
+  if (tier === 'smedley') {
+    return active >= 25
+      ? { met: true, reason: `${active} members` }
+      : { met: false, reason: `needs ${25 - active} more members (has ${active})` };
+  }
+  if (tier === 'pres') {
+    return active >= 20
+      ? { met: true, reason: `${active} members` }
+      : { met: false, reason: `needs ${20 - active} more members (has ${active})` };
+  }
+  if (tier === 'select') {
+    if (active >= 20) return { met: true, reason: `${active} members` };
+    if (netGrowth >= 5) return { met: true, reason: `net growth ${netGrowth}` };
+    const memGap = 20 - active;
+    const growthGap = 5 - netGrowth;
+    return { met: false, reason: `needs ${memGap} more members OR ${growthGap} more net growth` };
+  }
+  // distinguished
+  if (active >= 20) return { met: true, reason: `${active} members` };
+  if (netGrowth >= 3) return { met: true, reason: `net growth ${netGrowth}` };
+  const memGap = 20 - active;
+  const growthGap = 3 - netGrowth;
+  return { met: false, reason: `needs ${memGap} more members OR ${growthGap} more net growth` };
+}
+
+// Full Distinguished qualification check
+function distQualification(divRow, cpMap) {
+  const g = goals(divRow);
+  const cp = getCPData(divRow, cpMap);
+  const csp = cp ? (cp['CSP'] || '').toUpperCase() === 'Y' : null;
+  const active = cp ? (parseInt(cp['Active Members']) || 0) : members(divRow);
+  const netGrowth = cp ? (parseInt(cp['Net Growth']) || 0) : 0;
+
+  // Determine which tier they qualify for on goals alone
+  let goalTier = null;
+  if (g >= 10) goalTier = 'smedley';
+  else if (g >= 9) goalTier = 'pres';
+  else if (g >= 7) goalTier = 'select';
+  else if (g >= 5) goalTier = 'dist';
+
+  const mem = goalTier ? memThresholdMet(cp, goalTier) : null;
+
+  return { g, cp, csp, active, netGrowth, goalTier, mem };
+}
+
+// ══════════════════════════════════════════════
 // HELPERS
 // ══════════════════════════════════════════════
 function isActive(r) {
@@ -1113,7 +1333,27 @@ function isActive(r) {
 function isSuspended(r) { return (r['Charter Date/Suspend Date'] || '').includes('Susp'); }
 function goals(r) { return parseInt(r['Club Goals Met']) || 0; }
 function members(r) { return parseInt(r['Membership to date']) || 0; }
-function goalStatus(g, mem) {
+function goalStatus(g, mem, cp, cpMap) {
+  // If we have CP data, use proper qualification logic
+  if (cp !== undefined && cpMap !== undefined) {
+    const csp = cp ? (cp['CSP'] || '').toUpperCase() === 'Y' : false;
+    if (!csp) {
+      // CSP not submitted — can't be distinguished
+      if (g >= 2) return { label: "Building", cls: "badge badge-yellow" };
+      return { label: "At Risk", cls: "badge badge-red" };
+    }
+    if (g >= 10 && cp && (parseInt(cp['Active Members'])||0) >= 25)
+      return { label: "Smedley Dist.", cls: "badge badge-smedley" };
+    if (g >= 9 && cp && (parseInt(cp['Active Members'])||0) >= 20)
+      return { label: "Pres. Dist.", cls: "badge", style: "background:rgba(163,113,247,0.15);color:#a371f7" };
+    if (g >= 7 && memThresholdMet(cp, 'select').met)
+      return { label: "Select Dist.", cls: "badge badge-orange" };
+    if (g >= 5 && memThresholdMet(cp, 'dist').met)
+      return { label: "Distinguished", cls: "badge badge-green" };
+    if (g >= 2) return { label: "Building", cls: "badge badge-yellow" };
+    return { label: "At Risk", cls: "badge badge-red" };
+  }
+  // Fallback: goals + raw membership only (no CP data)
   if (g >= 10 && (mem || 0) >= 25) return { label: "Smedley Dist.", cls: "badge badge-smedley" };
   if (g >= 9) return { label: "Pres. Dist.", cls: "badge", style: "background:rgba(163,113,247,0.15);color:#a371f7" };
   if (g >= 7) return { label: "Select Dist.", cls: "badge badge-orange" };
@@ -1224,6 +1464,168 @@ function renderAll() {
   populateDivisionSelects();
   renderDivisionView();
   renderAreaView();
+  renderDistinguished();
+}
+
+// ══════════════════════════════════════════════
+// DISTINGUISHED VIEW
+// ══════════════════════════════════════════════
+function renderDistinguished() {
+  const active = allRows.filter(isActive);
+  const hasCPData = clubPerfRows.length > 0;
+  const cpMap = buildCPMap();
+
+  document.getElementById('dist-no-cp').style.display = hasCPData ? 'none' : 'flex';
+
+  // Helper to render a row in the "already distinguished" tables
+  function distRow(r, cp) {
+    const g = goals(r);
+    const activeMem = cp ? (parseInt(cp['Active Members']) || 0) : members(r);
+    const netG = cp ? (parseInt(cp['Net Growth']) || 0) : 0;
+    const csp = cp ? (cp['CSP'] || '').toUpperCase() : '?';
+    return `<tr>
+      <td style="font-weight:500">${r['Club Name'] || r['Club'] || '—'}</td>
+      <td><span class="badge badge-blue">${r['Division']}</span></td>
+      <td style="font-family:var(--mono)">${r['Area']}</td>
+      <td style="font-family:var(--mono);font-weight:600">${g}</td>
+      <td style="font-family:var(--mono)">${activeMem}</td>
+      <td style="font-family:var(--mono);color:${netG>0?'var(--green)':netG<0?'var(--red)':'var(--muted)'}">${netG>0?'+':''}${netG}</td>
+      <td><span class="badge ${csp==='Y'?'badge-green':'badge-red'}">${csp}</span></td>
+    </tr>`;
+  }
+
+  // Helper for "what's needed" gap chips
+  function gapChips(g, cp, forInelig) {
+    const chips = [];
+    const goalTarget = 5; // minimum for Distinguished
+    if (g < goalTarget) chips.push(`<span class="gap-chip gap-goals">+${goalTarget-g} goals</span>`);
+
+    if (cp) {
+      const mem = memThresholdMet(cp, 'dist');
+      if (!mem.met) chips.push(`<span class="gap-chip gap-mem">${mem.reason}</span>`);
+    }
+    if (!forInelig) {
+      // CSP already confirmed Y for almost-distinguished
+    } else {
+      chips.push(`<span class="gap-chip gap-csp">CSP not submitted</span>`);
+    }
+    return chips.length ? chips.join(' ') : '<span class="gap-chip gap-ok">✓ All met</span>';
+  }
+
+  // Categorise every active club
+  const smedley=[], pres=[], select=[], dist=[], needGoals=[], needMem=[], needBoth=[], inelig=[];
+
+  active.forEach(r => {
+    const g = goals(r);
+    const cp = getCPData(r, cpMap);
+    const csp = cp ? (cp['CSP'] || '').toUpperCase() === 'Y' : null;
+    const activeMem = cp ? (parseInt(cp['Active Members']) || 0) : members(r);
+    const netG = cp ? (parseInt(cp['Net Growth']) || 0) : 0;
+
+    // Already distinguished tiers (CSP required when CP data available)
+    const cspOk = !hasCPData || csp === true;
+
+    if (cspOk && g >= 10 && activeMem >= 25) { smedley.push(r); return; }
+    if (cspOk && g >= 9  && activeMem >= 20) { pres.push(r); return; }
+    if (cspOk && g >= 7  && (activeMem >= 20 || netG >= 5)) { select.push(r); return; }
+    if (cspOk && g >= 5  && (activeMem >= 20 || netG >= 3)) { dist.push(r); return; }
+
+    // Below Distinguished threshold — check almost categories
+    if (g < 3) return; // Not close enough to show
+
+    const memOk = hasCPData
+      ? (activeMem >= 20 || netG >= 3)
+      : (activeMem >= 20);
+
+    if (hasCPData && csp === false) {
+      // CSP not submitted — ineligible (only show 3+ goals clubs)
+      if (g >= 3) inelig.push(r);
+      return;
+    }
+
+    // CSP = Y (or no CP data) — categorise by what's missing
+    const goalsMet = g >= 5;
+    if (goalsMet && !memOk)    { needMem.push(r);   return; }
+    if (!goalsMet && memOk)    { needGoals.push(r);  return; }
+    if (!goalsMet && !memOk)   { needBoth.push(r);   return; }
+  });
+
+  // Sort helpers
+  const byGoalsDesc = (a, b) => goals(b) - goals(a);
+
+  // Render already distinguished tables
+  function renderDistTable(tbody, rows) {
+    const el = document.getElementById(tbody);
+    if (!rows.length) {
+      el.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:16px">No clubs in this tier yet</td></tr>`;
+      return;
+    }
+    el.innerHTML = [...rows].sort(byGoalsDesc).map(r => distRow(r, getCPData(r, cpMap))).join('');
+  }
+  renderDistTable('dist-body-smedley', smedley);
+  renderDistTable('dist-body-pres', pres);
+  renderDistTable('dist-body-select', select);
+  renderDistTable('dist-body-dist', dist);
+
+  // Helper for almost/inelig rows
+  function almostRow(r, cp, forInelig) {
+    const g = goals(r);
+    const activeMem = cp ? (parseInt(cp['Active Members']) || 0) : members(r);
+    const netG = cp ? (parseInt(cp['Net Growth']) || 0) : 0;
+    const chips = [];
+
+    if (!forInelig) {
+      // Show what's still needed (CSP already Y)
+      if (g < 5) chips.push(`<span class="gap-chip gap-goals">+${5-g} goal${5-g>1?'s':''} needed</span>`);
+      if (hasCPData && cp) {
+        const mem = memThresholdMet(cp, 'dist');
+        if (!mem.met) chips.push(`<span class="gap-chip gap-mem">${mem.reason}</span>`);
+      } else if (activeMem < 20) {
+        chips.push(`<span class="gap-chip gap-mem">needs ${20-activeMem} more members</span>`);
+      }
+    } else {
+      // Ineligible — show what they'd need excluding CSP
+      if (g < 5) chips.push(`<span class="gap-chip gap-goals">+${5-g} goal${5-g>1?'s':''} needed</span>`);
+      if (hasCPData && cp) {
+        const mem = memThresholdMet(cp, 'dist');
+        if (!mem.met) chips.push(`<span class="gap-chip gap-mem">${mem.reason}</span>`);
+      }
+      chips.push(`<span class="gap-chip gap-csp">CSP not submitted</span>`);
+    }
+
+    return `<tr>
+      <td style="font-weight:500">${r['Club Name'] || r['Club'] || '—'}</td>
+      <td><span class="badge badge-blue">${r['Division']}</span></td>
+      <td style="font-family:var(--mono)">${r['Area']}</td>
+      <td style="font-family:var(--mono);font-weight:600">${g}</td>
+      <td style="font-family:var(--mono)">${activeMem}</td>
+      <td style="font-family:var(--mono);color:${netG>0?'var(--green)':netG<0?'var(--red)':'var(--muted)'}">${netG>0?'+':''}${netG}</td>
+      <td>${chips.join(' ')}</td>
+    </tr>`;
+  }
+
+  function renderAlmostTable(tbody, rows, forInelig) {
+    const el = document.getElementById(tbody);
+    if (!rows.length) {
+      el.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:16px">No clubs in this category</td></tr>`;
+      return;
+    }
+    el.innerHTML = [...rows].sort(byGoalsDesc).map(r => almostRow(r, getCPData(r, cpMap), forInelig)).join('');
+  }
+  renderAlmostTable('dist-body-need-goals', needGoals, false);
+  renderAlmostTable('dist-body-need-mem',   needMem,   false);
+  renderAlmostTable('dist-body-need-both',  needBoth,  false);
+  renderAlmostTable('dist-body-inelig',     inelig,    true);
+
+  // Update KPI cards
+  const totalDist = smedley.length + pres.length + select.length + dist.length;
+  const almost    = needGoals.length + needMem.length + needBoth.length;
+  document.getElementById('dist-kpi-smedley').textContent = smedley.length;
+  document.getElementById('dist-kpi-pres').textContent    = pres.length;
+  document.getElementById('dist-kpi-select').textContent  = select.length;
+  document.getElementById('dist-kpi-dist').textContent    = dist.length;
+  document.getElementById('dist-kpi-almost').textContent  = almost;
+  document.getElementById('dist-kpi-inelig').textContent  = inelig.length;
 }
 
 // ══════════════════════════════════════════════
@@ -1674,8 +2076,10 @@ function clearAllData() {
   localStorage.removeItem('d31_snapshots');
   localStorage.removeItem('d31_latest_rows');
   localStorage.removeItem('d31_latest_date');
+  localStorage.removeItem('d31_cp_rows');
   snapshots = [];
   allRows = [];
+  clubPerfRows = [];
   document.getElementById('data-date').textContent = '—';
   document.getElementById('update-banner').style.display = 'none';
   document.getElementById('upload-status').textContent = 'Upload one or multiple CSVs · date tag applies to single-file uploads';
@@ -1835,6 +2239,12 @@ function restoreFromCache() {
   if (localStorage.getItem('d31_hide_welcome') === '1') {
     document.getElementById('title-overlay').style.display = 'none';
   }
+
+  // Restore Club Performance data from cache
+  try {
+    const savedCP = localStorage.getItem('d31_cp_rows');
+    if (savedCP) clubPerfRows = JSON.parse(savedCP);
+  } catch(e) { localStorage.removeItem('d31_cp_rows'); }
 
   // Step 1: Immediately restore from cache so returning users see data right away
   const hasCachedData = restoreFromCache();
