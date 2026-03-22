@@ -913,7 +913,9 @@
       <div class="kpi" style="--kpi-color:#a371f7"><div class="kpi-label">Pres. Distinguished</div><div class="kpi-value" id="dist-kpi-pres">—</div><div class="kpi-sub">9 goals · 20+ members</div></div>
       <div class="kpi" style="--kpi-color:#e8a44a"><div class="kpi-label">Select Distinguished</div><div class="kpi-value" id="dist-kpi-select">—</div><div class="kpi-sub">7–8 goals · mem threshold</div></div>
       <div class="kpi" style="--kpi-color:#3fb950"><div class="kpi-label">Distinguished</div><div class="kpi-value" id="dist-kpi-dist">—</div><div class="kpi-sub">5–6 goals · mem threshold</div></div>
-      <div class="kpi" style="--kpi-color:#5b9cf6"><div class="kpi-label">Almost There</div><div class="kpi-value" id="dist-kpi-almost">—</div><div class="kpi-sub">CSP ✓ · needs goals/mem</div></div>
+      <div class="kpi" style="--kpi-color:#5b9cf6"><div class="kpi-label">Almost — Need Goals</div><div class="kpi-value" id="dist-kpi-need-goals">—</div><div class="kpi-sub">mem ✓ · 3–4 goals</div></div>
+      <div class="kpi" style="--kpi-color:#5b9cf6"><div class="kpi-label">Almost — Need Members</div><div class="kpi-value" id="dist-kpi-need-mem">—</div><div class="kpi-sub">4+ goals · mem ✗</div></div>
+      <div class="kpi" style="--kpi-color:#5b9cf6"><div class="kpi-label">Almost — Need Both</div><div class="kpi-value" id="dist-kpi-need-both">—</div><div class="kpi-sub">3 goals · mem ✗</div></div>
       <div class="kpi" style="--kpi-color:#8b949e"><div class="kpi-label">Ineligible (CSP)</div><div class="kpi-value" id="dist-kpi-inelig">—</div><div class="kpi-sub">CSP not submitted</div></div>
     </div>
 
@@ -927,25 +929,25 @@
     <div class="dist-section-sub">Clubs that fully meet all criteria — goals, membership, and CSP submitted by Sep 30.</div>
 
     <div class="card wide-card">
-      <div class="card-title">Smedley Distinguished — 10 goals &amp; 25+ members &amp; CSP</div>
+      <div class="card-title">Smedley Distinguished — 10 goals &amp; 25+ members &amp; CSP <span id="dt-count-smedley" style="font-family:var(--mono);color:var(--muted);font-weight:400;margin-left:8px"></span></div>
       <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>CSP</th></tr></thead>
       <tbody id="dist-body-smedley"></tbody></table></div>
     </div>
 
     <div class="card wide-card">
-      <div class="card-title">President's Distinguished — 9 goals &amp; 20+ members &amp; CSP</div>
+      <div class="card-title">President's Distinguished — 9 goals &amp; 20+ members &amp; CSP <span id="dt-count-pres" style="font-family:var(--mono);color:var(--muted);font-weight:400;margin-left:8px"></span></div>
       <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>CSP</th></tr></thead>
       <tbody id="dist-body-pres"></tbody></table></div>
     </div>
 
     <div class="card wide-card">
-      <div class="card-title">Select Distinguished — 7–8 goals &amp; (20+ members or net growth ≥ 5) &amp; CSP</div>
+      <div class="card-title">Select Distinguished — 7–8 goals &amp; (20+ members or net growth ≥ 5) &amp; CSP <span id="dt-count-select" style="font-family:var(--mono);color:var(--muted);font-weight:400;margin-left:8px"></span></div>
       <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>CSP</th></tr></thead>
       <tbody id="dist-body-select"></tbody></table></div>
     </div>
 
     <div class="card wide-card">
-      <div class="card-title">Distinguished — 5–6 goals &amp; (20+ members or net growth ≥ 3) &amp; CSP</div>
+      <div class="card-title">Distinguished — 5–6 goals &amp; (20+ members or net growth ≥ 3) &amp; CSP <span id="dt-count-dist" style="font-family:var(--mono);color:var(--muted);font-weight:400;margin-left:8px"></span></div>
       <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>CSP</th></tr></thead>
       <tbody id="dist-body-dist"></tbody></table></div>
     </div>
@@ -955,19 +957,19 @@
     <div class="dist-section-sub">These clubs have submitted their CSP and are within reach. Each row shows exactly what's still needed.</div>
 
     <div class="card wide-card">
-      <div class="card-title">Just Need Goals — membership threshold met, 3–4 goals</div>
+      <div class="card-title">Just Need Goals — membership threshold met, 3–4 goals <span id="dt-count-need-goals" style="font-family:var(--mono);color:var(--muted);font-weight:400;margin-left:8px"></span></div>
       <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>What's Needed</th></tr></thead>
       <tbody id="dist-body-need-goals"></tbody></table></div>
     </div>
 
     <div class="card wide-card">
-      <div class="card-title">Just Need Members — 4+ goals, membership threshold not met</div>
+      <div class="card-title">Just Need Members — 4+ goals, membership threshold not met <span id="dt-count-need-mem" style="font-family:var(--mono);color:var(--muted);font-weight:400;margin-left:8px"></span></div>
       <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>What's Needed</th></tr></thead>
       <tbody id="dist-body-need-mem"></tbody></table></div>
     </div>
 
     <div class="card wide-card">
-      <div class="card-title">Needs Both — 3 goals &amp; membership threshold not met</div>
+      <div class="card-title">Needs Both — 3 goals &amp; membership threshold not met <span id="dt-count-need-both" style="font-family:var(--mono);color:var(--muted);font-weight:400;margin-left:8px"></span></div>
       <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>What's Needed</th></tr></thead>
       <tbody id="dist-body-need-both"></tbody></table></div>
     </div>
@@ -977,7 +979,7 @@
     <div class="dist-section-sub">These clubs did not submit their Club Success Plan by Sep 30 and cannot achieve Distinguished status this season. Shown for coaching awareness — ensure they submit early next year.</div>
 
     <div class="card wide-card">
-      <div class="card-title">Would Otherwise Qualify or Be Close — but blocked by missing CSP</div>
+      <div class="card-title">Would Otherwise Qualify or Be Close — but blocked by missing CSP <span id="dt-count-inelig" style="font-family:var(--mono);color:var(--muted);font-weight:400;margin-left:8px"></span></div>
       <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>Would Need (excl. CSP)</th></tr></thead>
       <tbody id="dist-body-inelig"></tbody></table></div>
     </div>
@@ -1556,6 +1558,8 @@ function renderDistinguished() {
   // Render already distinguished tables
   function renderDistTable(tbody, rows) {
     const el = document.getElementById(tbody);
+    const countEl = document.getElementById('dt-count-' + tbody.replace('dist-body-',''));
+    if (countEl) countEl.textContent = rows.length ? `(${rows.length})` : '(0)';
     if (!rows.length) {
       el.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:16px">No clubs in this tier yet</td></tr>`;
       return;
@@ -1606,6 +1610,8 @@ function renderDistinguished() {
 
   function renderAlmostTable(tbody, rows, forInelig) {
     const el = document.getElementById(tbody);
+    const countEl = document.getElementById('dt-count-' + tbody.replace('dist-body-',''));
+    if (countEl) countEl.textContent = rows.length ? `(${rows.length})` : '(0)';
     if (!rows.length) {
       el.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:16px">No clubs in this category</td></tr>`;
       return;
@@ -1618,14 +1624,14 @@ function renderDistinguished() {
   renderAlmostTable('dist-body-inelig',     inelig,    true);
 
   // Update KPI cards
-  const totalDist = smedley.length + pres.length + select.length + dist.length;
-  const almost    = needGoals.length + needMem.length + needBoth.length;
-  document.getElementById('dist-kpi-smedley').textContent = smedley.length;
-  document.getElementById('dist-kpi-pres').textContent    = pres.length;
-  document.getElementById('dist-kpi-select').textContent  = select.length;
-  document.getElementById('dist-kpi-dist').textContent    = dist.length;
-  document.getElementById('dist-kpi-almost').textContent  = almost;
-  document.getElementById('dist-kpi-inelig').textContent  = inelig.length;
+  document.getElementById('dist-kpi-smedley').textContent   = smedley.length;
+  document.getElementById('dist-kpi-pres').textContent      = pres.length;
+  document.getElementById('dist-kpi-select').textContent    = select.length;
+  document.getElementById('dist-kpi-dist').textContent      = dist.length;
+  document.getElementById('dist-kpi-need-goals').textContent = needGoals.length;
+  document.getElementById('dist-kpi-need-mem').textContent   = needMem.length;
+  document.getElementById('dist-kpi-need-both').textContent  = needBoth.length;
+  document.getElementById('dist-kpi-inelig').textContent    = inelig.length;
 }
 
 // ══════════════════════════════════════════════
@@ -1635,13 +1641,45 @@ function renderSummary() {
   const active = allRows.filter(isActive);
   const susp = allRows.filter(r => isSuspended(r) || (parseInt(r['Membership to date'])||0) === 0);
   const total = allRows.length;
-  const dist = active.filter(r => goals(r) >= 5).length;
-  const sel = active.filter(r => goals(r) >= 7).length;
-  const pres = active.filter(r => goals(r) >= 9).length;
-  const smedley = active.filter(r => goals(r) >= 10 && members(r) >= 25).length;
+  const hasCPData = clubPerfRows.length > 0;
+  const cpMap = buildCPMap();
+
+  // Distinguished counts — use full CP logic if available, else goals-only fallback
+  let smedley, pres, sel, dist;
+  if (hasCPData) {
+    smedley = active.filter(r => {
+      const cp = getCPData(r, cpMap);
+      const csp = cp && (cp['CSP']||'').toUpperCase() === 'Y';
+      const mem = cp ? (parseInt(cp['Active Members'])||0) : members(r);
+      return csp && goals(r) >= 10 && mem >= 25;
+    }).length;
+    pres = active.filter(r => {
+      const cp = getCPData(r, cpMap);
+      const csp = cp && (cp['CSP']||'').toUpperCase() === 'Y';
+      const mem = cp ? (parseInt(cp['Active Members'])||0) : members(r);
+      return csp && goals(r) >= 9 && goals(r) < 10 && mem >= 20;
+    }).length;
+    sel = active.filter(r => {
+      const cp = getCPData(r, cpMap);
+      const csp = cp && (cp['CSP']||'').toUpperCase() === 'Y';
+      return csp && goals(r) >= 7 && goals(r) < 9 && memThresholdMet(cp, 'select').met;
+    }).length;
+    dist = active.filter(r => {
+      const cp = getCPData(r, cpMap);
+      const csp = cp && (cp['CSP']||'').toUpperCase() === 'Y';
+      return csp && goals(r) >= 5 && goals(r) < 7 && memThresholdMet(cp, 'dist').met;
+    }).length;
+  } else {
+    smedley = active.filter(r => goals(r) >= 10 && members(r) >= 25).length;
+    pres    = active.filter(r => goals(r) >= 9  && goals(r) < 10).length;
+    sel     = active.filter(r => goals(r) >= 7  && goals(r) < 9).length;
+    dist    = active.filter(r => goals(r) >= 5  && goals(r) < 7).length;
+  }
+
   const risk = active.filter(r => goals(r) <= 1).length;
   const renewed = active.filter(r => r['April Renewals'] === '1').length;
   const totalMem = active.reduce((s, r) => s + members(r), 0);
+  const totalDist = smedley + pres + sel + dist;
 
   document.getElementById('kpi-active').textContent = active.length;
   document.getElementById('kpi-total').textContent = total;
@@ -1656,7 +1694,7 @@ function renderSummary() {
   document.getElementById('kpi-members').textContent = totalMem.toLocaleString();
 
   document.getElementById('summary-sub').textContent =
-    `${active.length} active clubs across 7 divisions · ${dist} distinguished (${(dist/active.length*100).toFixed(0)}%) · ${risk} at-risk`;
+    `${active.length} active clubs across 7 divisions · ${totalDist} distinguished (${(totalDist/active.length*100).toFixed(0)}%) · ${risk} at-risk`;
 
   if (risk > 0) {
     document.getElementById('at-risk-alert').style.display = 'flex';
