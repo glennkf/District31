@@ -1324,6 +1324,25 @@ function distQualification(divRow, cpMap) {
   return { g, cp, csp, active, netGrowth, goalTier, mem };
 }
 
+// Central tier classifier — single source of truth used by Summary, drillDown, and Distinguished tab
+// Returns: 'smedley' | 'pres' | 'select' | 'dist' | null
+function getDistTier(divRow, cpMap) {
+  const g = goals(divRow);
+  const hasCPData = clubPerfRows.length > 0;
+  const cp = getCPData(divRow, cpMap);
+  const csp = cp ? (cp['CSP'] || '').toUpperCase() === 'Y' : null;
+  const cspOk = !hasCPData || csp === true;
+  const activeMem = cp ? (parseInt(cp['Active Members']) || 0) : members(divRow);
+  const netG = cp ? (parseInt(cp['Net Growth']) || 0) : 0;
+
+  if (!cspOk) return null;
+  if (g >= 10 && activeMem >= 25) return 'smedley';
+  if (g >= 9  && activeMem >= 20) return 'pres';
+  if (g >= 7  && (activeMem >= 20 || netG >= 5)) return 'select';
+  if (g >= 5  && (activeMem >= 20 || netG >= 3)) return 'dist';
+  return null;
+}
+
 // ══════════════════════════════════════════════
 // HELPERS
 // ══════════════════════════════════════════════
@@ -1389,6 +1408,7 @@ document.addEventListener('keydown', e => {
 function drillDown(type) {
   if (!allRows.length) return;
   const active = allRows.filter(isActive);
+  const cpMap = buildCPMap();
   let clubs = [], title = '', sub = '';
 
   switch(type) {
@@ -1398,24 +1418,24 @@ function drillDown(type) {
       sub = `${clubs.length} clubs with active membership this season`;
       break;
     case 'dist':
-      clubs = active.filter(r => goals(r) >= 5 && !(goals(r) >= 10 && members(r) >= 25));
+      clubs = active.filter(r => getDistTier(r, cpMap) === 'dist');
       title = 'Distinguished Clubs';
-      sub = `${clubs.length} clubs with 5+ goals met (excl. higher tiers)`;
+      sub = `${clubs.length} clubs — 5–6 goals, membership threshold met, CSP submitted`;
       break;
     case 'select':
-      clubs = active.filter(r => goals(r) >= 7 && !(goals(r) >= 10 && members(r) >= 25));
+      clubs = active.filter(r => getDistTier(r, cpMap) === 'select');
       title = 'Select Distinguished Clubs';
-      sub = `${clubs.length} clubs with 7+ goals met (excl. higher tiers)`;
+      sub = `${clubs.length} clubs — 7–8 goals, membership threshold met, CSP submitted`;
       break;
     case 'pres':
-      clubs = active.filter(r => goals(r) >= 9 && !(goals(r) >= 10 && members(r) >= 25));
+      clubs = active.filter(r => getDistTier(r, cpMap) === 'pres');
       title = "President's Distinguished Clubs";
-      sub = `${clubs.length} clubs with 9+ goals met (excl. Smedley)`;
+      sub = `${clubs.length} clubs — 9 goals, 20+ members, CSP submitted`;
       break;
     case 'smedley':
-      clubs = active.filter(r => goals(r) >= 10 && members(r) >= 25);
+      clubs = active.filter(r => getDistTier(r, cpMap) === 'smedley');
       title = 'Smedley Distinguished Clubs';
-      sub = `${clubs.length} clubs with 10 goals met and 25+ members`;
+      sub = `${clubs.length} clubs — 10 goals, 25+ members, CSP submitted`;
       break;
     case 'risk':
       clubs = active.filter(r => goals(r) <= 1);
@@ -1524,32 +1544,30 @@ function renderDistinguished() {
     const activeMem = cp ? (parseInt(cp['Active Members']) || 0) : members(r);
     const netG = cp ? (parseInt(cp['Net Growth']) || 0) : 0;
 
-    // Already distinguished tiers (CSP required when CP data available)
-    const cspOk = !hasCPData || csp === true;
+    // Use central tier classifier for already-distinguished
+    const tier = getDistTier(r, cpMap);
+    if (tier === 'smedley') { smedley.push(r); return; }
+    if (tier === 'pres')    { pres.push(r);    return; }
+    if (tier === 'select')  { select.push(r);  return; }
+    if (tier === 'dist')    { dist.push(r);    return; }
 
-    if (cspOk && g >= 10 && activeMem >= 25) { smedley.push(r); return; }
-    if (cspOk && g >= 9  && activeMem >= 20) { pres.push(r); return; }
-    if (cspOk && g >= 7  && (activeMem >= 20 || netG >= 5)) { select.push(r); return; }
-    if (cspOk && g >= 5  && (activeMem >= 20 || netG >= 3)) { dist.push(r); return; }
-
-    // Below Distinguished threshold — check almost categories
-    if (g < 3) return; // Not close enough to show
+    // Below Distinguished threshold — check almost categories (3+ goals only)
+    if (g < 3) return;
 
     const memOk = hasCPData
       ? (activeMem >= 20 || netG >= 3)
       : (activeMem >= 20);
 
     if (hasCPData && csp === false) {
-      // CSP not submitted — ineligible (only show 3+ goals clubs)
-      if (g >= 3) inelig.push(r);
+      inelig.push(r);
       return;
     }
 
     // CSP = Y (or no CP data) — categorise by what's missing
     const goalsMet = g >= 5;
-    if (goalsMet && !memOk)    { needMem.push(r);   return; }
-    if (!goalsMet && memOk)    { needGoals.push(r);  return; }
-    if (!goalsMet && !memOk)   { needBoth.push(r);   return; }
+    if (goalsMet && !memOk)  { needMem.push(r);   return; }
+    if (!goalsMet && memOk)  { needGoals.push(r);  return; }
+    if (!goalsMet && !memOk) { needBoth.push(r);   return; }
   });
 
   // Sort helpers
@@ -1644,37 +1662,15 @@ function renderSummary() {
   const hasCPData = clubPerfRows.length > 0;
   const cpMap = buildCPMap();
 
-  // Distinguished counts — use full CP logic if available, else goals-only fallback
-  let smedley, pres, sel, dist;
-  if (hasCPData) {
-    smedley = active.filter(r => {
-      const cp = getCPData(r, cpMap);
-      const csp = cp && (cp['CSP']||'').toUpperCase() === 'Y';
-      const mem = cp ? (parseInt(cp['Active Members'])||0) : members(r);
-      return csp && goals(r) >= 10 && mem >= 25;
-    }).length;
-    pres = active.filter(r => {
-      const cp = getCPData(r, cpMap);
-      const csp = cp && (cp['CSP']||'').toUpperCase() === 'Y';
-      const mem = cp ? (parseInt(cp['Active Members'])||0) : members(r);
-      return csp && goals(r) >= 9 && goals(r) < 10 && mem >= 20;
-    }).length;
-    sel = active.filter(r => {
-      const cp = getCPData(r, cpMap);
-      const csp = cp && (cp['CSP']||'').toUpperCase() === 'Y';
-      return csp && goals(r) >= 7 && goals(r) < 9 && memThresholdMet(cp, 'select').met;
-    }).length;
-    dist = active.filter(r => {
-      const cp = getCPData(r, cpMap);
-      const csp = cp && (cp['CSP']||'').toUpperCase() === 'Y';
-      return csp && goals(r) >= 5 && goals(r) < 7 && memThresholdMet(cp, 'dist').met;
-    }).length;
-  } else {
-    smedley = active.filter(r => goals(r) >= 10 && members(r) >= 25).length;
-    pres    = active.filter(r => goals(r) >= 9  && goals(r) < 10).length;
-    sel     = active.filter(r => goals(r) >= 7  && goals(r) < 9).length;
-    dist    = active.filter(r => goals(r) >= 5  && goals(r) < 7).length;
-  }
+  // Distinguished counts — use central getDistTier for consistency with Distinguished tab
+  let smedley = 0, pres = 0, sel = 0, dist = 0;
+  active.forEach(r => {
+    const tier = getDistTier(r, cpMap);
+    if (tier === 'smedley') smedley++;
+    else if (tier === 'pres') pres++;
+    else if (tier === 'select') sel++;
+    else if (tier === 'dist') dist++;
+  });
 
   const risk = active.filter(r => goals(r) <= 1).length;
   const renewed = active.filter(r => r['April Renewals'] === '1').length;
