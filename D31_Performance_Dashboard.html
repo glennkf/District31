@@ -2073,26 +2073,29 @@ function renderDivisionView() {
     const ref = divRows[0];
     const clubBase    = parseInt(ref['Division Club Base']) || 0;
     const totalPaid   = parseInt(ref['Total Paid Division Clubs']) || 0;
-    const totalDist   = parseInt(ref['Total Dist. Division Clubs']) || 0;
     const goalDist    = parseInt(ref['Division Dist. Club Goal for Dist.']) || 0;
     const goalSelect  = parseInt(ref['Division Dist. Club Goal for Select Dist.']) || 0;
     const goalPres    = parseInt(ref['Division Dist. Club Goal for Pres. Dist.']) || 0;
-    const tiStatus    = (ref['Distinguished Division'] || '').trim();
     const netClubs    = totalPaid - clubBase;
     const noNetLoss   = netClubs >= 0;
 
-    // Determine tier from TI status field or compute ourselves
-    let tier = 'none';
-    if (tiStatus.toLowerCase().includes("president")) tier = 'pres';
-    else if (tiStatus.toLowerCase().includes("select")) tier = 'select';
-    else if (tiStatus.toLowerCase().includes("distinguished")) tier = 'dist';
+    // Compute totalDist live from club rows using getDistTier() —
+    // TI's 'Total Dist. Division Clubs' column is only populated at year-end (Jun 30)
+    const divActive = allRows.filter(r => isActive(r) && r['Division'] === div);
+    const totalDist  = divActive.filter(r => getDistTier(r, cpMap)).length;
 
-    // Badge
+    // Compute tier from live Distinguished count + thresholds
+    // (TI's 'Distinguished Division' column is also only set at year-end)
+    let tier = 'none';
+    if      (totalDist >= goalPres && netClubs >= 2) tier = 'pres';
+    else if (totalDist >= goalSelect && noNetLoss)   tier = 'select';
+    else if (totalDist >= goalDist && noNetLoss)     tier = 'dist';
+
     const tierLabels = { pres: "President's Distinguished", select: 'Select Distinguished', dist: 'Distinguished', none: 'Not Yet Distinguished' };
     const tierClasses = { pres: 'rec-tier-pres', select: 'rec-tier-select', dist: 'rec-tier-dist', none: 'rec-tier-none' };
     const badge = document.getElementById('div-rec-tier-badge');
     badge.className = 'rec-tier-badge ' + tierClasses[tier];
-    badge.textContent = tiStatus || tierLabels[tier];
+    badge.textContent = tierLabels[tier];
 
     // Metrics
     document.getElementById('div-rec-metrics').innerHTML = `
@@ -2123,26 +2126,24 @@ function renderDivisionView() {
       <div class="rec-progress-row">
         <div class="rec-progress-label">Distinguished (${goalDist})</div>
         <div class="rec-progress-track"><div class="rec-progress-fill" style="width:${pct(totalDist)}%;background:var(--green)"></div></div>
-        <div class="rec-progress-num">${totalDist} / ${goalDist} ${totalDist>=goalDist?'✓':''}</div>
+        <div class="rec-progress-num">${totalDist} / ${goalDist} ${totalDist>=goalDist&&noNetLoss?'✓':''}</div>
       </div>
       <div class="rec-progress-row">
-        <div class="rec-progress-label">Select (${goalSelect})</div>
+        <div class="rec-progress-label">Select (${goalSelect} + no loss)</div>
         <div class="rec-progress-track"><div class="rec-progress-fill" style="width:${pct(totalDist)}%;background:var(--accent)"></div></div>
         <div class="rec-progress-num">${totalDist} / ${goalSelect} ${totalDist>=goalSelect&&noNetLoss?'✓':''}</div>
       </div>
       <div class="rec-progress-row">
-        <div class="rec-progress-label">President's (${goalPres}+2)</div>
+        <div class="rec-progress-label">President's (${goalPres} + 2 clubs)</div>
         <div class="rec-progress-track"><div class="rec-progress-fill" style="width:${pct(totalDist)}%;background:#a371f7"></div></div>
         <div class="rec-progress-num">${totalDist} / ${goalPres} ${totalDist>=goalPres&&netClubs>=2?'✓':''}</div>
       </div>`;
 
     // Qualifying chips
-    const selectNote = noNetLoss ? (totalDist >= goalSelect ? '' : ` — need ${goalSelect - totalDist} more Dist. clubs`) : ' — net club loss blocks this';
-    const presNote   = netClubs >= 2 ? '' : ` — need ${2 - netClubs} net new club${2-netClubs!==1?'s':''}`;
     document.getElementById('div-rec-quals').innerHTML = `
       <span class="rec-qual-chip ${noNetLoss?'rec-qual-ok':'rec-qual-fail'}">${noNetLoss?'✓':'✗'} No Net Club Loss (${netClubs>=0?'+':''}${netClubs})</span>
-      <span class="rec-qual-chip rec-qual-info">ℹ Club visit reports verified separately in Area view</span>
-      <span class="rec-qual-chip rec-qual-info">Data date: ${allRows.length ? (allRows.find(r=>r['Division']===div)||{})['District']||'' : ''} · TI-computed thresholds</span>`;
+      <span class="rec-qual-chip rec-qual-info">ℹ Club visit reports verified in Area view</span>
+      <span class="rec-qual-chip rec-qual-info">ℹ Distinguished count uses live data · thresholds from TI</span>`;
   } else {
     panel.style.display = 'none';
   }
@@ -2171,7 +2172,8 @@ function renderDivisionView() {
   // Clubs table
   const sorted = [...active].sort((a, b) => goals(b) - goals(a));
   document.getElementById('div-clubs-body').innerHTML = sorted.map(r => {
-    const st = goalStatus(goals(r), members(r));
+    const cp = getCPData(r, cpMap);
+    const st = goalStatus(goals(r), members(r), cp, cpMap);
     const stStyle = st.style ? `class="${st.cls}" style="${st.style}"` : `class="${st.cls}"`;
     return `<tr>
       <td style="font-family:var(--mono)">${r['Area']}</td>
@@ -2224,11 +2226,9 @@ function renderAreaView() {
     const ref = areaRows[0];
     const clubBase   = parseInt(ref['Area Club Base']) || 0;
     const totalPaid  = parseInt(ref['Total Paid Area Clubs']) || 0;
-    const totalDist  = parseInt(ref['Total Dist. Area Clubs']) || 0;
     const goalDist   = parseInt(ref['Area Dist. Club Goal for Dist.']) || 0;
     const goalSelect = parseInt(ref['Area Dist. Club Goal for Select Dist.']) || 0;
     const goalPres   = parseInt(ref['Area Dist. Club Goal for Pres. Dist.']) || 0;
-    const tiStatus   = (ref['Distinguished Area'] || '').trim();
     const netClubs   = totalPaid - clubBase;
     const noNetLoss  = netClubs >= 0;
 
@@ -2241,17 +2241,21 @@ function renderAreaView() {
     const mayOk = mayVisits >= visitBase75;
     const qualifyingMet = noNetLoss && novOk && mayOk;
 
-    // Tier
+    // Compute totalDist live — TI's 'Total Dist. Area Clubs' column is only set at year-end
+    const areaActive = allRows.filter(r => isActive(r) && r['Area'] === area);
+    const totalDist  = areaActive.filter(r => getDistTier(r, cpMap)).length;
+
+    // Compute tier from live count + qualifying requirements
     let tier = 'none';
-    if (tiStatus.toLowerCase().includes("president")) tier = 'pres';
-    else if (tiStatus.toLowerCase().includes("select")) tier = 'select';
-    else if (tiStatus.toLowerCase().includes("distinguished")) tier = 'dist';
+    if      (totalDist >= goalPres && netClubs >= 1 && noNetLoss) tier = 'pres';
+    else if (totalDist >= goalSelect && noNetLoss)                tier = 'select';
+    else if (totalDist >= goalDist && noNetLoss)                  tier = 'dist';
 
     const tierLabels  = { pres: "President's Distinguished", select: 'Select Distinguished', dist: 'Distinguished', none: 'Not Yet Distinguished' };
     const tierClasses = { pres: 'rec-tier-pres', select: 'rec-tier-select', dist: 'rec-tier-dist', none: 'rec-tier-none' };
     const badge = document.getElementById('area-rec-tier-badge');
     badge.className = 'rec-tier-badge ' + tierClasses[tier];
-    badge.textContent = tiStatus || tierLabels[tier];
+    badge.textContent = tierLabels[tier];
 
     // Metrics
     document.getElementById('area-rec-metrics').innerHTML = `
@@ -2351,23 +2355,25 @@ function renderRecognition() {
 
   const divBody = document.getElementById('rec-div-body');
   if (divBody) {
+    const cpMap = buildCPMap();
     divBody.innerHTML = Object.entries(divsSeen).sort((a,b)=>a[0].localeCompare(b[0])).map(([d, ref]) => {
       const clubBase  = parseInt(ref['Division Club Base']) || 0;
       const totalPaid = parseInt(ref['Total Paid Division Clubs']) || 0;
-      const totalDist = parseInt(ref['Total Dist. Division Clubs']) || 0;
       const goalD     = parseInt(ref['Division Dist. Club Goal for Dist.']) || 0;
       const goalS     = parseInt(ref['Division Dist. Club Goal for Select Dist.']) || 0;
       const goalP     = parseInt(ref['Division Dist. Club Goal for Pres. Dist.']) || 0;
-      const tiStatus  = (ref['Distinguished Division'] || '').trim();
       const net       = totalPaid - clubBase;
+      const noLoss    = net >= 0;
 
-      let tierCls = 'badge-gray';
-      if (tiStatus.toLowerCase().includes("president")) tierCls = 'badge' ;
-      else if (tiStatus.toLowerCase().includes("select")) tierCls = 'badge-orange';
-      else if (tiStatus.toLowerCase().includes("distinguished")) tierCls = 'badge-green';
+      // Live Distinguished count
+      const divActive = allRows.filter(r => isActive(r) && r['Division'] === d);
+      const totalDist = divActive.filter(r => getDistTier(r, cpMap)).length;
 
-      const tierStyle = tiStatus.toLowerCase().includes("president") ? 'style="background:rgba(163,113,247,0.15);color:#a371f7"' : '';
-      const statusLabel = tiStatus || '—';
+      // Compute tier from live count
+      let tierCls = 'badge-gray', tierStyle = '', tierLabel = '—';
+      if (totalDist >= goalP && net >= 2) { tierCls = 'badge'; tierStyle = 'style="background:rgba(163,113,247,0.15);color:#a371f7"'; tierLabel = "President's Dist."; }
+      else if (totalDist >= goalS && noLoss) { tierCls = 'badge-orange'; tierLabel = 'Select Dist.'; }
+      else if (totalDist >= goalD && noLoss) { tierCls = 'badge-green';  tierLabel = 'Distinguished'; }
 
       return `<tr>
         <td style="font-family:var(--mono);font-weight:600"><span class="badge badge-blue">Div ${d}</span></td>
@@ -2376,9 +2382,9 @@ function renderRecognition() {
         <td style="font-family:var(--mono);color:${net>=0?'var(--green)':'var(--red)'};font-weight:600">${net>=0?'+':''}${net}</td>
         <td style="font-family:var(--mono);font-weight:600">${totalDist}</td>
         <td style="font-family:var(--mono);color:${totalDist>=goalD?'var(--green)':'var(--muted)'}">${goalD}</td>
-        <td style="font-family:var(--mono);color:${totalDist>=goalS&&net>=0?'var(--green)':'var(--muted)'}">${goalS}+no loss</td>
+        <td style="font-family:var(--mono);color:${totalDist>=goalS&&noLoss?'var(--green)':'var(--muted)'}">${goalS}+no loss</td>
         <td style="font-family:var(--mono);color:${totalDist>=goalP&&net>=2?'var(--green)':'var(--muted)'}">${goalP}+2 clubs</td>
-        <td><span class="badge ${tierCls}" ${tierStyle}>${statusLabel}</span></td>
+        <td><span class="badge ${tierCls}" ${tierStyle}>${tierLabel}</span></td>
       </tr>`;
     }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px">No data</td></tr>';
   }
@@ -2402,12 +2408,16 @@ function renderRecognition() {
       const a         = ref['Area'];
       const clubBase  = parseInt(ref['Area Club Base']) || 0;
       const totalPaid = parseInt(ref['Total Paid Area Clubs']) || 0;
-      const totalDist = parseInt(ref['Total Dist. Area Clubs']) || 0;
       const goalD     = parseInt(ref['Area Dist. Club Goal for Dist.']) || 0;
       const goalS     = parseInt(ref['Area Dist. Club Goal for Select Dist.']) || 0;
       const goalP     = parseInt(ref['Area Dist. Club Goal for Pres. Dist.']) || 0;
-      const tiStatus  = (ref['Distinguished Area'] || '').trim();
       const net       = totalPaid - clubBase;
+      const noLoss    = net >= 0;
+
+      // Live Distinguished count
+      const cpMap = buildCPMap();
+      const areaActive = allRows.filter(r => isActive(r) && r['Division'] === d && r['Area'] === a);
+      const totalDist = areaActive.filter(r => getDistTier(r, cpMap)).length;
 
       // Visit counts
       const areaRows  = allRows.filter(r => r['Division'] === d && r['Area'] === a);
@@ -2417,10 +2427,10 @@ function renderRecognition() {
       const novOk     = novVisits >= need75;
       const mayOk     = mayVisits >= need75;
 
-      let tierCls = 'badge-gray', tierStyle = '';
-      if (tiStatus.toLowerCase().includes("president")) { tierCls = 'badge'; tierStyle = 'style="background:rgba(163,113,247,0.15);color:#a371f7"'; }
-      else if (tiStatus.toLowerCase().includes("select")) tierCls = 'badge-orange';
-      else if (tiStatus.toLowerCase().includes("distinguished")) tierCls = 'badge-green';
+      let tierCls = 'badge-gray', tierStyle = '', tierLabel = '—';
+      if (totalDist >= goalP && net >= 1 && noLoss) { tierCls = 'badge'; tierStyle = 'style="background:rgba(163,113,247,0.15);color:#a371f7"'; tierLabel = "President's Dist."; }
+      else if (totalDist >= goalS && noLoss) { tierCls = 'badge-orange'; tierLabel = 'Select Dist.'; }
+      else if (totalDist >= goalD && noLoss) { tierCls = 'badge-green';  tierLabel = 'Distinguished'; }
 
       return `<tr>
         <td><span class="badge badge-blue">${d}</span></td>
@@ -2429,12 +2439,12 @@ function renderRecognition() {
         <td style="font-family:var(--mono)">${totalPaid}</td>
         <td style="font-family:var(--mono);color:${net>=0?'var(--green)':'var(--red)'};font-weight:600">${net>=0?'+':''}${net}</td>
         <td style="font-family:var(--mono);font-weight:600">${totalDist}</td>
-        <td style="font-family:var(--mono);color:${totalDist>=goalD?'var(--green)':'var(--muted)'}">${goalD}</td>
-        <td style="font-family:var(--mono);color:${totalDist>=goalS&&net>=0?'var(--green)':'var(--muted)'}">${goalS}+1</td>
+        <td style="font-family:var(--mono);color:${totalDist>=goalD&&noLoss?'var(--green)':'var(--muted)'}">${goalD}</td>
+        <td style="font-family:var(--mono);color:${totalDist>=goalS&&noLoss?'var(--green)':'var(--muted)'}">${goalS}+1</td>
         <td style="font-family:var(--mono);color:${totalDist>=goalP&&net>=1?'var(--green)':'var(--muted)'}">${goalP}+growth</td>
         <td style="font-family:var(--mono)"><span style="color:${novOk?'var(--green)':'var(--yellow)'}">${novVisits}/${need75}</span></td>
         <td style="font-family:var(--mono)"><span style="color:${mayOk?'var(--green)':'var(--yellow)'}">${mayVisits}/${need75}</span></td>
-        <td><span class="badge ${tierCls}" ${tierStyle}>${tiStatus||'—'}</span></td>
+        <td><span class="badge ${tierCls}" ${tierStyle}>${tierLabel}</span></td>
       </tr>`;
     }).join('') || '<tr><td colspan="12" style="text-align:center;color:var(--muted);padding:24px">No data</td></tr>';
   }
@@ -2443,12 +2453,14 @@ function renderRecognition() {
   if (!Object.keys(divsSeen).length) return;
 
   // Aggregate district-level values from division rows
-  let distClubBase = 0, distTotalPaid = 0, distTotalDist = 0;
+  let distClubBase = 0, distTotalPaid = 0;
   Object.values(divsSeen).forEach(ref => {
     distClubBase  += parseInt(ref['Division Club Base']) || 0;
     distTotalPaid += parseInt(ref['Total Paid Division Clubs']) || 0;
-    distTotalDist += parseInt(ref['Total Dist. Division Clubs']) || 0;
   });
+  // Live Distinguished count across entire district
+  const cpMapDist = buildCPMap();
+  const distTotalDist = allRows.filter(r => isActive(r)).filter(r => getDistTier(r, cpMapDist)).length;
   const distNetClubs = distTotalPaid - distClubBase;
 
   // Membership payments — from distPerfRows
