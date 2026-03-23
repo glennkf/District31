@@ -943,11 +943,11 @@
     </div>
 
     <div class="kpi-grid" id="div-kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
-      <div class="kpi" style="--kpi-color:#5b9cf6"><div class="kpi-label">Active Clubs</div><div class="kpi-value" id="div-kpi-clubs">—</div></div>
-      <div class="kpi" style="--kpi-color:#3fb950"><div class="kpi-label">Distinguished+</div><div class="kpi-value" id="div-kpi-dist">—</div><div class="kpi-sub">5+ goals</div></div>
-      <div class="kpi" style="--kpi-color:#f85149"><div class="kpi-label">At-Risk</div><div class="kpi-value" id="div-kpi-risk">—</div><div class="kpi-sub">0–1 goals</div></div>
+      <div class="kpi clickable" style="--kpi-color:#5b9cf6" id="div-kpi-active-card" onclick="drillDownDiv('active')" title="Click to see active clubs"><div class="kpi-label">Active Clubs</div><div class="kpi-value" id="div-kpi-clubs">—</div></div>
+      <div class="kpi clickable" style="--kpi-color:#3fb950" id="div-kpi-dist-card" onclick="drillDownDiv('dist')" title="Click to see Distinguished+ clubs"><div class="kpi-label">Distinguished+</div><div class="kpi-value" id="div-kpi-dist">—</div><div class="kpi-sub">5+ goals</div></div>
+      <div class="kpi clickable" style="--kpi-color:#f85149" id="div-kpi-risk-card" onclick="drillDownDiv('risk')" title="Click to see at-risk clubs"><div class="kpi-label">At-Risk</div><div class="kpi-value" id="div-kpi-risk">—</div><div class="kpi-sub">0–1 goals</div></div>
       <div class="kpi" style="--kpi-color:#e8a44a"><div class="kpi-label">Avg Goals</div><div class="kpi-value" id="div-kpi-avg">—</div></div>
-      <div class="kpi" style="--kpi-color:#3fb950"><div class="kpi-label">Apr Renewed</div><div class="kpi-value" id="div-kpi-renewed">—</div></div>
+      <div class="kpi clickable" style="--kpi-color:#3fb950" id="div-kpi-renewed-card" onclick="drillDownDiv('renewed')" title="Click to see April renewed clubs"><div class="kpi-label">Apr Renewed</div><div class="kpi-value" id="div-kpi-renewed">—</div></div>
       <div class="kpi" style="--kpi-color:#5b9cf6"><div class="kpi-label">Total Members</div><div class="kpi-value" id="div-kpi-members">—</div></div>
     </div>
 
@@ -973,7 +973,7 @@
     <div class="card wide-card">
       <div class="card-title">All Clubs in Division</div>
       <div class="table-wrap"><table id="div-clubs-table">
-        <thead><tr><th onclick="sortTable('div-clubs-body',0)">Area</th><th onclick="sortTable('div-clubs-body',1)">Club Name</th><th onclick="sortTable('div-clubs-body',2)">Goals ▾</th><th onclick="sortTable('div-clubs-body',3)">Members</th><th>Apr Renewed</th><th>Status</th></tr></thead>
+        <thead><tr><th onclick="sortTable('div-clubs-body',0)">Area</th><th onclick="sortTable('div-clubs-body',1)">Club Name</th><th onclick="sortTable('div-clubs-body',2)">Goals ▾</th><th onclick="sortTable('div-clubs-body',3)">Members</th><th>Apr Renewed</th><th>Status</th><th>Path to Distinguished</th></tr></thead>
         <tbody id="div-clubs-body"></tbody>
       </table></div>
     </div>
@@ -998,11 +998,11 @@
     </div>
 
     <div class="kpi-grid" id="area-kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
-      <div class="kpi" style="--kpi-color:#5b9cf6"><div class="kpi-label">Active Clubs</div><div class="kpi-value" id="area-kpi-clubs">—</div></div>
-      <div class="kpi" style="--kpi-color:#3fb950"><div class="kpi-label">Distinguished+</div><div class="kpi-value" id="area-kpi-dist">—</div></div>
-      <div class="kpi" style="--kpi-color:#f85149"><div class="kpi-label">At-Risk</div><div class="kpi-value" id="area-kpi-risk">—</div></div>
+      <div class="kpi clickable" style="--kpi-color:#5b9cf6" onclick="drillDownArea('active')" title="Click to see active clubs"><div class="kpi-label">Active Clubs</div><div class="kpi-value" id="area-kpi-clubs">—</div></div>
+      <div class="kpi clickable" style="--kpi-color:#3fb950" onclick="drillDownArea('dist')" title="Click to see Distinguished+ clubs"><div class="kpi-label">Distinguished+</div><div class="kpi-value" id="area-kpi-dist">—</div></div>
+      <div class="kpi clickable" style="--kpi-color:#f85149" onclick="drillDownArea('risk')" title="Click to see at-risk clubs"><div class="kpi-label">At-Risk</div><div class="kpi-value" id="area-kpi-risk">—</div></div>
       <div class="kpi" style="--kpi-color:#e8a44a"><div class="kpi-label">Avg Goals</div><div class="kpi-value" id="area-kpi-avg">—</div></div>
-      <div class="kpi" style="--kpi-color:#3fb950"><div class="kpi-label">Apr Renewed</div><div class="kpi-value" id="area-kpi-renewed">—</div></div>
+      <div class="kpi clickable" style="--kpi-color:#3fb950" onclick="drillDownArea('renewed')" title="Click to see April renewed clubs"><div class="kpi-label">Apr Renewed</div><div class="kpi-value" id="area-kpi-renewed">—</div></div>
     </div>
 
     <!-- Distinguished Area Status Panel -->
@@ -1019,7 +1019,7 @@
     <div class="card wide-card">
       <div class="card-title">Club Coaching Priorities</div>
       <div class="table-wrap"><table>
-        <thead><tr><th>Club Name</th><th>Goals Met</th><th>Members</th><th>Apr Renewed</th><th>Goals to Distinguished</th><th>Priority</th></tr></thead>
+        <thead><tr><th>Club Name</th><th>Goals Met</th><th>Members</th><th>Apr Renewed</th><th>Path to Distinguished</th><th>Priority</th></tr></thead>
         <tbody id="area-clubs-body"></tbody>
       </table></div>
     </div>
@@ -1653,6 +1653,85 @@ function closeDrillModal() {
   document.getElementById('drill-modal').classList.remove('open');
 }
 
+// Drill-down scoped to the currently selected Division
+function drillDownDiv(type) {
+  const div = document.getElementById('div-select').value;
+  if (!div || !allRows.length) return;
+  const cpMap = buildCPMap();
+  const active = allRows.filter(r => isActive(r) && r['Division'] === div);
+  let clubs = [], title = '', sub = '';
+  switch(type) {
+    case 'active':
+      clubs = active; title = `Division ${div} — Active Clubs`;
+      sub = `${clubs.length} active clubs in Division ${div}`; break;
+    case 'dist':
+      clubs = active.filter(r => getDistTier(r, cpMap));
+      title = `Division ${div} — Distinguished+ Clubs`;
+      sub = `${clubs.length} clubs at Distinguished or above`; break;
+    case 'risk':
+      clubs = active.filter(r => goals(r) <= 1);
+      title = `Division ${div} — At-Risk Clubs`;
+      sub = `${clubs.length} clubs with 0–1 goals in Division ${div}`; break;
+    case 'renewed':
+      clubs = active.filter(r => r['April Renewals'] === '1');
+      title = `Division ${div} — April Renewed`;
+      sub = `${clubs.length} clubs that have renewed April dues`; break;
+  }
+  openDrillModal(title, sub, clubs, cpMap);
+}
+
+// Drill-down scoped to the currently selected Area
+function drillDownArea(type) {
+  const area = document.getElementById('area-area-select').value;
+  if (!area || !allRows.length) return;
+  const cpMap = buildCPMap();
+  const clubs_area = allRows.filter(r => isActive(r) && r['Area'] === area);
+  let clubs = [], title = '', sub = '';
+  switch(type) {
+    case 'active':
+      clubs = clubs_area; title = `Area ${area} — Active Clubs`;
+      sub = `${clubs.length} active clubs in Area ${area}`; break;
+    case 'dist':
+      clubs = clubs_area.filter(r => getDistTier(r, cpMap));
+      title = `Area ${area} — Distinguished+ Clubs`;
+      sub = `${clubs.length} clubs at Distinguished or above`; break;
+    case 'risk':
+      clubs = clubs_area.filter(r => goals(r) <= 1);
+      title = `Area ${area} — At-Risk Clubs`;
+      sub = `${clubs.length} clubs with 0–1 goals in Area ${area}`; break;
+    case 'renewed':
+      clubs = clubs_area.filter(r => r['April Renewals'] === '1');
+      title = `Area ${area} — April Renewed`;
+      sub = `${clubs.length} clubs that have renewed April dues`; break;
+  }
+  openDrillModal(title, sub, clubs, cpMap);
+}
+
+// Shared modal renderer used by drillDown, drillDownDiv, drillDownArea
+function openDrillModal(title, sub, clubs, cpMap) {
+  const sorted = [...clubs].sort((a, b) => {
+    if (goals(b) !== goals(a)) return goals(b) - goals(a);
+    return members(b) - members(a);
+  });
+  document.getElementById('drill-modal-title').textContent = title;
+  document.getElementById('drill-modal-sub').textContent = sub;
+  document.getElementById('drill-body').innerHTML = sorted.map(r => {
+    const cp = getCPData(r, cpMap);
+    const st = goalStatus(goals(r), members(r), cp, cpMap);
+    const stStyle = st.style ? `class="${st.cls}" style="${st.style}"` : `class="${st.cls}"`;
+    return `<tr>
+      <td style="font-weight:500">${r['Club Name'] || r['Club'] || '—'}</td>
+      <td><span class="badge badge-blue">${r['Division']}</span></td>
+      <td style="font-family:var(--mono)">${r['Area']}</td>
+      <td style="font-family:var(--mono);font-weight:600;color:var(--text)">${goals(r)}</td>
+      <td style="font-family:var(--mono)">${members(r)}</td>
+      <td>${r['April Renewals']==='1' ? '<span class="dot dot-green"></span>Yes' : '<span class="dot dot-red"></span>No'}</td>
+      <td><span ${stStyle}>${st.label}</span></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No clubs in this category</td></tr>`;
+  document.getElementById('drill-modal').classList.add('open');
+}
+
 document.getElementById('drill-modal').addEventListener('click', function(e) {
   if (e.target === this) closeDrillModal();
 });
@@ -1714,24 +1793,7 @@ function drillDown(type) {
     if (goals(b) !== goals(a)) return goals(b) - goals(a);
     return members(b) - members(a);
   });
-
-  document.getElementById('drill-modal-title').textContent = title;
-  document.getElementById('drill-modal-sub').textContent = sub;
-  document.getElementById('drill-body').innerHTML = sorted.map(r => {
-    const st = goalStatus(goals(r), members(r));
-    const stStyle = st.style ? `class="${st.cls}" style="${st.style}"` : `class="${st.cls}"`;
-    return `<tr>
-      <td style="font-weight:500">${r['Club Name'] || r['Club'] || '—'}</td>
-      <td><span class="badge badge-blue">${r['Division']}</span></td>
-      <td style="font-family:var(--mono)">${r['Area']}</td>
-      <td style="font-family:var(--mono);font-weight:600;color:var(--text)">${goals(r)}</td>
-      <td style="font-family:var(--mono)">${members(r)}</td>
-      <td>${r['April Renewals']==='1' ? '<span class="dot dot-green"></span>Yes' : '<span class="dot dot-red"></span>No'}</td>
-      <td><span ${stStyle}>${st.label}</span></td>
-    </tr>`;
-  }).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No clubs in this category</td></tr>`;
-
-  document.getElementById('drill-modal').classList.add('open');
+  openDrillModal(title, sub, clubs, cpMap);
 }
 
 // ══════════════════════════════════════════════
@@ -1955,12 +2017,24 @@ function renderSummary() {
       `${risk} active clubs have 0–1 goals met. These clubs need coaching outreach before the season ends. See Area View to identify priorities.`;
   }
 
-  // Division bars
+  // Division bars — sorted by avg goals, with Distinguished status badge overlay
   const divs = [...new Set(active.map(r => r['Division']))].sort();
   const divAvgs = divs.map(d => {
-    const clubs = active.filter(r => r['Division'] === d);
-    const avg = clubs.reduce((s, r) => s + goals(r), 0) / clubs.length;
-    return { d, avg, clubs: clubs.length };
+    const dclubs = active.filter(r => r['Division'] === d);
+    const avg = dclubs.reduce((s, r) => s + goals(r), 0) / dclubs.length;
+    const ref = allRows.find(r => r['Division'] === d && r['Division Club Base']);
+    const clubBase  = ref ? (parseInt(ref['Division Club Base']) || 0) : 0;
+    const totalPaid = ref ? (parseInt(ref['Total Paid Division Clubs']) || 0) : 0;
+    const goalD  = ref ? (parseInt(ref['Division Dist. Club Goal for Dist.']) || 0) : 0;
+    const goalS  = ref ? (parseInt(ref['Division Dist. Club Goal for Select Dist.']) || 0) : 0;
+    const goalP  = ref ? (parseInt(ref['Division Dist. Club Goal for Pres. Dist.']) || 0) : 0;
+    const net    = totalPaid - clubBase;
+    const totalDist = dclubs.filter(r => getDistTier(r, cpMap)).length;
+    let recLabel = '', recStyle = '';
+    if (totalDist >= goalP && net >= 2)       { recLabel = "Pres. Dist."; recStyle = 'background:rgba(163,113,247,0.2);color:#a371f7;border:1px solid rgba(163,113,247,0.4)'; }
+    else if (totalDist >= goalS && net >= 0)  { recLabel = "Select Dist."; recStyle = 'background:rgba(232,164,74,0.2);color:var(--accent);border:1px solid rgba(232,164,74,0.4)'; }
+    else if (totalDist >= goalD && net >= 0)  { recLabel = "Distinguished"; recStyle = 'background:rgba(63,185,80,0.2);color:var(--green);border:1px solid rgba(63,185,80,0.4)'; }
+    return { d, avg, clubs: dclubs.length, recLabel, recStyle };
   }).sort((a, b) => b.avg - a.avg);
   const maxAvg = Math.max(...divAvgs.map(x => x.avg));
   const colors = ['#3fb950','#5b9cf6','#e8a44a','#a371f7','#d29922','#58a6ff','#f85149'];
@@ -1973,7 +2047,9 @@ function renderSummary() {
         </div>
       </div>
       <div class="div-bar-num">${x.avg.toFixed(1)}</div>
+      ${x.recLabel ? `<span style="font-size:10px;font-family:var(--mono);padding:2px 7px;border-radius:4px;white-space:nowrap;${x.recStyle}">${x.recLabel}</span>` : '<span style="width:90px;display:inline-block"></span>'}
     </div>`).join('');
+  document.querySelector('.card-title').textContent = 'Division Rankings — Avg Goals / Club';
 
   // Goals distribution
   const maxG = 9;
@@ -2141,7 +2217,7 @@ function renderDivisionView() {
 
     // Qualifying chips
     document.getElementById('div-rec-quals').innerHTML = `
-      <span class="rec-qual-chip ${noNetLoss?'rec-qual-ok':'rec-qual-fail'}">${noNetLoss?'✓':'✗'} No Net Club Loss (${netClubs>=0?'+':''}${netClubs})</span>
+      <span class="rec-qual-chip ${noNetLoss?'rec-qual-ok':'rec-qual-fail'}">${noNetLoss?'✓ No Net Club Loss':'✗ Net Club Loss'} (${netClubs>=0?'+':''}${netClubs})</span>
       <span class="rec-qual-chip rec-qual-info">ℹ Club visit reports verified in Area view</span>
       <span class="rec-qual-chip rec-qual-info">ℹ Distinguished count uses live data · thresholds from TI</span>`;
   } else {
@@ -2175,6 +2251,21 @@ function renderDivisionView() {
     const cp = getCPData(r, cpMap);
     const st = goalStatus(goals(r), members(r), cp, cpMap);
     const stStyle = st.style ? `class="${st.cls}" style="${st.style}"` : `class="${st.cls}"`;
+    const tier = getDistTier(r, cpMap);
+    let pathHtml = '<span style="color:var(--green);font-size:12px">✓ Distinguished</span>';
+    if (!tier) {
+      const g = goals(r);
+      const parts = [];
+      const goalGap = Math.max(0, 5 - g);
+      if (goalGap > 0) parts.push(`<span class="gap-chip gap-goals">+${goalGap} goal${goalGap>1?'s':''}</span>`);
+      if (cp) {
+        const mem = memThresholdMet(cp, 'dist');
+        if (!mem.met) parts.push(`<span class="gap-chip gap-mem">${mem.reason}</span>`);
+        const csp = (cp['CSP']||'').toUpperCase();
+        if (csp !== 'Y') parts.push(`<span class="gap-chip gap-csp">CSP needed</span>`);
+      }
+      pathHtml = parts.length ? parts.join(' ') : '<span style="color:var(--muted);font-size:12px">—</span>';
+    }
     return `<tr>
       <td style="font-family:var(--mono)">${r['Area']}</td>
       <td style="font-weight:500">${r['Club Name']}</td>
@@ -2182,6 +2273,7 @@ function renderDivisionView() {
       <td style="font-family:var(--mono)">${members(r)}</td>
       <td>${r['April Renewals']==='1' ? '<span class="dot dot-green"></span>Yes' : '<span class="dot dot-red"></span>No'}</td>
       <td><span ${stStyle}>${st.label}</span></td>
+      <td>${pathHtml}</td>
     </tr>`;
   }).join('');
 }
@@ -2301,7 +2393,7 @@ function renderAreaView() {
 
     // Qualifying requirement chips
     document.getElementById('area-rec-quals').innerHTML = `
-      <span class="rec-qual-chip ${noNetLoss?'rec-qual-ok':'rec-qual-fail'}">${noNetLoss?'✓':'✗'} No Net Club Loss (${netClubs>=0?'+':''}${netClubs})</span>
+      <span class="rec-qual-chip ${noNetLoss?'rec-qual-ok':'rec-qual-fail'}">${noNetLoss?'✓ No Net Club Loss':'✗ Net Club Loss'} (${netClubs>=0?'+':''}${netClubs})</span>
       <span class="rec-qual-chip ${novOk?'rec-qual-ok':'rec-qual-warn'}">${novOk?'✓':'⚠'} Nov Visits: ${novVisits}/${visitBase75} needed</span>
       <span class="rec-qual-chip ${mayOk?'rec-qual-ok':'rec-qual-warn'}">${mayOk?'✓':'⚠'} May Visits: ${mayVisits}/${visitBase75} needed</span>
       <span class="rec-qual-chip ${qualifyingMet?'rec-qual-ok':'rec-qual-warn'}">${qualifyingMet?'✓ All qualifying reqs met':'⚠ Qualifying reqs incomplete'}</span>`;
@@ -2312,15 +2404,29 @@ function renderAreaView() {
   const sorted = [...clubs].sort((a, b) => goals(a) - goals(b));
   document.getElementById('area-clubs-body').innerHTML = sorted.map(r => {
     const g = goals(r);
-    const needed = Math.max(0, 5 - g);
-    const st = goalStatus(g, members(r));
+    const cp = getCPData(r, cpMap);
+    const tier = getDistTier(r, cpMap);
+    const st = goalStatus(g, members(r), cp, cpMap);
     const stStyle = st.style ? `class="${st.cls}" style="${st.style}"` : `class="${st.cls}"`;
+    let pathHtml = '<span style="color:var(--green);font-size:12px">✓ Distinguished</span>';
+    if (!tier) {
+      const parts = [];
+      const goalGap = Math.max(0, 5 - g);
+      if (goalGap > 0) parts.push(`<span class="gap-chip gap-goals">+${goalGap} goal${goalGap>1?'s':''}</span>`);
+      if (cp) {
+        const mem = memThresholdMet(cp, 'dist');
+        if (!mem.met) parts.push(`<span class="gap-chip gap-mem">${mem.reason}</span>`);
+        const csp = (cp['CSP']||'').toUpperCase();
+        if (csp !== 'Y') parts.push(`<span class="gap-chip gap-csp">CSP needed</span>`);
+      }
+      pathHtml = parts.length ? parts.join(' ') : '<span style="color:var(--muted);font-size:12px">—</span>';
+    }
     return `<tr>
       <td style="font-weight:500">${r['Club Name']}</td>
       <td style="font-family:var(--mono);font-weight:600">${g}</td>
       <td style="font-family:var(--mono)">${members(r)}</td>
       <td>${r['April Renewals']==='1' ? '<span class="dot dot-green"></span>Yes' : '<span class="dot dot-red"></span>No'}</td>
-      <td style="font-family:var(--mono);color:${needed===0?'var(--green)':'var(--accent)'}">${needed===0 ? '✓ Achieved' : `+${needed} more`}</td>
+      <td>${pathHtml}</td>
       <td>${priorityLabel(g)}</td>
     </tr>`;
   }).join('');
@@ -2331,6 +2437,9 @@ function renderAreaView() {
 // ══════════════════════════════════════════════
 function renderRecognition() {
   if (!allRows.length) return;
+
+  // Build cpMap once for the entire function
+  const cpMap = buildCPMap();
 
   // ── Division summary table ──
   const validDivRows = allRows.filter(r => r['Division'] && r['Division'].length === 1 && /^[A-Z]$/i.test(r['Division']));
@@ -2355,7 +2464,6 @@ function renderRecognition() {
 
   const divBody = document.getElementById('rec-div-body');
   if (divBody) {
-    const cpMap = buildCPMap();
     divBody.innerHTML = Object.entries(divsSeen).sort((a,b)=>a[0].localeCompare(b[0])).map(([d, ref]) => {
       const clubBase  = parseInt(ref['Division Club Base']) || 0;
       const totalPaid = parseInt(ref['Total Paid Division Clubs']) || 0;
@@ -2415,7 +2523,6 @@ function renderRecognition() {
       const noLoss    = net >= 0;
 
       // Live Distinguished count
-      const cpMap = buildCPMap();
       const areaActive = allRows.filter(r => isActive(r) && r['Division'] === d && r['Area'] === a);
       const totalDist = areaActive.filter(r => getDistTier(r, cpMap)).length;
 
@@ -2459,8 +2566,7 @@ function renderRecognition() {
     distTotalPaid += parseInt(ref['Total Paid Division Clubs']) || 0;
   });
   // Live Distinguished count across entire district
-  const cpMapDist = buildCPMap();
-  const distTotalDist = allRows.filter(r => isActive(r)).filter(r => getDistTier(r, cpMapDist)).length;
+  const distTotalDist = allRows.filter(r => isActive(r)).filter(r => getDistTier(r, cpMap)).length;
   const distNetClubs = distTotalPaid - distClubBase;
 
   // Membership payments — from distPerfRows
@@ -2576,7 +2682,7 @@ function renderRecognition() {
       : 'Load prior year (Jun 30) District Performance CSV';
     const memOk1 = memGrowthPct !== null && memGrowthPct >= 1;
     distQuals.innerHTML = `
-      <span class="rec-qual-chip ${distNetClubs>=0?'rec-qual-ok':'rec-qual-fail'}">${distNetClubs>=0?'✓':'✗'} Net Club Growth: ${distNetClubs>=0?'+':''}${distNetClubs} (${distClubBase?(distNetClubs/distClubBase*100).toFixed(1):'—'}%)</span>
+      <span class="rec-qual-chip ${distNetClubs>=0?'rec-qual-ok':'rec-qual-fail'}">${distNetClubs>=0?'✓ Net Club Growth':'✗ Net Club Loss'}: ${distNetClubs>=0?'+':''}${distNetClubs} (${distClubBase?(distNetClubs/distClubBase*100).toFixed(1):'—'}%)</span>
       <span class="rec-qual-chip ${memBase!==null?(memOk1?'rec-qual-ok':'rec-qual-warn'):'rec-qual-info'}">${memBase!==null?(memOk1?'✓':'⚠'):'ℹ'} Mem. Payments: ${memNote}</span>
       <span class="rec-qual-chip rec-qual-info">ℹ Qualifying reqs (training report, success plan, etc.) verified outside dashboard</span>`;
   }
