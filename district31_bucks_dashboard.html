@@ -427,6 +427,32 @@ const QUARTERS = [
 // Live CSV store (starts with originals, updated on upload)
 let csvStore = { ...ORIGINAL_CSV };
 
+// ── localStorage persistence ──────────────────────────────────
+const LS_KEY = 'd31_bucks_csvStore';
+
+function saveToStorage() {
+  try {
+    // Only save keys that differ from ORIGINAL_CSV (i.e. user-uploaded overrides)
+    const overrides = {};
+    for (const k of Object.keys(csvStore)) {
+      if (csvStore[k] !== ORIGINAL_CSV[k]) overrides[k] = csvStore[k];
+    }
+    localStorage.setItem(LS_KEY, JSON.stringify(overrides));
+  } catch(e) { console.warn('Could not save to localStorage:', e); }
+}
+
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return;
+    const overrides = JSON.parse(raw);
+    Object.assign(csvStore, overrides);
+  } catch(e) { console.warn('Could not load from localStorage:', e); }
+}
+
+// Load any previously uploaded CSVs immediately
+loadFromStorage();
+
 // Pending uploads (before Apply)
 let pendingUploads = {};
 
@@ -633,10 +659,31 @@ function render() {
   toggleQ4Columns();
 }
 
+function getQ3DateLabel() {
+  // Try to extract the date from the Q3_current CSV filename hint stored in the card,
+  // or fall back to parsing the 'Date Generated' or first date-like column from the CSV itself.
+  const csv = csvStore['Q3_current'];
+  if (!csv) return 'Feb 27, 2026'; // fallback to original baked-in date
+  // Look for a "Date Generated" or "Report Date" style header value
+  const firstLines = csv.split('\n').slice(0, 5).join('\n');
+  const dateMatch = firstLines.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+  if (dateMatch) {
+    // Found a date in the header rows — format it nicely
+    let [, m, d, y] = dateMatch;
+    if (y.length === 2) y = '20' + y;
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const monthName = months[parseInt(m) - 1] || m;
+    return `${monthName} ${parseInt(d)}, ${y}`;
+  }
+  // Fallback: scan filename hint from the slot card title if nothing in CSV
+  return 'latest upload';
+}
+
 function updateHeaderPill() {
   const hasQ4 = csvStore['Q4_current'] || csvStore['Q4_start'];
   const q3partial = !QUARTERS[2].complete;
-  let text = hasQ4 ? 'Q4 in progress' : (q3partial ? 'Q3 in progress — data thru <span>Feb 27, 2026</span>' : 'Q3 complete');
+  const dateLabel = getQ3DateLabel();
+  let text = hasQ4 ? 'Q4 in progress' : (q3partial ? `Q3 in progress — data thru <span>${dateLabel}</span>` : 'Q3 complete');
   document.getElementById('headerDatePill').innerHTML = text;
 }
 
@@ -675,7 +722,8 @@ function renderNote() {
   const hasQ4 = csvStore['Q4_current'];
   const confB = ALL_CLUBS.reduce((s,c)=>s+(c.confirmed_bucks||0),0);
   const prelB  = ALL_CLUBS.reduce((s,c)=>s+(c.prelim_bucks||0),0);
-  let msg = `<strong>⚠️ Q3 in progress:</strong> Data through Feb 27, 2026. <strong style="color:var(--green)">$${confB.toLocaleString()} confirmed</strong> (Q1+Q2 final) + <strong style="color:var(--gold-light)">$${prelB.toLocaleString()} preliminary</strong> (Q3 closes Mar 31). Q3 Level Up rankings also preliminary. <em>Early Membership Renewals</em> data not yet available.`;
+  const dateLabel = getQ3DateLabel();
+  let msg = `<strong>⚠️ Q3 in progress:</strong> Data through ${dateLabel}. <strong style="color:var(--green)">$${confB.toLocaleString()} confirmed</strong> (Q1+Q2 final) + <strong style="color:var(--gold-light)">$${prelB.toLocaleString()} preliminary</strong> (Q3 closes Mar 31). Q3 Level Up rankings also preliminary. <em>Early Membership Renewals</em> data not yet available.`;
   if (hasQ4) msg = `<strong>ℹ️ Q4 in progress:</strong> Q1–Q3 confirmed. <strong style="color:var(--gold-light)">$${prelB.toLocaleString()} preliminary</strong> from Q4 (in progress). <em>Early Membership Renewals</em> data not yet available.`;
   document.getElementById('dashNote').innerHTML = msg;
 }
@@ -938,15 +986,17 @@ function applyUploads() {
   }
   Object.assign(csvStore, pendingUploads);
   pendingUploads = {};
+  saveToStorage();
   processData();
   render();
-  alert(`✅ Data updated! ${ALL_CLUBS.length} clubs recalculated.`);
+  alert(`✅ Data updated! ${ALL_CLUBS.length} clubs recalculated. Data saved for future sessions.`);
 }
 
 function resetToOriginal() {
   if (!confirm('Reset all data to the original 6 uploaded snapshots?')) return;
   csvStore = { ...ORIGINAL_CSV };
   pendingUploads = {};
+  localStorage.removeItem(LS_KEY);
   processData();
   render();
 }
