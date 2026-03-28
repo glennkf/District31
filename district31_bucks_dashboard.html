@@ -429,32 +429,66 @@ let csvStore = { ...ORIGINAL_CSV };
 
 // ── localStorage persistence ──────────────────────────────────
 const LS_KEY = 'd31_bucks_csvStore';
+const LS_NAMES_KEY = 'd31_bucks_fileNames';
+
+// Track uploaded filenames (key → filename)
+let uploadedNames = {};
 
 function saveToStorage() {
   try {
-    // Only save keys that differ from ORIGINAL_CSV (i.e. user-uploaded overrides)
     const overrides = {};
     for (const k of Object.keys(csvStore)) {
       if (csvStore[k] !== ORIGINAL_CSV[k]) overrides[k] = csvStore[k];
     }
     localStorage.setItem(LS_KEY, JSON.stringify(overrides));
+    localStorage.setItem(LS_NAMES_KEY, JSON.stringify(uploadedNames));
   } catch(e) { console.warn('Could not save to localStorage:', e); }
 }
 
 function loadFromStorage() {
   try {
     const raw = localStorage.getItem(LS_KEY);
-    if (!raw) return;
-    const overrides = JSON.parse(raw);
-    Object.assign(csvStore, overrides);
+    if (raw) Object.assign(csvStore, JSON.parse(raw));
+    const names = localStorage.getItem(LS_NAMES_KEY);
+    if (names) Object.assign(uploadedNames, JSON.parse(names));
   } catch(e) { console.warn('Could not load from localStorage:', e); }
 }
 
 // Load any previously uploaded CSVs immediately
 loadFromStorage();
 
+// Sanity-check: if restored data causes wildly wrong club counts, clear it
+(function validateStorage() {
+  try {
+    const parsed = {};
+    for (const q of QUARTERS) {
+      if (csvStore[q.startKey]) parsed[q.startKey] = csvStore[q.startKey];
+      if (csvStore[q.endKey])   parsed[q.endKey]   = csvStore[q.endKey];
+    }
+    const allNums = new Set();
+    for (const csv of Object.values(parsed)) {
+      const lines = csv.trim().split('\n');
+      for (const l of lines.slice(1)) {
+        if (l.trim() && !l.startsWith('Month')) {
+          const parts = l.split(',');
+          if (parts[3]) allNums.add(parts[3].trim());
+        }
+      }
+    }
+    // D31 has ~130-160 clubs; if wildly outside that range, clear storage
+    if (allNums.size > 250 || allNums.size < 50) {
+      console.warn('Stored data looks corrupted (' + allNums.size + ' clubs). Clearing localStorage.');
+      csvStore = { ...ORIGINAL_CSV };
+      uploadedNames = {};
+      localStorage.removeItem(LS_KEY);
+      localStorage.removeItem(LS_NAMES_KEY);
+    }
+  } catch(e) { /* ignore validation errors */ }
+})();
+
 // Pending uploads (before Apply)
 let pendingUploads = {};
+let pendingUploadNames = {};
 
 // Computed state
 let ALL_CLUBS = [];
@@ -660,22 +694,20 @@ function render() {
 }
 
 function getQ3DateLabel() {
-  // Try to extract the date from the Q3_current CSV filename hint stored in the card,
-  // or fall back to parsing the 'Date Generated' or first date-like column from the CSV itself.
+  // The TI CSV puts the date on the LAST non-empty line, e.g.:
+  // "Month of Feb, As of 02/27/2026,,,,..."
   const csv = csvStore['Q3_current'];
-  if (!csv) return 'Feb 27, 2026'; // fallback to original baked-in date
-  // Look for a "Date Generated" or "Report Date" style header value
-  const firstLines = csv.split('\n').slice(0, 5).join('\n');
-  const dateMatch = firstLines.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+  if (!csv) return 'Feb 27, 2026';
+  // Search last 5 lines for a date pattern MM/DD/YYYY
+  const lines = csv.trim().split('\n');
+  const tail = lines.slice(-5).join('\n');
+  const dateMatch = tail.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
   if (dateMatch) {
-    // Found a date in the header rows — format it nicely
     let [, m, d, y] = dateMatch;
-    if (y.length === 2) y = '20' + y;
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const monthName = months[parseInt(m) - 1] || m;
     return `${monthName} ${parseInt(d)}, ${y}`;
   }
-  // Fallback: scan filename hint from the slot card title if nothing in CSV
   return 'latest upload';
 }
 
@@ -933,6 +965,13 @@ function renderUploadGrid() {
   document.getElementById('uploadGrid').innerHTML = SLOT_DEFS.map(s => {
     const loaded = !!csvStore[s.key];
     const pending = !!pendingUploads[s.key];
+    const isOverride = loaded && csvStore[s.key] !== ORIGINAL_CSV[s.key];
+    const fname = pendingUploadNames[s.key] || uploadedNames[s.key] || null;
+    let statusText;
+    if (pending) statusText = `⏳ Pending: ${fname || 'file'}`;
+    else if (isOverride && fname) statusText = `✓ Loaded: ${fname}`;
+    else if (loaded) statusText = '✓ Data loaded';
+    else statusText = 'Drop CSV here or click to browse';
     return `<div class="upload-card ${loaded?'loaded':''}" id="card-${s.key}"
       ondragover="event.preventDefault();this.classList.add('drag-over')"
       ondragleave="this.classList.remove('drag-over')"
@@ -941,9 +980,7 @@ function renderUploadGrid() {
       <div class="upload-icon">${loaded ? '✅' : '📄'}</div>
       <div class="upload-label">${s.label}</div>
       <div class="upload-desc">${s.desc}<br><span style="color:var(--border)">${s.hint}</span></div>
-      <div class="upload-status ${loaded?'ok':''}" id="status-${s.key}">
-        ${pending ? '⏳ Pending upload' : loaded ? '✓ Data loaded' : 'Drop CSV here or click to browse'}
-      </div>
+      <div class="upload-status ${loaded?'ok':''}" id="status-${s.key}">${statusText}</div>
     </div>`;
   }).join('');
 }
@@ -965,13 +1002,13 @@ function readFile(file, key) {
   const reader = new FileReader();
   reader.onload = e => {
     const text = e.target.result;
-    // Quick validation
     if (!text.includes('Club Number') && !text.includes('Club Name')) {
       document.getElementById('status-'+key).innerHTML = '❌ Invalid file — must be a Club Performance CSV';
       document.getElementById('status-'+key).className = 'upload-status err';
       return;
     }
     pendingUploads[key] = text;
+    pendingUploadNames[key] = file.name;
     document.getElementById('status-'+key).innerHTML = `⏳ Pending: ${file.name}`;
     document.getElementById('status-'+key).className = 'upload-status ok';
     document.getElementById('card-'+key).classList.add('loaded');
@@ -985,7 +1022,9 @@ function applyUploads() {
     return;
   }
   Object.assign(csvStore, pendingUploads);
+  Object.assign(uploadedNames, pendingUploadNames);
   pendingUploads = {};
+  pendingUploadNames = {};
   saveToStorage();
   processData();
   render();
@@ -996,7 +1035,10 @@ function resetToOriginal() {
   if (!confirm('Reset all data to the original 6 uploaded snapshots?')) return;
   csvStore = { ...ORIGINAL_CSV };
   pendingUploads = {};
+  pendingUploadNames = {};
+  uploadedNames = {};
   localStorage.removeItem(LS_KEY);
+  localStorage.removeItem(LS_NAMES_KEY);
   processData();
   render();
 }
