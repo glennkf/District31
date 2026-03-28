@@ -481,6 +481,8 @@ function parseCSV(text) {
     const vals = splitCSVLine(line);
     const obj = {};
     headers.forEach((h, i) => obj[h.trim()] = (vals[i] || '').trim());
+    // Normalize club number: strip leading zeros so "00000508" === "508"
+    if (obj['Club Number']) obj['Club Number'] = obj['Club Number'].replace(/^0+/, '') || '0';
     return obj;
   }).filter(r => r['Club Number']);
 }
