@@ -516,23 +516,14 @@ function getLevelCounts(row) {
   return [l1, l2, al2, l3, l4, al4];
 }
 
-function eduDcpPoints(counts) {
-  // Each column has its own threshold to earn 1 education DCP point:
-  //   Level 1s:           need >= 4  → 1 pt
-  //   Level 2s:           need >= 2  → 1 pt
-  //   Add. Level 2s:      need >= 2  → 1 pt
-  //   Level 3s:           need >= 2  → 1 pt
-  //   Level 4s/Path/DTM:  need >= 1  → 1 pt
-  //   Add. Level 4s/Path: need >= 1  → 1 pt
-  const [l1, l2, al2, l3, l4, al4] = counts;
-  let pts = 0;
-  if (l1  >= 4) pts++;
-  if (l2  >= 2) pts++;
-  if (al2 >= 2) pts++;
-  if (l3  >= 2) pts++;
-  if (l4  >= 1) pts++;
-  if (al4 >= 1) pts++;
-  return pts;
+function earnedEduDcp(endCounts, startCounts) {
+  // A DCP point is earned in this quarter if the cumulative total crossed
+  // the threshold during the quarter (end >= threshold AND start < threshold)
+  const thresholds = [4, 2, 2, 2, 1, 1]; // L1, L2, AL2, L3, L4, AL4
+  for (let i = 0; i < thresholds.length; i++) {
+    if (endCounts[i] >= thresholds[i] && startCounts[i] < thresholds[i]) return true;
+  }
+  return false;
 }
 
 function deltaCounts(endRow, startRow) {
@@ -591,10 +582,10 @@ function processData() {
       // So Q1 counts = Q1_end values directly (treat start as zero baseline).
       // For Q2+: compute delta counts between end and start snapshots.
       const isQ1 = q.key === 'Q1';
-      const counts = isQ1
-        ? getLevelCounts(endRow)
-        : deltaCounts(endRow, startRow || {});
-      const eduDcp = endRow ? eduDcpPoints(counts) : 0;
+      const endCounts   = getLevelCounts(endRow);
+      const startCounts = isQ1 ? [0,0,0,0,0,0] : getLevelCounts(startRow || {});
+      const counts = endCounts.map((v, i) => Math.max(0, v - startCounts[i])); // delta for Level Up! ranking
+      const eduDcp = endRow ? earnedEduDcp(endCounts, startCounts) : false;
       const levels = counts.reduce((a,b)=>a+b,0); // total completions (for Level Up! ranking)
       const nm     = endRow ? (isQ1 ? newMembers(endRow) : Math.max(0, newMembers(endRow) - newMembers(startRow || {}))) : 0;
       const good     = isGoodStanding(endRow || startRow);
@@ -603,7 +594,7 @@ function processData() {
       qData[q.key] = { levels, new_mem: nm, good, mem_base: memBase };
 
       // UYG — requires at least 1 education DCP point earned in the quarter
-      if (eduDcp >= 1) {
+      if (eduDcp) {
         const payout = payouts[Math.min(consec, 3)];
         uyg += payout; uyg_per_q[q.key] = payout; consec++;
       } else {
