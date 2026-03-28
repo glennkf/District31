@@ -93,6 +93,10 @@
     padding:18px 22px; position:relative; overflow:hidden; transition:border-color .2s;
   }
   .kpi-card:hover { border-color:var(--gold-dim); }
+  .kpi-card.clickable { cursor:pointer; }
+  .kpi-card.clickable:hover { border-color:var(--gold); background:rgba(212,168,67,.07); }
+  .kpi-card.kpi-active { border-color:var(--gold) !important; background:rgba(212,168,67,.12) !important; }
+  .kpi-card.kpi-active::before { background:var(--gold); }
   .kpi-card::before { content:''; position:absolute; top:0;left:0;right:0; height:2px; background:linear-gradient(90deg,var(--gold),transparent); }
   .kpi-label { font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:7px; }
   .kpi-value { font-family:'Syne',sans-serif; font-size:30px; font-weight:800; color:var(--gold); line-height:1; }
@@ -333,6 +337,11 @@
     <div class="section-title"><div class="dot"></div> Club Leaderboard</div>
   </div>
 
+  <div id="kpiFilterBanner" style="display:none;background:rgba(212,168,67,.1);border:1px solid rgba(212,168,67,.3);border-radius:8px;padding:9px 14px;font-size:11px;color:var(--gold);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
+    <span id="kpiFilterBannerText"></span>
+    <button onclick="setKpiFilter(kpiFilter)" style="background:none;border:none;color:var(--gold);cursor:pointer;font-size:11px;font-family:'DM Mono',monospace;">✕ Clear</button>
+  </div>
+
   <div class="controls">
     <input type="text" id="searchInput" placeholder="Search club name or number…" oninput="applyFilters()">
     <select id="divFilter" onchange="applyFilters()">
@@ -469,7 +478,7 @@ let pendingUploadNames = {};
 // Computed state
 let ALL_CLUBS = [];
 let LEVEL_UP_WINNERS = {};
-let sortCol = 'total', sortDir = -1, currentPage = 1, earnersOnly = false;
+let sortCol = 'total', sortDir = -1, currentPage = 1, earnersOnly = false, kpiFilter = null;
 
 // ══════════════════════════════════════════════
 // CSV PARSING
@@ -705,18 +714,25 @@ function renderKPIs() {
   const active = ALL_CLUBS.filter(c => c.current_status === 'Active').length;
   const kpis = [
     { label:'Total Clubs',            value: ALL_CLUBS.length,  sub:`${active} Active`, color:'var(--gold)' },
-    { label:'Clubs Earning Bucks',    value: earners.length,    sub:`${Math.round(earners.length/ALL_CLUBS.length*100)}% of clubs`, color:'var(--gold)' },
+    { label:'Clubs Earning Bucks',    value: earners.length,    sub:`${Math.round(earners.length/ALL_CLUBS.length*100)}% of clubs`, color:'var(--gold)', filter:'earners' },
     { label:'Total Bucks Awarded',    value:`$${totalBucks.toLocaleString()}`, sub:'Q1 + Q2 + Q3 combined', color:'var(--gold)' },
     { label:'✓ Confirmed (Q1+Q2)',    value:`$${confirmedBucks.toLocaleString()}`, sub:'Final · quarters closed', color:'var(--green)' },
     { label:'⏳ Preliminary (Q3)',    value:`$${prelimBucks.toLocaleString()}`, sub:`${Math.round(prelimBucks/totalBucks*100)}% of total · Q3 in progress`, color:'var(--gold-light)' },
-    { label:'3+ Quarter UYG Earners', value: uyg3, sub:'Consecutive or spread', color:'var(--gold)' },
+    { label:'3+ Quarter UYG Earners', value: uyg3, sub:'Consecutive or spread', color:'var(--gold)', filter:'uyg3' },
   ];
-  document.getElementById('kpiGrid').innerHTML = kpis.map(k => `
-    <div class="kpi-card">
+  document.getElementById('kpiGrid').innerHTML = kpis.map(k => {
+    const isClickable = !!k.filter;
+    const isActive = kpiFilter === k.filter;
+    const classes = `kpi-card${isClickable ? ' clickable' : ''}${isActive ? ' kpi-active' : ''}`;
+    const onclick = isClickable ? `onclick="setKpiFilter('${k.filter}')"` : '';
+    const indicator = isClickable ? `<div style="font-size:9px;margin-top:6px;color:${isActive ? 'var(--gold)' : 'var(--muted)'}; letter-spacing:.5px; text-transform:uppercase">${isActive ? '✕ Clear filter' : '▼ Click to filter'}</div>` : '';
+    return `<div class="${classes}" ${onclick}>
       <div class="kpi-label">${k.label}</div>
       <div class="kpi-value" style="color:${k.color||'var(--gold)'}">${k.value}</div>
       <div class="kpi-sub">${k.sub}</div>
-    </div>`).join('');
+      ${indicator}
+    </div>`;
+  }).join('');
 }
 
 function renderNote() {
@@ -829,6 +845,16 @@ function qBadge(val) {
 }
 
 function applyFilters() {
+  // Update KPI filter banner
+  const banner = document.getElementById('kpiFilterBanner');
+  const bannerText = document.getElementById('kpiFilterBannerText');
+  if (kpiFilter && banner) {
+    const labels = { earners: 'Showing: Clubs Earning Bucks', uyg3: 'Showing: 3+ Quarter UYG Earners' };
+    bannerText.textContent = labels[kpiFilter] || '';
+    banner.style.display = 'flex';
+  } else if (banner) {
+    banner.style.display = 'none';
+  }
   const search   = (document.getElementById('searchInput')?.value || '').toLowerCase();
   const divF     = document.getElementById('divFilter')?.value || '';
   const statF    = document.getElementById('statusFilter')?.value || '';
@@ -840,6 +866,8 @@ function applyFilters() {
     if (divF && c.division !== divF) return false;
     if (statF && c.current_status !== statF) return false;
     if (earnersOnly && c.total_bucks === 0) return false;
+    if (kpiFilter === 'earners' && c.total_bucks === 0) return false;
+    if (kpiFilter === 'uyg3' && Object.values(c.uyg_per_q).filter(v => v > 0).length < 3) return false;
     return true;
   });
 
@@ -899,6 +927,16 @@ function applyFilters() {
     pagHtml += `<button class="page-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
   if (currentPage < totalPages) pagHtml += `<button class="page-btn" onclick="goPage(${currentPage+1})">Next →</button>`;
   document.getElementById('pagination').innerHTML = pagHtml;
+}
+
+function setKpiFilter(filter) {
+  // Toggle off if already active
+  kpiFilter = kpiFilter === filter ? null : filter;
+  currentPage = 1;
+  renderKPIs(); // re-render to update active state
+  // Switch to leaderboard tab and apply
+  showTab('leaderboard', document.querySelectorAll('.nav-tab')[1]);
+  applyFilters();
 }
 
 function goPage(p) { currentPage = p; applyFilters(); }
