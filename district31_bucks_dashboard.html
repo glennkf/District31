@@ -428,10 +428,13 @@ const QUARTERS = [
 let csvStore = { ...ORIGINAL_CSV };
 
 // ── localStorage persistence ──────────────────────────────────
-const LS_KEY = 'd31_bucks_csvStore';
-const LS_NAMES_KEY = 'd31_bucks_fileNames';
-const LS_VERSION_KEY = 'd31_bucks_version';
-const LS_VERSION = '2'; // Bump this whenever storage format changes
+// v3 keys — deliberately different prefix to guarantee clean slate on upgrade
+const LS_KEY = 'd31_bucks_v3_csvStore';
+const LS_NAMES_KEY = 'd31_bucks_v3_fileNames';
+
+// Purge ALL keys written by prior versions of this dashboard
+['d31_bucks_csvStore','d31_bucks_fileNames','d31_bucks_version','d31_bucks_v2_csvStore']
+  .forEach(k => localStorage.removeItem(k));
 
 // Track uploaded filenames (key → filename)
 let uploadedNames = {};
@@ -444,20 +447,11 @@ function saveToStorage() {
     }
     localStorage.setItem(LS_KEY, JSON.stringify(overrides));
     localStorage.setItem(LS_NAMES_KEY, JSON.stringify(uploadedNames));
-    localStorage.setItem(LS_VERSION_KEY, LS_VERSION);
   } catch(e) { console.warn('Could not save to localStorage:', e); }
 }
 
 function loadFromStorage() {
   try {
-    // If storage version doesn't match, wipe everything and start fresh
-    const storedVersion = localStorage.getItem(LS_VERSION_KEY);
-    if (storedVersion !== LS_VERSION) {
-      localStorage.removeItem(LS_KEY);
-      localStorage.removeItem(LS_NAMES_KEY);
-      localStorage.setItem(LS_VERSION_KEY, LS_VERSION);
-      return;
-    }
     const raw = localStorage.getItem(LS_KEY);
     if (raw) Object.assign(csvStore, JSON.parse(raw));
     const names = localStorage.getItem(LS_NAMES_KEY);
@@ -467,35 +461,6 @@ function loadFromStorage() {
 
 // Load any previously uploaded CSVs immediately
 loadFromStorage();
-
-// Sanity-check: if restored data causes wildly wrong club counts, clear it
-(function validateStorage() {
-  try {
-    const parsed = {};
-    for (const q of QUARTERS) {
-      if (csvStore[q.startKey]) parsed[q.startKey] = csvStore[q.startKey];
-      if (csvStore[q.endKey])   parsed[q.endKey]   = csvStore[q.endKey];
-    }
-    const allNums = new Set();
-    for (const csv of Object.values(parsed)) {
-      const lines = csv.trim().split('\n');
-      for (const l of lines.slice(1)) {
-        if (l.trim() && !l.startsWith('Month')) {
-          const parts = l.split(',');
-          if (parts[3]) allNums.add(parts[3].trim());
-        }
-      }
-    }
-    // D31 has ~130-160 clubs; if wildly outside that range, clear storage
-    if (allNums.size > 250 || allNums.size < 50) {
-      console.warn('Stored data looks corrupted (' + allNums.size + ' clubs). Clearing localStorage.');
-      csvStore = { ...ORIGINAL_CSV };
-      uploadedNames = {};
-      localStorage.removeItem(LS_KEY);
-      localStorage.removeItem(LS_NAMES_KEY);
-    }
-  } catch(e) { /* ignore validation errors */ }
-})();
 
 // Pending uploads (before Apply)
 let pendingUploads = {};
@@ -1050,7 +1015,6 @@ function resetToOriginal() {
   uploadedNames = {};
   localStorage.removeItem(LS_KEY);
   localStorage.removeItem(LS_NAMES_KEY);
-  localStorage.removeItem(LS_VERSION_KEY);
   processData();
   render();
 }
