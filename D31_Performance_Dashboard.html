@@ -523,6 +523,77 @@
   .rec-section-heading:first-of-type { margin-top: 0; }
   .rec-section-sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
 
+  /* ── Renewal Alert Tab ── */
+  .renewal-alert-banner {
+    background: linear-gradient(90deg, rgba(248,81,73,0.12), rgba(248,81,73,0.04));
+    border: 1px solid rgba(248,81,73,0.3);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .renewal-alert-left { display: flex; align-items: center; gap: 12px; }
+  .renewal-alert-icon { font-size: 24px; flex-shrink: 0; }
+  .renewal-alert-title { font-family: var(--serif); font-size: 18px; color: var(--red); }
+  .renewal-alert-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .renewal-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .renewal-div-pills {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    align-items: center;
+  }
+  .renewal-div-pill {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--mono);
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+  .renewal-div-pill:hover { border-color: var(--accent); color: var(--accent); }
+  .renewal-div-pill.active { background: var(--accent); color: #0d1117; border-color: var(--accent); }
+  .renewal-div-pill.all { background: var(--surface2); }
+  .renewal-progress-bar {
+    height: 5px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+  .renewal-progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--green);
+    transition: width 0.5s ease;
+  }
+  .need-chip {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--mono);
+    white-space: nowrap;
+  }
+  .need-critical { background: rgba(248,81,73,0.15); color: var(--red); }
+  .need-high     { background: rgba(210,153,34,0.15); color: var(--yellow); }
+  .need-low      { background: rgba(63,185,80,0.15);  color: var(--green); }
+
   /* ── Last Updated Banner ── */
   .update-banner {
     background: linear-gradient(90deg, rgba(232,164,74,0.12), rgba(232,164,74,0.04));
@@ -862,6 +933,7 @@
   <div class="tab" data-view="area">Area View</div>
   <div class="tab" data-view="distinguished">Distinguished</div>
   <div class="tab" data-view="recognition">District Recognition</div>
+  <div class="tab" data-view="renewal" style="color:var(--red)">⚠ Renewal Alert</div>
   <div class="tab" data-view="trend">Trend &amp; History</div>
 </div>
 
@@ -1201,6 +1273,92 @@
   </div>
 
   <!-- ═══════════════════════════════════════════════
+       VIEW — RENEWAL ALERT
+  ════════════════════════════════════════════════ -->
+  <div class="view" id="view-renewal">
+    <div class="section-title">April Renewal Alert</div>
+    <div class="section-sub">Clubs with fewer than 8 renewed members (9/30/26 or 3/31/27 end date) as of the uploaded Membership List. Upload the latest Membership List CSV via the manual override zone to populate.</div>
+
+    <div id="renewal-no-data" class="alert">
+      <span class="alert-icon">📋</span>
+      <span>No Membership List data loaded. Use the <strong>Manual override</strong> upload zone above to drag in the latest <code>MembershipList-District*.csv</code> file. This data is not auto-loaded from GitHub.</span>
+    </div>
+
+    <div id="renewal-content" style="display:none">
+      <!-- Urgency banner -->
+      <div class="renewal-alert-banner">
+        <div class="renewal-alert-left">
+          <div class="renewal-alert-icon">🚨</div>
+          <div>
+            <div class="renewal-alert-title">Less than 48 hours to April renewal deadline</div>
+            <div class="renewal-alert-sub">Members with a 3/31/26 end date must renew before April 1 · Data as of: <span id="renewal-data-date">—</span></div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--muted);text-align:right">
+          Renewed = end date 9/30/26 or 3/31/27<br>
+          Threshold = 8 members to be a paid club
+        </div>
+      </div>
+
+      <!-- KPI cards -->
+      <div class="renewal-kpi-row">
+        <div class="kpi" style="--kpi-color:var(--red)">
+          <div class="kpi-label">Clubs at Risk</div>
+          <div class="kpi-value" id="renewal-kpi-clubs">—</div>
+          <div class="kpi-sub">fewer than 8 renewed</div>
+        </div>
+        <div class="kpi" style="--kpi-color:#ffd700">
+          <div class="kpi-label">Zero Renewals</div>
+          <div class="kpi-value" id="renewal-kpi-zero">—</div>
+          <div class="kpi-sub">no members renewed yet</div>
+        </div>
+        <div class="kpi" style="--kpi-color:var(--accent)">
+          <div class="kpi-label">Renewals Still Needed</div>
+          <div class="kpi-value" id="renewal-kpi-needed">—</div>
+          <div class="kpi-sub">to reach 8-member threshold</div>
+        </div>
+        <div class="kpi" style="--kpi-color:var(--muted)">
+          <div class="kpi-label">Members Expiring</div>
+          <div class="kpi-value" id="renewal-kpi-expiring">—</div>
+          <div class="kpi-sub">3/31/26 across at-risk clubs</div>
+        </div>
+      </div>
+
+      <!-- Division filter pills -->
+      <div class="renewal-div-pills" id="renewal-div-pills">
+        <span style="font-size:12px;color:var(--muted);margin-right:4px">Filter:</span>
+      </div>
+
+      <!-- Per-division summary -->
+      <div class="card wide-card" id="renewal-div-summary-card">
+        <div class="card-title">At-Risk Clubs by Division</div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Division</th><th>At-Risk Clubs</th><th>Zero Renewals</th><th>Renewals Still Needed</th><th>Members Expiring</th></tr></thead>
+          <tbody id="renewal-div-summary-body"></tbody>
+        </table></div>
+      </div>
+
+      <!-- Main club table -->
+      <div class="card wide-card">
+        <div class="card-title">Club-by-Club Renewal Status <span id="renewal-table-count" style="font-family:var(--mono);color:var(--muted);font-weight:400;margin-left:8px"></span></div>
+        <div class="table-wrap"><table>
+          <thead><tr>
+            <th>Div</th>
+            <th>Area</th>
+            <th>Club Name</th>
+            <th>Renewed</th>
+            <th>Still Expiring</th>
+            <th>Total</th>
+            <th>Still Need</th>
+            <th>Progress</th>
+          </tr></thead>
+          <tbody id="renewal-clubs-body"></tbody>
+        </table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
        VIEW 4 — TREND & HISTORY
   ════════════════════════════════════════════════ -->
   <div class="view" id="view-trend">
@@ -1246,6 +1404,8 @@
 let allRows = [];
 let clubPerfRows = []; // Latest Club Performance CSV rows, keyed by Club Number
 let distPerfRows = []; // District Performance CSV rows (membership payments) — keyed by year-end date
+let membershipListRows = []; // Membership List CSV rows for April renewal risk tracking
+let membershipListDate = ''; // Date label extracted from membership list filename/content
 let snapshots = JSON.parse(localStorage.getItem('d31_snapshots') || '[]');
 
 // ══════════════════════════════════════════════
@@ -1258,6 +1418,7 @@ document.querySelectorAll('.tab').forEach(t => {
     t.classList.add('active');
     document.getElementById('view-' + t.dataset.view).classList.add('active');
     if (t.dataset.view === 'trend') renderTrendCharts();
+    if (t.dataset.view === 'renewal') renderRenewalAlert();
   });
 });
 
@@ -1327,13 +1488,20 @@ function isDistrictPerfText(text) {
   return firstLine.includes('Total to Date') && firstLine.includes('Total Ren.') && !firstLine.includes('Club Goals Met');
 }
 
+function isMembershipListText(text) {
+  // Membership List CSVs have 'Membership End' and 'Club ID' columns
+  const firstLine = text.replace(/^\ufeff/, '').split('\n')[0] || '';
+  return firstLine.includes('Membership End') && firstLine.includes('Club ID');
+}
+
 function processAllTexts(texts, total) {
   const status = document.getElementById('upload-status');
 
-  // Separate all three CSV types
+  // Separate all four CSV types
   const cpTexts   = texts.filter(t =>  isClubPerfText(t));
   const dpTexts   = texts.filter(t =>  isDistrictPerfText(t));
-  const divTexts  = texts.filter(t => !isClubPerfText(t) && !isDistrictPerfText(t));
+  const mlTexts   = texts.filter(t =>  isMembershipListText(t));
+  const divTexts  = texts.filter(t => !isClubPerfText(t) && !isDistrictPerfText(t) && !isMembershipListText(t));
 
   // Process Club Performance — keep only the latest
   if (cpTexts.length > 0) {
@@ -1354,7 +1522,6 @@ function processAllTexts(texts, total) {
       const rows = parseRowsFromText(text);
       const validRows = rows.filter(r => r['Division'] && r['Division'].length === 1 && /^[A-Z]$/i.test(r['Division']));
       if (validRows.length > 0) {
-        // Avoid duplicates by date
         distPerfRows = distPerfRows.filter(d => d.date !== dateStr);
         distPerfRows.push({ date: dateStr, dateObj: dateStr ? parseSnapDate(dateStr) : new Date(0), rows: validRows });
       }
@@ -1362,11 +1529,21 @@ function processAllTexts(texts, total) {
     try { localStorage.setItem('d31_dist_perf', JSON.stringify(distPerfRows.map(d => ({ date: d.date, rows: d.rows })))); } catch(e) {}
   }
 
+  // Process Membership List — manual upload only, keep latest
+  if (mlTexts.length > 0) {
+    const mlRows = parseRowsFromText(mlTexts[0]);
+    const validML = mlRows.filter(r => r['Club ID'] && r['Membership End']);
+    membershipListRows = validML;
+    membershipListDate = extractDateFromText(mlTexts[0]) || new Date().toLocaleDateString();
+    renderRenewalAlert();
+  }
+
   if (divTexts.length === 0) {
     renderAll();
     const notes = [];
     if (cpTexts.length)  notes.push(`${cpTexts.length} Club Performance`);
     if (dpTexts.length)  notes.push(`${dpTexts.length} District Performance`);
+    if (mlTexts.length)  notes.push(`${mlTexts.length} Membership List`);
     status.textContent = `✓ Loaded ${notes.join(' + ')}`;
     return;
   }
@@ -1408,13 +1585,16 @@ function processAllTexts(texts, total) {
   notes.push(`${divTexts.length} Division Performance`);
   if (cpTexts.length) notes.push(`${cpTexts.length} Club Performance`);
   if (dpTexts.length) notes.push(`${dpTexts.length} District Performance`);
+  if (mlTexts.length) notes.push(`${mlTexts.length} Membership List`);
   status.textContent = `✓ Loaded ${notes.join(' + ')} · ${newCount} new snapshot${newCount !== 1 ? 's' : ''} saved`;
   renderTrendCharts();
 }
 
 // Parse rows from raw CSV text (shared helper used by processAllTexts and parseCSV)
 function parseRowsFromText(text) {
-  const lines = text.trim().split('\n')
+  // Strip UTF-8 BOM if present
+  const cleaned = text.replace(/^\ufeff/, '').trim();
+  const lines = cleaned.split('\n')
     .filter(l => !l.startsWith('Month') && !l.startsWith('"Month'));
   function parseLine(line) {
     const result = []; let cur = '', inQuote = false;
@@ -1433,7 +1613,8 @@ function parseRowsFromText(text) {
     const vals = parseLine(lines[i]);
     const row = {};
     header.forEach((h, idx) => row[h] = (vals[idx] || '').trim());
-    if (row['District']) rows.push(row);
+    // Accept rows from Division Performance (have 'District') OR Membership List (have 'Club ID')
+    if (row['District'] || row['Club ID']) rows.push(row);
   }
   return rows;
 }
@@ -1467,6 +1648,16 @@ function parseCSV(text, manualDate) {
     try { localStorage.setItem('d31_dist_perf', JSON.stringify(distPerfRows.map(d => ({ date: d.date, rows: d.rows })))); } catch(e) {}
     renderAll();
     document.getElementById('upload-status').textContent = '✓ District Performance data loaded (' + dateStr + ')';
+    return;
+  }
+
+  // Route Membership List files separately
+  if (isMembershipListText(text)) {
+    const rows = parseRowsFromText(text);
+    membershipListRows = rows.filter(r => r['Club ID'] && r['Membership End']);
+    membershipListDate = extractDateFromText(text) || new Date().toLocaleDateString();
+    renderRenewalAlert();
+    document.getElementById('upload-status').textContent = '✓ Membership List loaded — ' + membershipListRows.length + ' member records · See Renewal Alert tab';
     return;
   }
 
@@ -2686,6 +2877,156 @@ function renderRecognition() {
       <span class="rec-qual-chip ${memBase!==null?(memOk1?'rec-qual-ok':'rec-qual-warn'):'rec-qual-info'}">${memBase!==null?(memOk1?'✓':'⚠'):'ℹ'} Mem. Payments: ${memNote}</span>
       <span class="rec-qual-chip rec-qual-info">ℹ Qualifying reqs (training report, success plan, etc.) verified outside dashboard</span>`;
   }
+}
+
+// ══════════════════════════════════════════════
+// RENEWAL ALERT VIEW
+// ══════════════════════════════════════════════
+let renewalFilterDiv = 'all';
+
+function renderRenewalAlert() {
+  const noData = document.getElementById('renewal-no-data');
+  const content = document.getElementById('renewal-content');
+  if (!membershipListRows.length) {
+    noData.style.display = 'flex';
+    content.style.display = 'none';
+    return;
+  }
+  noData.style.display = 'none';
+  content.style.display = 'block';
+
+  // Set data date
+  document.getElementById('renewal-data-date').textContent = membershipListDate || '—';
+
+  // Renewed = end date 9/30/26 or 3/31/27 (already renewed April dues)
+  // Expiring = 3/31/26 (not yet renewed)
+  const RENEWED = new Set(['9/30/26', '3/31/27']);
+
+  // Aggregate per club
+  const clubMap = {};
+  membershipListRows.forEach(r => {
+    const cid = (r['Club ID'] || '').trim();
+    const end = (r['Membership End'] || '').trim();
+    if (!cid) return;
+    if (!clubMap[cid]) {
+      clubMap[cid] = {
+        name: (r['Club Name'] || '').trim(),
+        division: (r['Division'] || '').trim(),
+        area: (r['Area'] || '').trim(),
+        renewed: 0, expiring: 0, total: 0
+      };
+    }
+    clubMap[cid].total++;
+    if (RENEWED.has(end)) clubMap[cid].renewed++;
+    else clubMap[cid].expiring++;
+  });
+
+  // Filter: clubs with fewer than 8 renewed
+  const atRisk = Object.values(clubMap)
+    .filter(c => c.renewed < 8)
+    .sort((a, b) => a.division.localeCompare(b.division) || parseInt(a.area) - parseInt(b.area) || a.name.localeCompare(b.name));
+
+  // District-level KPIs
+  const totalNeeded = atRisk.reduce((s, c) => s + (8 - c.renewed), 0);
+  const zeroRenewed = atRisk.filter(c => c.renewed === 0).length;
+  const totalExpiring = atRisk.reduce((s, c) => s + c.expiring, 0);
+
+  document.getElementById('renewal-kpi-clubs').textContent = atRisk.length;
+  document.getElementById('renewal-kpi-zero').textContent = zeroRenewed;
+  document.getElementById('renewal-kpi-needed').textContent = totalNeeded;
+  document.getElementById('renewal-kpi-expiring').textContent = totalExpiring;
+
+  // Build division pills
+  const divs = [...new Set(atRisk.map(c => c.division))].sort();
+  const pillsEl = document.getElementById('renewal-div-pills');
+  pillsEl.innerHTML = '<span style="font-size:12px;color:var(--muted);margin-right:4px">Filter:</span>';
+
+  const makeActive = (val) => {
+    renewalFilterDiv = val;
+    pillsEl.querySelectorAll('.renewal-div-pill').forEach(p => {
+      p.classList.toggle('active', p.dataset.div === val);
+    });
+    renderRenewalTable(atRisk);
+  };
+
+  const allPill = document.createElement('span');
+  allPill.className = 'renewal-div-pill all' + (renewalFilterDiv === 'all' ? ' active' : '');
+  allPill.textContent = `All (${atRisk.length})`;
+  allPill.dataset.div = 'all';
+  allPill.onclick = () => makeActive('all');
+  pillsEl.appendChild(allPill);
+
+  divs.forEach(d => {
+    const count = atRisk.filter(c => c.division === d).length;
+    const pill = document.createElement('span');
+    pill.className = 'renewal-div-pill' + (renewalFilterDiv === d ? ' active' : '');
+    pill.textContent = `Division ${d} (${count})`;
+    pill.dataset.div = d;
+    pill.onclick = () => makeActive(d);
+    pillsEl.appendChild(pill);
+  });
+
+  // Division summary table
+  const divSummaryBody = document.getElementById('renewal-div-summary-body');
+  divSummaryBody.innerHTML = divs.map(d => {
+    const dClubs = atRisk.filter(c => c.division === d);
+    const dNeeded = dClubs.reduce((s, c) => s + (8 - c.renewed), 0);
+    const dZero = dClubs.filter(c => c.renewed === 0).length;
+    const dExpiring = dClubs.reduce((s, c) => s + c.expiring, 0);
+    return `<tr style="cursor:pointer" onclick="document.querySelector('[data-div=\\'${d}\\']').click()">
+      <td><span class="badge badge-blue">Division ${d}</span></td>
+      <td style="font-family:var(--mono);font-weight:600;color:var(--red)">${dClubs.length}</td>
+      <td style="font-family:var(--mono);color:${dZero>0?'var(--red)':'var(--muted)'}">${dZero}</td>
+      <td style="font-family:var(--mono);color:var(--accent)">${dNeeded}</td>
+      <td style="font-family:var(--mono)">${dExpiring}</td>
+    </tr>`;
+  }).join('');
+
+  renderRenewalTable(atRisk);
+}
+
+function renderRenewalTable(atRisk) {
+  const filtered = renewalFilterDiv === 'all'
+    ? atRisk
+    : atRisk.filter(c => c.division === renewalFilterDiv);
+
+  const countEl = document.getElementById('renewal-table-count');
+  if (countEl) countEl.textContent = `(${filtered.length} clubs)`;
+
+  const body = document.getElementById('renewal-clubs-body');
+  if (!filtered.length) {
+    body.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">No at-risk clubs in this division</td></tr>`;
+    return;
+  }
+
+  body.innerHTML = filtered.map(c => {
+    const stillNeed = 8 - c.renewed;
+    const pct = c.total > 0 ? Math.round(c.renewed / c.total * 100) : 0;
+
+    let needCls = 'need-critical';
+    if (stillNeed <= 2) needCls = 'need-low';
+    else if (stillNeed <= 5) needCls = 'need-high';
+
+    const zeroNote = c.renewed === 0
+      ? '<span style="font-size:10px;color:var(--red);font-family:var(--mono);display:block;margin-top:2px">No renewals yet</span>'
+      : '';
+
+    return `<tr>
+      <td><span class="badge badge-blue">${c.division}</span></td>
+      <td style="font-family:var(--mono)">${c.area}</td>
+      <td style="font-weight:500">${c.name}${zeroNote}</td>
+      <td style="font-family:var(--mono);font-weight:600;color:var(--green)">${c.renewed}</td>
+      <td style="font-family:var(--mono);color:var(--red)">${c.expiring}</td>
+      <td style="font-family:var(--mono)">${c.total}</td>
+      <td><span class="need-chip ${needCls}">Need ${stillNeed}</span></td>
+      <td style="min-width:100px">
+        <div class="renewal-progress-bar">
+          <div class="renewal-progress-fill" style="width:${pct}%;background:${c.renewed===0?'var(--red)':stillNeed<=2?'var(--green)':'var(--accent)'}"></div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:2px">${c.renewed}/${c.total} (${pct}%)</div>
+      </td>
+    </tr>`;
+  }).join('');
 }
 
 // ══════════════════════════════════════════════
