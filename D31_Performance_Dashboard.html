@@ -1705,10 +1705,13 @@ function parseCSV(text, manualDate) {
 // ══════════════════════════════════════════════
 
 // Build a lookup map from Club Number → CP row
+// Normalize by stripping leading zeros so the join is robust whether or not
+// Excel has stripped zero-padding when the CSV was opened and re-saved.
 function buildCPMap() {
   const map = {};
   clubPerfRows.forEach(r => {
-    const num = (r['Club Number'] || r['Club'] || '').trim();
+    const raw = (r['Club Number'] || r['Club'] || '').trim();
+    const num = raw.replace(/^0+/, '') || raw; // strip leading zeros; keep '0' if all zeros
     if (num) map[num] = r;
   });
   return map;
@@ -1716,7 +1719,8 @@ function buildCPMap() {
 
 // Get CP data for a Division Performance row (join on Club Number)
 function getCPData(divRow, cpMap) {
-  const num = (divRow['Club'] || '').trim();
+  const raw = (divRow['Club'] || '').trim();
+  const num = raw.replace(/^0+/, '') || raw;
   return cpMap[num] || null;
 }
 
