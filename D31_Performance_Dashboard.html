@@ -3503,8 +3503,18 @@ function latestSnapshotDate() {
 }
 
 function updateBanner(dateLabel) {
-  // Always show the most recent date across all snapshots, not just the last upload
-  const latest = latestSnapshotDate() || dateLabel;
+  // Show the most recent date — either the passed dateLabel or the latest snapshot,
+  // whichever is newer. This ensures the live view date is always correct even when
+  // the fetched file has identical content to an existing snapshot (duplicate fingerprint).
+  const snapDate = latestSnapshotDate();
+  let latest;
+  if (!snapDate) {
+    latest = dateLabel;
+  } else if (!dateLabel) {
+    latest = snapDate;
+  } else {
+    latest = parseSnapDate(dateLabel) >= parseSnapDate(snapDate) ? dateLabel : snapDate;
+  }
   const banner = document.getElementById('update-banner');
   banner.style.display = 'flex';
   document.getElementById('data-date').textContent = latest;
