@@ -1603,13 +1603,17 @@ function processAllTexts(items, total) {
   });
   const newCount = snapshots.length - countBefore;
 
-  // Step 3: Live view = latest snapshot across ALL saved snapshots
-  const latestDateLabel = latestSnapshotDate();
+  // Step 3: Live view = most recent file in THIS batch, regardless of whether its
+  // snapshot was saved (duplicate fingerprint check should not block the live view update)
   const latestParsed = parsed
     .filter(p => p.dateStr)
     .sort((a, b) => b.dateObj - a.dateObj)[0];
 
-  if (latestParsed && latestParsed.dateStr === latestDateLabel) {
+  const latestDateLabel = latestParsed
+    ? latestParsed.dateStr
+    : latestSnapshotDate();
+
+  if (latestParsed) {
     const latestRows = parseRowsFromText(latestParsed.text);
     allRows = latestRows;
     try {
