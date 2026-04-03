@@ -2352,7 +2352,9 @@ function renderYoY() {
   const container = document.getElementById('yoy-card');
   if (!container) return;
 
-  const currentDateStr = latestSnapshotDate();
+  // Use the live data date (from the most recently fetched file) rather than
+  // latestSnapshotDate(), which may be stale when the file has a duplicate fingerprint.
+  const currentDateStr = localStorage.getItem('d31_latest_date') || latestSnapshotDate();
   if (!currentDateStr || !allRows.length) {
     container.style.display = 'none';
     return;
