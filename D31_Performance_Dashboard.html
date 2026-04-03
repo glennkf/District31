@@ -964,6 +964,8 @@
       <span id="at-risk-msg"></span>
     </div>
 
+    <div class="card wide-card" id="yoy-card" style="display:none"></div>
+
     <div class="two-col">
       <div class="card">
         <div class="card-title">Division Rankings — Avg Goals / Club</div>
@@ -1408,6 +1410,12 @@ let membershipListRows = []; // Membership List CSV rows for April renewal risk 
 let membershipListDate = ''; // Date label extracted from membership list filename/content
 let snapshots = JSON.parse(localStorage.getItem('d31_snapshots') || '[]');
 
+// ── Prior-year data (PY_ prefix files) ──
+let pySnapshots = JSON.parse(localStorage.getItem('d31_py_snapshots') || '[]');
+let pyAllRowsByDate = {}; // date string → full rows array, for live YoY metric computation
+let pyClubPerfRows = []; // Prior-year Club Performance rows (latest PY_ CP file)
+let pyDistPerfRows = []; // Prior-year District Performance rows
+
 // ══════════════════════════════════════════════
 // TABS
 // ══════════════════════════════════════════════
@@ -1457,7 +1465,7 @@ function handleFiles(files) {
     Array.from(files).forEach((file, idx) => {
       const reader = new FileReader();
       reader.onload = e => {
-        results[idx] = e.target.result;
+        results[idx] = { text: e.target.result, filename: file.name };
         completed++;
         if (completed === files.length) {
           processAllTexts(results, files.length);
@@ -1494,14 +1502,46 @@ function isMembershipListText(text) {
   return firstLine.includes('Membership End') && firstLine.includes('Club ID');
 }
 
-function processAllTexts(texts, total) {
+// ── processAllTexts ──
+// Accepts either:
+//   - legacy: array of plain text strings (filename unknown, treated as current-year)
+//   - new:    array of { text, filename } objects (filename used to detect PY_ prefix)
+function processAllTexts(items, total) {
   const status = document.getElementById('upload-status');
 
+  // Normalise to { text, filename } objects
+  const entries = items.map(item =>
+    (typeof item === 'string') ? { text: item, filename: '' } : item
+  );
+
+  // ── Route prior-year files (PY_ prefix) ──
+  const pyEntries = entries.filter(e => e.filename.toUpperCase().startsWith('PY_'));
+  const cyEntries = entries.filter(e => !e.filename.toUpperCase().startsWith('PY_'));
+
+  // Warn about any old-looking files that are missing the PY_ prefix
+  const latestCYDate = latestSnapshotDate();
+  cyEntries.forEach(e => {
+    const dateStr = extractDateFromText(e.text);
+    if (dateStr && latestCYDate) {
+      const daysDiff = (parseSnapDate(latestCYDate) - parseSnapDate(dateStr)) / (1000 * 60 * 60 * 24);
+      if (daysDiff > 300 && !isClubPerfText(e.text) && !isDistrictPerfText(e.text) && !isMembershipListText(e.text)) {
+        const msg = `⚠ "${e.filename || dateStr}" looks like prior-year data (${dateStr}) but isn't prefixed PY_ — was this intentional?`;
+        status.textContent = msg;
+        console.warn(msg);
+      }
+    }
+  });
+
+  if (pyEntries.length > 0) processPriorYearEntries(pyEntries);
+
+  // ── Process current-year files ──
+  const cyTexts = cyEntries.map(e => e.text);
+
   // Separate all four CSV types
-  const cpTexts   = texts.filter(t =>  isClubPerfText(t));
-  const dpTexts   = texts.filter(t =>  isDistrictPerfText(t));
-  const mlTexts   = texts.filter(t =>  isMembershipListText(t));
-  const divTexts  = texts.filter(t => !isClubPerfText(t) && !isDistrictPerfText(t) && !isMembershipListText(t));
+  const cpTexts   = cyTexts.filter(t =>  isClubPerfText(t));
+  const dpTexts   = cyTexts.filter(t =>  isDistrictPerfText(t));
+  const mlTexts   = cyTexts.filter(t =>  isMembershipListText(t));
+  const divTexts  = cyTexts.filter(t => !isClubPerfText(t) && !isDistrictPerfText(t) && !isMembershipListText(t));
 
   // Process Club Performance — keep only the latest
   if (cpTexts.length > 0) {
@@ -1541,10 +1581,11 @@ function processAllTexts(texts, total) {
   if (divTexts.length === 0) {
     renderAll();
     const notes = [];
-    if (cpTexts.length)  notes.push(`${cpTexts.length} Club Performance`);
-    if (dpTexts.length)  notes.push(`${dpTexts.length} District Performance`);
-    if (mlTexts.length)  notes.push(`${mlTexts.length} Membership List`);
-    status.textContent = `✓ Loaded ${notes.join(' + ')}`;
+    if (pyEntries.length) notes.push(`${pyEntries.length} Prior Year`);
+    if (cpTexts.length)   notes.push(`${cpTexts.length} Club Performance`);
+    if (dpTexts.length)   notes.push(`${dpTexts.length} District Performance`);
+    if (mlTexts.length)   notes.push(`${mlTexts.length} Membership List`);
+    if (notes.length) status.textContent = `✓ Loaded ${notes.join(' + ')}`;
     return;
   }
 
@@ -1582,12 +1623,71 @@ function processAllTexts(texts, total) {
   updateBanner(latestDateLabel || '—');
 
   const notes = [];
+  if (pyEntries.length) notes.push(`${pyEntries.length} Prior Year`);
   notes.push(`${divTexts.length} Division Performance`);
   if (cpTexts.length) notes.push(`${cpTexts.length} Club Performance`);
   if (dpTexts.length) notes.push(`${dpTexts.length} District Performance`);
   if (mlTexts.length) notes.push(`${mlTexts.length} Membership List`);
   status.textContent = `✓ Loaded ${notes.join(' + ')} · ${newCount} new snapshot${newCount !== 1 ? 's' : ''} saved`;
   renderTrendCharts();
+}
+
+// ── processPriorYearEntries ──
+// Handles all PY_-prefixed files — routes by CSV type into py* state variables
+function processPriorYearEntries(entries) {
+  entries.forEach(({ text, filename }) => {
+    if (isClubPerfText(text)) {
+      // Prior-year Club Performance — keep latest
+      const dateStr = extractDateFromText(text);
+      const dateObj = dateStr ? parseSnapDate(dateStr) : new Date(0);
+      const existing = pyClubPerfRows._dateObj || new Date(0);
+      if (dateObj >= existing) {
+        pyClubPerfRows = parseRowsFromText(text);
+        pyClubPerfRows._dateStr = dateStr;
+        pyClubPerfRows._dateObj = dateObj;
+        try { localStorage.setItem('d31_py_cp_rows', JSON.stringify({ dateStr, rows: pyClubPerfRows })); } catch(e) {}
+      }
+    } else if (isDistrictPerfText(text)) {
+      // Prior-year District Performance
+      const dateStr = extractDateFromText(text);
+      const rows = parseRowsFromText(text);
+      const validRows = rows.filter(r => r['Division'] && r['Division'].length === 1 && /^[A-Z]$/i.test(r['Division']));
+      if (validRows.length > 0) {
+        pyDistPerfRows = pyDistPerfRows.filter(d => d.date !== dateStr);
+        pyDistPerfRows.push({ date: dateStr, dateObj: dateStr ? parseSnapDate(dateStr) : new Date(0), rows: validRows });
+        try { localStorage.setItem('d31_py_dist_perf', JSON.stringify(pyDistPerfRows.map(d => ({ date: d.date, rows: d.rows })))); } catch(e) {}
+      }
+    } else if (!isMembershipListText(text)) {
+      // Prior-year Division Performance — store rows by date for YoY metric computation
+      const dateStr = extractDateFromText(text);
+      if (!dateStr) return;
+      const rows = parseRowsFromText(text);
+      const active = rows.filter(isActive);
+      const fingerprint = contentFingerprint(rows);
+      const existingMatch = pySnapshots.find(s => s.fingerprint === fingerprint);
+      if (!existingMatch) {
+        pySnapshots = pySnapshots.filter(s => s.date !== dateStr);
+        pySnapshots.push({
+          date: dateStr,
+          savedAt: new Date().toISOString(),
+          fingerprint,
+          activeClubs: active.length,
+          atRisk: active.filter(r => goals(r) <= 1).length,
+          aprRenewed: active.filter(r => r['April Renewals'] === '1').length,
+          totalMembers: active.reduce((s, r) => s + members(r), 0),
+        });
+        pySnapshots.sort((a, b) => parseSnapDate(a.date) - parseSnapDate(b.date));
+        try { localStorage.setItem('d31_py_snapshots', JSON.stringify(pySnapshots)); } catch(e) {}
+      }
+      // Always store full rows in memory (keyed by date) for live metric computation
+      pyAllRowsByDate[dateStr] = rows;
+      try {
+        const stored = JSON.parse(localStorage.getItem('d31_py_rows') || '{}');
+        stored[dateStr] = rows;
+        localStorage.setItem('d31_py_rows', JSON.stringify(stored));
+      } catch(e) {}
+    }
+  });
 }
 
 // Parse rows from raw CSV text (shared helper used by processAllTexts and parseCSV)
@@ -2167,6 +2267,168 @@ function renderDistinguished() {
 }
 
 // ══════════════════════════════════════════════
+// YEAR-OVER-YEAR HELPERS
+// ══════════════════════════════════════════════
+
+// Find the prior-year snapshot whose date best matches (currentDate minus 1 year).
+// Returns { snap, rows, matchType, diffDays } or null.
+function findPriorYearMatch(currentDateStr) {
+  if (!currentDateStr || !pySnapshots.length) return null;
+  const cur = parseSnapDate(currentDateStr);
+  const target = new Date(cur);
+  target.setFullYear(target.getFullYear() - 1);
+
+  let best = null;
+  let bestDiff = Infinity;
+  pySnapshots.forEach(snap => {
+    const diff = Math.abs(parseSnapDate(snap.date) - target) / (1000 * 60 * 60 * 24);
+    if (diff < bestDiff) { bestDiff = diff; best = snap; }
+  });
+
+  if (!best) return null;
+  const matchType = bestDiff === 0 ? 'exact' : bestDiff <= 7 ? 'near' : null;
+  if (!matchType) return null;
+
+  const rows = pyAllRowsByDate[best.date] || null;
+  return { snap: best, rows, matchType, diffDays: Math.round(bestDiff) };
+}
+
+// Compute the 6 YoY metrics from a given set of rows + cpRows + distRows.
+// Uses inline tier logic (mirrors getDistTier) so it works on any row set.
+function computeMetrics(rows, cpRows, distRows) {
+  const cpMap = {};
+  (cpRows || []).forEach(r => {
+    const raw = (r['Club Number'] || r['Club'] || '').trim();
+    const num = raw.replace(/^0+/, '') || raw;
+    if (num) cpMap[num] = r;
+  });
+
+  const active = rows.filter(isActive);
+  const hasCPData = (cpRows || []).length > 0;
+  let smedley = 0, pres = 0, sel = 0, dist = 0;
+  active.forEach(r => {
+    const g = goals(r);
+    const raw = (r['Club'] || '').trim();
+    const num = raw.replace(/^0+/, '') || raw;
+    const cp = cpMap[num] || null;
+    const csp = cp ? (cp['CSP'] || '').toUpperCase() === 'Y' : null;
+    const cspOk = !hasCPData || csp === true;
+    const activeMem = cp ? (parseInt(cp['Active Members']) || 0) : members(r);
+    const netG = cp ? (parseInt(cp['Net Growth']) || 0) : 0;
+    if (!cspOk) return;
+    if (g >= 10 && activeMem >= 25) { smedley++; return; }
+    if (g >= 9  && activeMem >= 20) { pres++;    return; }
+    if (g >= 7  && (activeMem >= 20 || netG >= 5)) { sel++; return; }
+    if (g >= 5  && (activeMem >= 20 || netG >= 3)) { dist++; return; }
+  });
+
+  const atRisk   = active.filter(r => goals(r) <= 1).length;
+  const renewed  = active.filter(r => r['April Renewals'] === '1').length;
+  const totalMem = active.reduce((s, r) => s + members(r), 0);
+  const renewedPct = active.length ? (renewed / active.length * 100) : 0;
+
+  let memPayments = null;
+  if (distRows && distRows.length > 0) {
+    const sorted = [...distRows].sort((a, b) => b.dateObj - a.dateObj);
+    memPayments = sorted[0].rows.reduce((s, r) => s + (parseInt(r['Total to Date']) || 0), 0);
+  }
+
+  return {
+    activeClubs: active.length,
+    distinguished: { smedley, pres, sel, dist, total: smedley + pres + sel + dist },
+    atRisk,
+    renewedPct,
+    totalMembers: totalMem,
+    memPayments,
+  };
+}
+
+// Render the Year-over-Year comparison card on the District Summary tab.
+function renderYoY() {
+  const container = document.getElementById('yoy-card');
+  if (!container) return;
+
+  const currentDateStr = latestSnapshotDate();
+  if (!currentDateStr || !allRows.length) {
+    container.style.display = 'none';
+    return;
+  }
+
+  const match = findPriorYearMatch(currentDateStr);
+  if (!match || !match.rows) {
+    container.style.display = 'block';
+    container.innerHTML = `
+      <div class="card-title">Year-over-Year Comparison</div>
+      <div style="color:var(--muted);font-size:13px;padding:8px 0">
+        No prior-year data loaded. Add <code style="background:var(--surface2);padding:1px 5px;border-radius:3px">PY_</code>-prefixed CSV files to the GitHub manifest to enable this comparison.
+      </div>`;
+    return;
+  }
+
+  const cy = computeMetrics(allRows, clubPerfRows, distPerfRows);
+  const py = computeMetrics(match.rows, pyClubPerfRows, pyDistPerfRows);
+
+  function delta(cyVal, pyVal, isPositiveGood, fmt) {
+    if (pyVal === null || pyVal === undefined || cyVal === null || cyVal === undefined) return '<span style="color:var(--muted)">—</span>';
+    const diff = cyVal - pyVal;
+    if (diff === 0) return '<span style="color:var(--muted)">—</span>';
+    const good = isPositiveGood ? diff > 0 : diff < 0;
+    const color = good ? 'var(--green)' : 'var(--red)';
+    const arrow = diff > 0 ? '▲' : '▼';
+    const formatted = fmt ? fmt(diff) : (diff > 0 ? '+' : '') + diff;
+    return `<span style="color:${color};font-family:var(--mono)">${arrow} ${formatted}</span>`;
+  }
+
+  const matchNote = match.matchType === 'near'
+    ? `<span style="color:var(--yellow);font-size:11px;font-family:var(--mono);margin-left:10px">⚠ closest match: ${match.snap.date} (±${match.diffDays}d)</span>`
+    : `<span style="color:var(--muted);font-size:11px;font-family:var(--mono);margin-left:10px">vs. ${match.snap.date}</span>`;
+
+  const fmtPct = d => (d > 0 ? '+' : '') + d.toFixed(1) + '%';
+  const fmtNum = d => (d > 0 ? '+' : '') + d.toLocaleString();
+
+  const tableRows = [
+    { label: 'Active Clubs',          cyFmt: cy.activeClubs,                       pyFmt: py.activeClubs,                       d: delta(cy.activeClubs,            py.activeClubs,            true) },
+    { label: 'Distinguished (total)', cyFmt: cy.distinguished.total,               pyFmt: py.distinguished.total,               d: delta(cy.distinguished.total,    py.distinguished.total,    true) },
+    { label: '↳ Smedley Dist.',       cyFmt: cy.distinguished.smedley,             pyFmt: '<span style="color:var(--muted);font-style:italic">N/A</span>', d: '<span style="color:var(--muted)">—</span>', indent: true },
+    { label: "↳ President's Dist.",   cyFmt: cy.distinguished.pres,                pyFmt: py.distinguished.pres,                d: delta(cy.distinguished.pres,     py.distinguished.pres,     true), indent: true },
+    { label: '↳ Select Dist.',        cyFmt: cy.distinguished.sel,                 pyFmt: py.distinguished.sel,                 d: delta(cy.distinguished.sel,      py.distinguished.sel,      true), indent: true },
+    { label: '↳ Distinguished',       cyFmt: cy.distinguished.dist,                pyFmt: py.distinguished.dist,                d: delta(cy.distinguished.dist,     py.distinguished.dist,     true), indent: true },
+    { label: 'At-Risk Clubs',         cyFmt: cy.atRisk,                            pyFmt: py.atRisk,                            d: delta(cy.atRisk,                 py.atRisk,                 false) },
+    { label: 'April Renewal %',       cyFmt: cy.renewedPct.toFixed(1) + '%',       pyFmt: py.renewedPct.toFixed(1) + '%',       d: delta(cy.renewedPct,             py.renewedPct,             true, fmtPct) },
+    { label: 'Total Members',         cyFmt: cy.totalMembers.toLocaleString(),      pyFmt: py.totalMembers.toLocaleString(),      d: delta(cy.totalMembers,           py.totalMembers,           true, fmtNum) },
+    { label: 'Membership Payments',
+      cyFmt: cy.memPayments !== null ? cy.memPayments.toLocaleString() : '—',
+      pyFmt: py.memPayments !== null ? py.memPayments.toLocaleString() : '—',
+      d: (cy.memPayments !== null && py.memPayments !== null) ? delta(cy.memPayments, py.memPayments, true, fmtNum) : '<span style="color:var(--muted)">—</span>' },
+  ];
+
+  container.style.display = 'block';
+  container.innerHTML = `
+    <div class="card-title">Year-over-Year Comparison
+      <span style="font-family:var(--mono);font-weight:400;color:var(--muted);font-size:11px;margin-left:8px">as of ${currentDateStr}</span>
+      ${matchNote}
+    </div>
+    <div class="table-wrap">
+      <table style="font-size:13px">
+        <thead><tr>
+          <th style="width:200px">Metric</th>
+          <th style="text-align:right">This Year</th>
+          <th style="text-align:right">Last Year</th>
+          <th style="text-align:right">Change</th>
+        </tr></thead>
+        <tbody>
+          ${tableRows.map(r => `<tr>
+            <td style="color:${r.indent ? 'var(--muted)' : 'var(--text)'};padding-left:${r.indent ? '28px' : '12px'};font-size:${r.indent ? '12px' : '13px'}">${r.label}</td>
+            <td style="font-family:var(--mono);font-weight:600;text-align:right">${r.cyFmt}</td>
+            <td style="font-family:var(--mono);color:var(--muted);text-align:right">${r.pyFmt}</td>
+            <td style="text-align:right">${r.d}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════
 // SUMMARY VIEW
 // ══════════════════════════════════════════════
 function renderSummary() {
@@ -2292,6 +2554,8 @@ function renderSummary() {
     <td style="font-family:var(--mono)">${r['Area']}</td>
     <td style="font-family:var(--mono);color:var(--muted)">${r['Charter Date/Suspend Date'] || 'No members / inactive'}</td>
   </tr>`).join('');
+
+  renderYoY();
 }
 
 // ══════════════════════════════════════════════
@@ -3256,10 +3520,18 @@ function clearAllData() {
   localStorage.removeItem('d31_latest_date');
   localStorage.removeItem('d31_cp_rows');
   localStorage.removeItem('d31_dist_perf');
+  localStorage.removeItem('d31_py_snapshots');
+  localStorage.removeItem('d31_py_cp_rows');
+  localStorage.removeItem('d31_py_dist_perf');
+  localStorage.removeItem('d31_py_rows');
   snapshots = [];
   allRows = [];
   clubPerfRows = [];
   distPerfRows = [];
+  pySnapshots = [];
+  pyAllRowsByDate = {};
+  pyClubPerfRows = [];
+  pyDistPerfRows = [];
   document.getElementById('data-date').textContent = '—';
   document.getElementById('update-banner').style.display = 'none';
   document.getElementById('upload-status').textContent = 'Upload one or multiple CSVs · date tag applies to single-file uploads';
@@ -3341,7 +3613,7 @@ async function fetchGithubData() {
             console.warn('CSV fetch failed for', filename, '— HTTP', r.status);
             return null;
           }
-          return await r.text();
+          return { text: await r.text(), filename };
         } catch(e) {
           console.warn('CSV fetch error for', filename, '—', e.message);
           return null;
@@ -3434,6 +3706,30 @@ function restoreFromCache() {
       distPerfRows = parsed.map(d => ({ date: d.date, dateObj: parseSnapDate(d.date), rows: d.rows }));
     }
   } catch(e) { localStorage.removeItem('d31_dist_perf'); }
+
+  // Restore Prior-year data from cache
+  try {
+    const savedPYCP = localStorage.getItem('d31_py_cp_rows');
+    if (savedPYCP) {
+      const parsed = JSON.parse(savedPYCP);
+      pyClubPerfRows = parsed.rows || [];
+      pyClubPerfRows._dateStr = parsed.dateStr;
+      pyClubPerfRows._dateObj = parsed.dateStr ? parseSnapDate(parsed.dateStr) : new Date(0);
+    }
+  } catch(e) { localStorage.removeItem('d31_py_cp_rows'); }
+
+  try {
+    const savedPYDP = localStorage.getItem('d31_py_dist_perf');
+    if (savedPYDP) {
+      const parsed = JSON.parse(savedPYDP);
+      pyDistPerfRows = parsed.map(d => ({ date: d.date, dateObj: parseSnapDate(d.date), rows: d.rows }));
+    }
+  } catch(e) { localStorage.removeItem('d31_py_dist_perf'); }
+
+  try {
+    const savedPYRows = localStorage.getItem('d31_py_rows');
+    if (savedPYRows) pyAllRowsByDate = JSON.parse(savedPYRows);
+  } catch(e) { localStorage.removeItem('d31_py_rows'); }
 
   // Step 1: Immediately restore from cache so returning users see data right away
   const hasCachedData = restoreFromCache();
