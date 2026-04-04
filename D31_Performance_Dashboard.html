@@ -771,10 +771,11 @@
 
   /* ── Likelihood badge (Distinguished tab) ── */
   .lh-badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:500; font-family:var(--mono); white-space:nowrap; }
-  .lh-very-likely  { background:rgba(63,185,80,0.18);  color:var(--green);  border:1px solid rgba(63,185,80,0.3); }
-  .lh-quite-likely { background:rgba(63,185,80,0.10);  color:var(--green); }
-  .lh-likely       { background:rgba(210,153,34,0.15); color:var(--yellow); border:1px solid rgba(210,153,34,0.3); }
-  .lh-long-shot    { background:rgba(248,81,73,0.10);  color:var(--red); }
+  .lh-very-likely      { background:rgba(63,185,80,0.18);  color:var(--green);  border:1px solid rgba(63,185,80,0.3); }
+  .lh-quite-likely     { background:rgba(63,185,80,0.10);  color:var(--green); }
+  .lh-likely           { background:rgba(210,153,34,0.15); color:var(--yellow); border:1px solid rgba(210,153,34,0.3); }
+  .lh-somewhat-likely  { background:rgba(232,164,74,0.12); color:var(--accent); }
+  .lh-long-shot        { background:rgba(248,81,73,0.10);  color:var(--red); }
 
   /* ── June 30 Projection card ── */
   .proj-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:20px 24px; margin-bottom:24px; }
@@ -1159,14 +1160,14 @@
 
     <!-- KPI cards -->
     <div class="kpi-grid" id="dist-kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:28px">
-      <div class="kpi" style="--kpi-color:#ffd700"><div class="kpi-label">Smedley Dist.</div><div class="kpi-value" id="dist-kpi-smedley">—</div><div class="kpi-sub">10 goals · 25+ members</div></div>
-      <div class="kpi" style="--kpi-color:#a371f7"><div class="kpi-label">Pres. Distinguished</div><div class="kpi-value" id="dist-kpi-pres">—</div><div class="kpi-sub">9 goals · 20+ members</div></div>
-      <div class="kpi" style="--kpi-color:#e8a44a"><div class="kpi-label">Select Distinguished</div><div class="kpi-value" id="dist-kpi-select">—</div><div class="kpi-sub">7–8 goals · mem threshold</div></div>
-      <div class="kpi" style="--kpi-color:#3fb950"><div class="kpi-label">Distinguished</div><div class="kpi-value" id="dist-kpi-dist">—</div><div class="kpi-sub">5–6 goals · mem threshold</div></div>
-      <div class="kpi" style="--kpi-color:#5b9cf6"><div class="kpi-label">Almost — Need Goals</div><div class="kpi-value" id="dist-kpi-need-goals">—</div><div class="kpi-sub">mem ✓ · 3–4 goals</div></div>
-      <div class="kpi" style="--kpi-color:#5b9cf6"><div class="kpi-label">Almost — Need Members</div><div class="kpi-value" id="dist-kpi-need-mem">—</div><div class="kpi-sub">4+ goals · mem ✗</div></div>
-      <div class="kpi" style="--kpi-color:#5b9cf6"><div class="kpi-label">Almost — Need Both</div><div class="kpi-value" id="dist-kpi-need-both">—</div><div class="kpi-sub">3 goals · mem ✗</div></div>
-      <div class="kpi" style="--kpi-color:#8b949e"><div class="kpi-label">Ineligible (CSP)</div><div class="kpi-value" id="dist-kpi-inelig">—</div><div class="kpi-sub">CSP not submitted</div></div>
+      <div class="kpi clickable" style="--kpi-color:#ffd700" onclick="drillDownDist('smedley')" title="Click to see Smedley Distinguished clubs"><div class="kpi-label">Smedley Dist.</div><div class="kpi-value" id="dist-kpi-smedley">—</div><div class="kpi-sub">10 goals · 25+ members</div></div>
+      <div class="kpi clickable" style="--kpi-color:#a371f7" onclick="drillDownDist('pres')" title="Click to see President's Distinguished clubs"><div class="kpi-label">Pres. Distinguished</div><div class="kpi-value" id="dist-kpi-pres">—</div><div class="kpi-sub">9 goals · 20+ members</div></div>
+      <div class="kpi clickable" style="--kpi-color:#e8a44a" onclick="drillDownDist('select')" title="Click to see Select Distinguished clubs"><div class="kpi-label">Select Distinguished</div><div class="kpi-value" id="dist-kpi-select">—</div><div class="kpi-sub">7–8 goals · mem threshold</div></div>
+      <div class="kpi clickable" style="--kpi-color:#3fb950" onclick="drillDownDist('dist')" title="Click to see Distinguished clubs"><div class="kpi-label">Distinguished</div><div class="kpi-value" id="dist-kpi-dist">—</div><div class="kpi-sub">5–6 goals · mem threshold</div></div>
+      <div class="kpi clickable" style="--kpi-color:#5b9cf6" onclick="drillDownDist('need-goals')" title="Click to see Almost — Need Goals clubs"><div class="kpi-label">Almost — Need Goals</div><div class="kpi-value" id="dist-kpi-need-goals">—</div><div class="kpi-sub">mem ✓ · 3–4 goals</div></div>
+      <div class="kpi clickable" style="--kpi-color:#5b9cf6" onclick="drillDownDist('need-mem')" title="Click to see Almost — Need Members clubs"><div class="kpi-label">Almost — Need Members</div><div class="kpi-value" id="dist-kpi-need-mem">—</div><div class="kpi-sub">4+ goals · mem ✗</div></div>
+      <div class="kpi clickable" style="--kpi-color:#5b9cf6" onclick="drillDownDist('need-both')" title="Click to see Almost — Need Both clubs"><div class="kpi-label">Almost — Need Both</div><div class="kpi-value" id="dist-kpi-need-both">—</div><div class="kpi-sub">3 goals · mem ✗</div></div>
+      <div class="kpi clickable" style="--kpi-color:#8b949e" onclick="drillDownDist('inelig')" title="Click to see Ineligible clubs"><div class="kpi-label">Ineligible (CSP)</div><div class="kpi-value" id="dist-kpi-inelig">—</div><div class="kpi-sub">CSP not submitted</div></div>
     </div>
 
     <div id="dist-no-cp" class="alert" style="display:none">
@@ -2057,6 +2058,92 @@ function drillDownArea(type) {
   openDrillModal(title, sub, clubs, cpMap);
 }
 
+// Drill-down from Distinguished tab KPI cards
+function drillDownDist(type) {
+  if (!allRows.length) return;
+  const active  = allRows.filter(isActive);
+  const cpMap   = buildCPMap();
+  const hasCPData = clubPerfRows.length > 0;
+  let clubs = [], title = '', sub = '';
+
+  switch (type) {
+    case 'smedley':
+      clubs = active.filter(r => getDistTier(r, cpMap) === 'smedley');
+      title = 'Smedley Distinguished Clubs';
+      sub   = `${clubs.length} clubs — 10 goals · 25+ members · CSP ✓`; break;
+    case 'pres':
+      clubs = active.filter(r => getDistTier(r, cpMap) === 'pres');
+      title = "President's Distinguished Clubs";
+      sub   = `${clubs.length} clubs — 9 goals · 20+ members · CSP ✓`; break;
+    case 'select':
+      clubs = active.filter(r => getDistTier(r, cpMap) === 'select');
+      title = 'Select Distinguished Clubs';
+      sub   = `${clubs.length} clubs — 7–8 goals · membership threshold · CSP ✓`; break;
+    case 'dist':
+      clubs = active.filter(r => getDistTier(r, cpMap) === 'dist');
+      title = 'Distinguished Clubs';
+      sub   = `${clubs.length} clubs — 5–6 goals · membership threshold · CSP ✓`; break;
+    case 'need-goals': {
+      // CSP=Y, members met, goals 3–4
+      clubs = active.filter(r => {
+        const tier = getDistTier(r, cpMap); if (tier) return false;
+        const g = goals(r); if (g < 3) return false;
+        const cp = getCPData(r, cpMap);
+        const csp = cp ? (cp['CSP']||'').toUpperCase()==='Y' : null;
+        if (hasCPData && csp !== true) return false;
+        const activeMem = cp ? (parseInt(cp['Active Members'])||0) : members(r);
+        const netG = cp ? (parseInt(cp['Net Growth'])||0) : 0;
+        const memOk = activeMem >= 20 || netG >= 3;
+        return g < 5 && memOk;
+      });
+      title = 'Almost Distinguished — Need Goals';
+      sub   = `${clubs.length} clubs — membership met · 3–4 goals · CSP ✓`; break;
+    }
+    case 'need-mem': {
+      // CSP=Y, goals ≥5, members not met
+      clubs = active.filter(r => {
+        const tier = getDistTier(r, cpMap); if (tier) return false;
+        const g = goals(r); if (g < 3) return false;
+        const cp = getCPData(r, cpMap);
+        const csp = cp ? (cp['CSP']||'').toUpperCase()==='Y' : null;
+        if (hasCPData && csp !== true) return false;
+        const activeMem = cp ? (parseInt(cp['Active Members'])||0) : members(r);
+        const netG = cp ? (parseInt(cp['Net Growth'])||0) : 0;
+        const memOk = activeMem >= 20 || netG >= 3;
+        return g >= 5 && !memOk;
+      });
+      title = 'Almost Distinguished — Need Members';
+      sub   = `${clubs.length} clubs — 4+ goals · membership not met · CSP ✓`; break;
+    }
+    case 'need-both': {
+      // CSP=Y, goals <5, members not met
+      clubs = active.filter(r => {
+        const tier = getDistTier(r, cpMap); if (tier) return false;
+        const g = goals(r); if (g < 3) return false;
+        const cp = getCPData(r, cpMap);
+        const csp = cp ? (cp['CSP']||'').toUpperCase()==='Y' : null;
+        if (hasCPData && csp !== true) return false;
+        const activeMem = cp ? (parseInt(cp['Active Members'])||0) : members(r);
+        const netG = cp ? (parseInt(cp['Net Growth'])||0) : 0;
+        const memOk = activeMem >= 20 || netG >= 3;
+        return g < 5 && !memOk;
+      });
+      title = 'Almost Distinguished — Need Both';
+      sub   = `${clubs.length} clubs — need goals and membership · CSP ✓`; break;
+    }
+    case 'inelig':
+      clubs = active.filter(r => {
+        if (getDistTier(r, cpMap)) return false;
+        const cp = getCPData(r, cpMap);
+        return cp && (cp['CSP']||'').toUpperCase()==='N';
+      });
+      title = 'Ineligible — CSP Not Submitted';
+      sub   = `${clubs.length} clubs — did not submit Club Success Plan by Sep 30`; break;
+  }
+
+  openDrillModal(title, sub, clubs, cpMap);
+}
+
 // Shared modal renderer used by drillDown, drillDownDiv, drillDownArea
 function openDrillModal(title, sub, clubs, cpMap) {
   const sorted = [...clubs].sort((a, b) => {
@@ -2300,7 +2387,7 @@ function renderDistinguished() {
   }
 
   // Sort by likelihood order (Very Likely → Quite Likely → Likely → Long Shot)
-  const LH_ORDER = { 'very-likely':0, 'quite-likely':1, 'likely':2, 'long-shot':3 };
+  const LH_ORDER = { 'very-likely':0, 'quite-likely':1, 'likely':2, 'somewhat-likely':3, 'long-shot':4 };
   function byLikelihood(a, b) {
     const la = clubLikelihood(a, cpMap);
     const lb = clubLikelihood(b, cpMap);
@@ -2365,20 +2452,20 @@ function clubLikelihood(r, cpMap) {
   const goalGap = Math.max(0, 5 - g);
   const memGap  = calcMemberGap(cp);
   // Map all 12 situations to likelihood tiers
-  if (goalGap === 1 && memGap === 0) return { label:'🟢 Very Likely',  cls:'very-likely'  };
-  if (goalGap === 2 && memGap === 0) return { label:'🟢 Quite Likely', cls:'quite-likely' };
-  if (goalGap === 0 && memGap === 1) return { label:'🟢 Quite Likely', cls:'quite-likely' };
-  if (goalGap === 0 && memGap === 2) return { label:'🟡 Likely',       cls:'likely'       };
-  if (goalGap === 1 && memGap === 1) return { label:'🟡 Likely',       cls:'likely'       };
-  if (goalGap === 1 && memGap === 2) return { label:'🟡 Likely',       cls:'likely'       };
-  if (goalGap === 2 && memGap === 1) return { label:'🟡 Likely',       cls:'likely'       };
+  if (goalGap === 1 && memGap === 0) return { label:'🟢 Very Likely',      cls:'very-likely'     };
+  if (goalGap === 2 && memGap === 0) return { label:'🟢 Quite Likely',     cls:'quite-likely'    };
+  if (goalGap === 0 && memGap === 1) return { label:'🟢 Quite Likely',     cls:'quite-likely'    };
+  if (goalGap === 0 && memGap === 2) return { label:'🟡 Likely',           cls:'likely'          };
+  if (goalGap === 1 && memGap === 1) return { label:'🟡 Likely',           cls:'likely'          };
+  if (goalGap === 1 && memGap === 2) return { label:'🟡 Likely',           cls:'likely'          };
+  if (goalGap === 2 && memGap === 1) return { label:'🟡 Likely',           cls:'likely'          };
+  if (goalGap === 2 && memGap === 2) return { label:'🟠 Somewhat Likely',  cls:'somewhat-likely' };
   // Long shot situations
-  if (goalGap === 3 && memGap === 0) return { label:'🔴 Long Shot',    cls:'long-shot'    };
-  if (goalGap === 4 && memGap === 0) return { label:'🔴 Long Shot',    cls:'long-shot'    };
-  if (goalGap === 0 && memGap >= 3)  return { label:'🔴 Long Shot',    cls:'long-shot'    };
-  if (goalGap === 2 && memGap === 2) return { label:'🔴 Long Shot',    cls:'long-shot'    };
-  if (goalGap === 3 && memGap === 1) return { label:'🔴 Long Shot',    cls:'long-shot'    };
-  if (goalGap >= 3  && memGap >= 2)  return { label:'🔴 Long Shot',    cls:'long-shot'    };
+  if (goalGap === 3 && memGap === 0) return { label:'🔴 Long Shot',        cls:'long-shot'       };
+  if (goalGap === 4 && memGap === 0) return { label:'🔴 Long Shot',        cls:'long-shot'       };
+  if (goalGap === 0 && memGap >= 3)  return { label:'🔴 Long Shot',        cls:'long-shot'       };
+  if (goalGap === 3 && memGap === 1) return { label:'🔴 Long Shot',        cls:'long-shot'       };
+  if (goalGap >= 3  && memGap >= 2)  return { label:'🔴 Long Shot',        cls:'long-shot'       };
   return null;
 }
 
@@ -2434,13 +2521,14 @@ function renderDistProjection(active, smedley, pres, select, dist, needGoals, ne
   const floor = smedley.length + pres.length + select.length + dist.length;
 
   // Classify near-miss clubs using clubLikelihood
-  const veryLikely  = active.filter(r => { const lh = clubLikelihood(r, cpMap); return lh && lh.cls === 'very-likely';  });
-  const quiteLikely = active.filter(r => { const lh = clubLikelihood(r, cpMap); return lh && lh.cls === 'quite-likely'; });
-  const likelyCl    = active.filter(r => { const lh = clubLikelihood(r, cpMap); return lh && lh.cls === 'likely';       });
-  const longShot    = active.filter(r => { const lh = clubLikelihood(r, cpMap); return lh && lh.cls === 'long-shot';    });
+  const veryLikely    = active.filter(r => { const lh = clubLikelihood(r, cpMap); return lh && lh.cls === 'very-likely';     });
+  const quiteLikely   = active.filter(r => { const lh = clubLikelihood(r, cpMap); return lh && lh.cls === 'quite-likely';    });
+  const likelyCl      = active.filter(r => { const lh = clubLikelihood(r, cpMap); return lh && lh.cls === 'likely';          });
+  const somewhatLikely= active.filter(r => { const lh = clubLikelihood(r, cpMap); return lh && lh.cls === 'somewhat-likely'; });
+  const longShot      = active.filter(r => { const lh = clubLikelihood(r, cpMap); return lh && lh.cls === 'long-shot';       });
 
   const likely   = floor + veryLikely.length;
-  const ceiling  = likely + quiteLikely.length + likelyCl.length;
+  const ceiling  = likely + quiteLikely.length + likelyCl.length + somewhatLikely.length;
   const lsMax    = ceiling + longShot.length;
 
   el.style.display = 'block';
@@ -2508,7 +2596,7 @@ function renderDistProjection(active, smedley, pres, select, dist, needGoals, ne
         <div style="font-size:11px;color:var(--muted);line-height:1.9;margin-left:8px">
           <div><span style="color:var(--accent2)">■</span> Floor = already distinguished</div>
           <div><span style="color:var(--green)">■</span> Likely = + Very Likely clubs</div>
-          <div><span style="color:var(--muted)">■</span> Ceiling = + Quite Likely + Likely clubs</div>
+          <div><span style="color:var(--muted)">■</span> Ceiling = + Quite Likely + Likely + Somewhat Likely</div>
           <div><span style="color:var(--red);opacity:0.6">■</span> LS Max = + Long Shot clubs (dimmed)</div>
         </div>
       </div>
@@ -2531,6 +2619,10 @@ function renderDistProjection(active, smedley, pres, select, dist, needGoals, ne
         <div class="proj-bk-row">
           <span>🟡 Likely — small combined gaps (see table)</span>
           <span style="display:flex;gap:10px;align-items:center"><span style="font-family:var(--mono);font-weight:600">${likelyCl.length}</span><span class="lh-badge lh-likely" style="font-size:10px">→ Ceiling</span></span>
+        </div>
+        <div class="proj-bk-row">
+          <span>🟠 Somewhat Likely — 2 goals + 2 members away</span>
+          <span style="display:flex;gap:10px;align-items:center"><span style="font-family:var(--mono);font-weight:600">${somewhatLikely.length}</span><span class="lh-badge lh-somewhat-likely" style="font-size:10px">→ Ceiling</span></span>
         </div>
         <div class="proj-bk-row" style="opacity:0.6">
           <span>🔴 Long Shot — large gaps (3+ goals or 3+ members)</span>
