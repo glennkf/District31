@@ -753,6 +753,109 @@
   .title-skip { font-size: 12px; color: var(--muted); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
   .title-skip:hover { color: var(--text); }
 
+  /* ── Division composite score table ── */
+  .comp-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 16px; }
+  .comp-table th {
+    text-align: right; padding: 6px 10px; font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted);
+    border-bottom: 1px solid var(--border); white-space: nowrap;
+  }
+  .comp-table th:first-child { text-align: left; }
+  .comp-table td { padding: 7px 10px; border-bottom: 1px solid rgba(42,50,68,0.4); text-align: right; vertical-align: middle; }
+  .comp-table td:first-child { text-align: left; font-family: var(--mono); font-size: 12px; color: var(--text); font-weight: 500; }
+  .comp-table tr:last-child td { border-bottom: none; }
+  .comp-table tr:hover td { background: rgba(255,255,255,0.025); }
+  .comp-score-pill {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-family: var(--mono); font-size: 11px; font-weight: 600; white-space: nowrap;
+  }
+  .cell-chip {
+    display: inline-block; padding: 1px 6px; border-radius: 3px;
+    font-family: var(--mono); font-size: 11px; white-space: nowrap;
+  }
+  .cell-green { background: rgba(63,185,80,0.12);  color: var(--green); }
+  .cell-yellow { background: rgba(210,153,34,0.12); color: var(--yellow); }
+  .cell-red   { background: rgba(248,81,73,0.12);  color: var(--red); }
+  .comp-rank { font-family: var(--mono); font-size: 11px; color: var(--muted); width: 22px; display: inline-block; }
+
+  /* ── June 30 Projection card ── */
+  .proj-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+  .proj-title {
+    font-size: 12px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.07em; color: var(--muted); margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .proj-row { margin-bottom: 18px; }
+  .proj-row-label {
+    font-size: 12px; color: var(--text); font-weight: 500; margin-bottom: 6px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .proj-target-badge {
+    font-family: var(--mono); font-size: 10px; padding: 1px 6px; border-radius: 3px;
+    background: rgba(232,164,74,0.15); color: var(--accent); border: 1px solid rgba(232,164,74,0.3);
+  }
+  .proj-track {
+    position: relative; height: 28px; background: var(--border);
+    border-radius: 6px; overflow: visible; margin-bottom: 4px;
+  }
+  .proj-range-fill {
+    position: absolute; top: 0; height: 100%; border-radius: 6px;
+    background: linear-gradient(90deg, rgba(91,156,246,0.25), rgba(63,185,80,0.35));
+    transition: left 0.6s ease, width 0.6s ease;
+  }
+  .proj-floor-fill {
+    position: absolute; top: 0; height: 100%; border-radius: 6px;
+    background: rgba(91,156,246,0.5); transition: width 0.6s ease;
+  }
+  .proj-marker {
+    position: absolute; top: -4px; width: 3px; height: 36px;
+    border-radius: 2px; background: var(--accent);
+    transform: translateX(-50%);
+  }
+  .proj-marker-label {
+    position: absolute; top: -18px; transform: translateX(-50%);
+    font-family: var(--mono); font-size: 10px; color: var(--accent);
+    white-space: nowrap; font-weight: 600;
+  }
+  .proj-labels {
+    display: flex; justify-content: space-between;
+    font-family: var(--mono); font-size: 10px; color: var(--muted);
+    margin-top: 2px; padding: 0 2px;
+  }
+  .proj-scenario-row {
+    display: flex; gap: 16px; margin-top: 14px; flex-wrap: wrap;
+  }
+  .proj-scenario {
+    display: flex; flex-direction: column; align-items: center;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 16px; min-width: 90px;
+  }
+  .proj-scenario-val {
+    font-family: var(--serif); font-size: 28px; line-height: 1; color: var(--text);
+  }
+  .proj-scenario-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-top: 4px; }
+  .proj-breakdown {
+    margin-top: 16px; border-top: 1px solid var(--border); padding-top: 14px;
+  }
+  .proj-breakdown-title {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--muted); margin-bottom: 10px;
+  }
+  .proj-bucket-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 5px 0; border-bottom: 1px solid rgba(42,50,68,0.4); font-size: 12px;
+  }
+  .proj-bucket-row:last-child { border-bottom: none; }
+  .proj-bucket-label { color: var(--text); }
+  .proj-bucket-count { font-family: var(--mono); font-weight: 600; }
+  .proj-bucket-scenario { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+
   /* ── Help Modal (re-triggered from banner) ── */
   .help-modal {
     position: fixed;
@@ -968,8 +1071,9 @@
 
     <div class="two-col">
       <div class="card">
-        <div class="card-title">Division Rankings — Avg Goals / Club</div>
+        <div class="card-title" id="div-rankings-title">Division Rankings</div>
         <div id="div-bars"></div>
+        <div id="div-comp-table"></div>
       </div>
       <div class="card">
         <div class="card-title">Goals Met Distribution (Active Clubs)</div>
@@ -1105,6 +1209,9 @@
   <div class="view" id="view-distinguished">
     <div class="section-title">Distinguished Club Tracker</div>
     <div class="section-sub" id="dist-view-sub">Tracks Distinguished status using Club Performance data (CSP, membership base, net growth) joined with Division Performance goals.</div>
+
+    <!-- June 30 Projection Card -->
+    <div id="dist-proj-card" style="display:none"></div>
 
     <!-- KPI cards -->
     <div class="kpi-grid" id="dist-kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:28px">
@@ -2268,6 +2375,155 @@ function renderDistinguished() {
   document.getElementById('dist-kpi-need-mem').textContent   = needMem.length;
   document.getElementById('dist-kpi-need-both').textContent  = needBoth.length;
   document.getElementById('dist-kpi-inelig').textContent    = inelig.length;
+
+  // Render June 30 projection card
+  renderDistProjection({ smedley, pres, select, dist, needGoals, needMem, needBoth, cpMap, active });
+}
+
+// ══════════════════════════════════════════════
+// JUNE 30 PROJECTION
+// ══════════════════════════════════════════════
+function renderDistProjection({ smedley, pres, select, dist, needGoals, needMem, needBoth, cpMap, active }) {
+  const el = document.getElementById('dist-proj-card');
+  if (!el || !active.length) { if (el) el.style.display = 'none'; return; }
+
+  const floor = smedley.length + pres.length + select.length + dist.length;
+
+  // Likely: floor + clubs that only need goals (1 or 2 goals away, members already OK)
+  // These are "needGoals" clubs — CSP=Y, members met, just short on goals.
+  // Split by how far they are: 1 goal away vs 2 goals away.
+  const needGoals1 = needGoals.filter(r => goals(r) === 4); // 1 goal away from Distinguished
+  const needGoals2 = needGoals.filter(r => goals(r) === 3); // 2 goals away
+
+  // "needMem" clubs: have enough goals (5+), CSP=Y, but short on members.
+  // Members are harder to close — ceiling only.
+  const memOnlyGap = needMem; // goals already ≥5, just need members
+
+  // "needBoth" = 3 goals + members gap — ceiling only (hardest)
+  const bothGap = needBoth;
+
+  const likely  = floor + needGoals1.length;
+  const ceiling = likely + needGoals2.length + memOnlyGap.length;
+
+  const TARGET_DIST   = 60;
+  const TARGET_SELECT = 66;
+
+  if (!el) return;
+  el.style.display = 'block';
+
+  // Progress track helper
+  // Track spans from 0 to max(ceiling, target)+5 for visual headroom
+  function projTrack(label, target, targetLabel) {
+    const trackMax = Math.max(ceiling, target) + 4;
+    const toX = v => Math.min(100, (v / trackMax) * 100);
+    const floorX   = toX(floor);
+    const likelyX  = toX(likely);
+    const ceilingX = toX(ceiling);
+    const targetX  = toX(target);
+
+    return `
+      <div class="proj-row">
+        <div class="proj-row-label">
+          ${label}
+          <span class="proj-target-badge">Target: ${target} for ${targetLabel}</span>
+        </div>
+        <div class="proj-track" style="margin-top:20px">
+          <div class="proj-range-fill" style="left:${floorX}%;width:${Math.max(0,ceilingX-floorX)}%"></div>
+          <div class="proj-floor-fill" style="width:${floorX}%"></div>
+          <div class="proj-marker" style="left:${targetX}%">
+            <div class="proj-marker-label">${target}</div>
+          </div>
+        </div>
+        <div class="proj-labels">
+          <span>0</span>
+          <span style="position:absolute;left:${floorX}%;transform:translateX(-50%);font-size:10px;color:var(--accent2)">▲ ${floor} Floor</span>
+          <span style="position:absolute;left:${likelyX}%;transform:translateX(-50%);font-size:10px;color:var(--green);margin-top:2px">▲ ${likely} Likely</span>
+          <span style="position:absolute;left:${Math.min(94,ceilingX)}%;transform:translateX(-50%);font-size:10px;color:var(--muted)">▲ ${ceiling} Ceiling</span>
+          <span>${trackMax}</span>
+        </div>
+      </div>`;
+  }
+
+  const hasCPData = clubPerfRows.length > 0;
+  const cpNote = hasCPData ? '' : `<span style="color:var(--yellow);font-size:11px;font-family:var(--mono);margin-left:8px">⚠ No Club Performance data — CSP status unknown, projections may overcount</span>`;
+
+  el.innerHTML = `
+    <div class="proj-card">
+      <div class="proj-title">
+        📅 Projected Distinguished Clubs by June 30 ${cpNote}
+      </div>
+      <div style="position:relative">
+        ${projTrack('Distinguished (any tier)', TARGET_DIST, 'Distinguished District')}
+        <div style="height:24px"></div>
+        ${projTrack('Select Distinguished or above', TARGET_SELECT, 'Select Distinguished District')}
+      </div>
+
+      <div class="proj-scenario-row">
+        <div class="proj-scenario">
+          <div class="proj-scenario-val">${floor}</div>
+          <div class="proj-scenario-label">Floor</div>
+        </div>
+        <div class="proj-scenario" style="border-color:var(--green);background:rgba(63,185,80,0.06)">
+          <div class="proj-scenario-val" style="color:var(--green)">${likely}</div>
+          <div class="proj-scenario-label" style="color:var(--green)">Likely</div>
+        </div>
+        <div class="proj-scenario">
+          <div class="proj-scenario-val">${ceiling}</div>
+          <div class="proj-scenario-label">Ceiling</div>
+        </div>
+        <div style="display:flex;flex-direction:column;justify-content:center;gap:4px;margin-left:8px;font-size:12px;color:var(--muted)">
+          <div>Floor = currently distinguished</div>
+          <div>Likely = + clubs 1 goal away, members ✓</div>
+          <div>Ceiling = + clubs 2 goals away or members gap only</div>
+        </div>
+      </div>
+
+      <div class="proj-breakdown">
+        <div class="proj-breakdown-title">Bucket Breakdown (CSP = Y required throughout)</div>
+        <div class="proj-bucket-row">
+          <span class="proj-bucket-label">✅ Already Distinguished (any tier)</span>
+          <span style="display:flex;gap:16px;align-items:center">
+            <span class="proj-bucket-count">${floor}</span>
+            <span class="proj-bucket-scenario badge badge-green" style="font-size:10px">Floor</span>
+          </span>
+        </div>
+        <div class="proj-bucket-row">
+          <span class="proj-bucket-label">🎯 Need 1 more goal · members ✓ · CSP ✓</span>
+          <span style="display:flex;gap:16px;align-items:center">
+            <span class="proj-bucket-count">${needGoals1.length}</span>
+            <span class="proj-bucket-scenario badge badge-green" style="font-size:10px">→ Likely</span>
+          </span>
+        </div>
+        <div class="proj-bucket-row">
+          <span class="proj-bucket-label">🔶 Need 2 more goals · members ✓ · CSP ✓</span>
+          <span style="display:flex;gap:16px;align-items:center">
+            <span class="proj-bucket-count">${needGoals2.length}</span>
+            <span class="proj-bucket-scenario badge badge-yellow" style="font-size:10px">→ Ceiling</span>
+          </span>
+        </div>
+        <div class="proj-bucket-row">
+          <span class="proj-bucket-label">🔶 Goals met · members gap only · CSP ✓</span>
+          <span style="display:flex;gap:16px;align-items:center">
+            <span class="proj-bucket-count">${memOnlyGap.length}</span>
+            <span class="proj-bucket-scenario badge badge-yellow" style="font-size:10px">→ Ceiling</span>
+          </span>
+        </div>
+        <div class="proj-bucket-row">
+          <span class="proj-bucket-label" style="color:var(--muted)">⬜ Goals gap + members gap · CSP ✓ (excluded)</span>
+          <span style="display:flex;gap:16px;align-items:center">
+            <span class="proj-bucket-count" style="color:var(--muted)">${bothGap.length}</span>
+            <span class="proj-bucket-scenario badge badge-gray" style="font-size:10px">Not counted</span>
+          </span>
+        </div>
+        <div class="proj-bucket-row">
+          <span class="proj-bucket-label" style="color:var(--muted)">🚫 CSP not submitted (ineligible)</span>
+          <span style="display:flex;gap:16px;align-items:center">
+            <span class="proj-bucket-count" style="color:var(--muted)">${active.filter(r => { const cp=getCPData(r,cpMap); return cp && (cp['CSP']||'').toUpperCase()==='N'; }).length}</span>
+            <span class="proj-bucket-scenario badge badge-gray" style="font-size:10px">Ineligible</span>
+          </span>
+        </div>
+      </div>
+    </div>`;
 }
 
 // ══════════════════════════════════════════════
@@ -2480,11 +2736,27 @@ function renderSummary() {
       `${risk} active clubs have 0–1 goals met. These clubs need coaching outreach before the season ends. See Area View to identify priorities.`;
   }
 
-  // Division bars — sorted by avg goals, with Distinguished status badge overlay
+  // ── Division Rankings — Composite Score ──
+  // Weights: avg goals/club 35%, % distinguished 25%, April renewal 20%, CSP% 10%, at-risk% (inverted) 10%
+  const COMP_WEIGHTS = { avgGoals: 0.35, pctDist: 0.25, renewal: 0.20, csp: 0.10, atRisk: 0.10 };
+
   const divs = [...new Set(active.map(r => r['Division']))].sort();
-  const divAvgs = divs.map(d => {
+  const divStats = divs.map(d => {
     const dclubs = active.filter(r => r['Division'] === d);
-    const avg = dclubs.reduce((s, r) => s + goals(r), 0) / dclubs.length;
+    const n = dclubs.length || 1;
+    const avgGoals  = dclubs.reduce((s, r) => s + goals(r), 0) / n;
+    const distCount = dclubs.filter(r => getDistTier(r, cpMap)).length;
+    const pctDist   = distCount / n * 100;
+    const renewedN  = dclubs.filter(r => r['April Renewals'] === '1').length;
+    const renewal   = renewedN / n * 100;
+    const cspN      = hasCPData
+      ? dclubs.filter(r => { const cp = getCPData(r, cpMap); return cp && (cp['CSP']||'').toUpperCase()==='Y'; }).length
+      : n; // if no CP data, treat as 100%
+    const cspPct    = cspN / n * 100;
+    const atRiskN   = dclubs.filter(r => goals(r) <= 1).length;
+    const atRiskPct = atRiskN / n * 100; // lower is better — inverted in scoring
+
+    // Distinguished Division tier (for badge)
     const ref = allRows.find(r => r['Division'] === d && r['Division Club Base']);
     const clubBase  = ref ? (parseInt(ref['Division Club Base']) || 0) : 0;
     const totalPaid = ref ? (parseInt(ref['Total Paid Division Clubs']) || 0) : 0;
@@ -2492,37 +2764,122 @@ function renderSummary() {
     const goalS  = ref ? (parseInt(ref['Division Dist. Club Goal for Select Dist.']) || 0) : 0;
     const goalP  = ref ? (parseInt(ref['Division Dist. Club Goal for Pres. Dist.']) || 0) : 0;
     const net    = totalPaid - clubBase;
-    const totalDist = dclubs.filter(r => getDistTier(r, cpMap)).length;
     let recLabel = '', recStyle = '';
-    if (totalDist >= goalP && net >= 2)       { recLabel = "Pres. Dist."; recStyle = 'background:rgba(163,113,247,0.2);color:#a371f7;border:1px solid rgba(163,113,247,0.4)'; }
-    else if (totalDist >= goalS && net >= 0)  { recLabel = "Select Dist."; recStyle = 'background:rgba(232,164,74,0.2);color:var(--accent);border:1px solid rgba(232,164,74,0.4)'; }
-    else if (totalDist >= goalD && net >= 0)  { recLabel = "Distinguished"; recStyle = 'background:rgba(63,185,80,0.2);color:var(--green);border:1px solid rgba(63,185,80,0.4)'; }
-    return { d, avg, clubs: dclubs.length, recLabel, recStyle };
-  }).sort((a, b) => b.avg - a.avg);
-  const maxAvg = Math.max(...divAvgs.map(x => x.avg));
-  const colors = ['#3fb950','#5b9cf6','#e8a44a','#a371f7','#d29922','#58a6ff','#f85149'];
-  document.getElementById('div-bars').innerHTML = divAvgs.map((x, i) => `
+    if (goalP && distCount >= goalP && net >= 2)      { recLabel = 'Pres. Dist.';   recStyle = 'background:rgba(163,113,247,0.2);color:#a371f7;border:1px solid rgba(163,113,247,0.4)'; }
+    else if (goalS && distCount >= goalS && net >= 0) { recLabel = 'Select Dist.';  recStyle = 'background:rgba(232,164,74,0.2);color:var(--accent);border:1px solid rgba(232,164,74,0.4)'; }
+    else if (goalD && distCount >= goalD && net >= 0) { recLabel = 'Distinguished'; recStyle = 'background:rgba(63,185,80,0.2);color:var(--green);border:1px solid rgba(63,185,80,0.4)'; }
+
+    return { d, avgGoals, pctDist, renewal, cspPct, atRiskPct, distCount, clubs: dclubs.length, recLabel, recStyle, renewedN, atRiskN };
+  });
+
+  // Normalize each metric 0–100 across divisions (min-max), then apply weights
+  function normalizeCol(arr, key, invert) {
+    const vals = arr.map(x => x[key]);
+    const mn = Math.min(...vals), mx = Math.max(...vals);
+    const range = mx - mn || 1;
+    arr.forEach(x => {
+      const norm = (x[key] - mn) / range * 100;
+      x['_n_' + key] = invert ? (100 - norm) : norm;
+    });
+  }
+  normalizeCol(divStats, 'avgGoals', false);
+  normalizeCol(divStats, 'pctDist',  false);
+  normalizeCol(divStats, 'renewal',  false);
+  normalizeCol(divStats, 'cspPct',   false);
+  normalizeCol(divStats, 'atRiskPct', true); // inverted — lower at-risk is better
+
+  divStats.forEach(x => {
+    x.compScore = (
+      x._n_avgGoals  * COMP_WEIGHTS.avgGoals +
+      x._n_pctDist   * COMP_WEIGHTS.pctDist  +
+      x._n_renewal   * COMP_WEIGHTS.renewal  +
+      x._n_cspPct    * COMP_WEIGHTS.csp      +
+      x._n_atRiskPct * COMP_WEIGHTS.atRisk
+    );
+  });
+
+  const ranked = [...divStats].sort((a, b) => b.compScore - a.compScore);
+
+  // Bar chart — keyed by composite rank order, bar width = composite score
+  const maxScore = Math.max(...ranked.map(x => x.compScore)) || 1;
+  const barColors = ['#3fb950','#5b9cf6','#e8a44a','#a371f7','#d29922','#58a6ff','#f85149'];
+  document.getElementById('div-bars').innerHTML = ranked.map((x, i) => `
     <div class="div-bar-row">
       <div class="div-bar-label">Division ${x.d}</div>
       <div class="div-bar-track">
-        <div class="div-bar-fill" style="width:${(x.avg/maxAvg*100).toFixed(0)}%;background:${colors[i]}">
+        <div class="div-bar-fill" style="width:${(x.compScore/maxScore*100).toFixed(0)}%;background:${barColors[i]}">
           ${x.clubs} clubs
         </div>
       </div>
-      <div class="div-bar-num">${x.avg.toFixed(1)}</div>
+      <div class="div-bar-num">${x.compScore.toFixed(0)}</div>
       ${x.recLabel ? `<span style="font-size:10px;font-family:var(--mono);padding:2px 7px;border-radius:4px;white-space:nowrap;${x.recStyle}">${x.recLabel}</span>` : '<span style="width:90px;display:inline-block"></span>'}
     </div>`).join('');
-  document.querySelector('.card-title').textContent = 'Division Rankings — Avg Goals / Club';
+  document.getElementById('div-rankings-title').textContent = 'Division Rankings — Composite Score';
+
+  // Helper: color-chip a cell value relative to median across all divisions
+  function cellChip(val, fmt, higherBetter) {
+    const vals = divStats.map(x => x[val]);
+    const sorted = [...vals].sort((a,b)=>a-b);
+    const median = sorted[Math.floor(sorted.length/2)];
+    const v = divStats; // not used, just getting value
+    return function(row) {
+      const rv = row[val];
+      const pct = row['_n_' + val]; // already 0-100 normalized
+      const cls = pct >= 60 ? 'cell-green' : pct <= 30 ? 'cell-red' : 'cell-yellow';
+      return `<span class="cell-chip ${cls}">${fmt(rv)}</span>`;
+    };
+  }
+  const fmtPct1 = v => v.toFixed(0) + '%';
+  const fmtGoal = v => v.toFixed(1);
+  const fmtCnt  = v => v;
+
+  const chipAvg     = row => { const p=row._n_avgGoals; const c=p>=60?'cell-green':p<=30?'cell-red':'cell-yellow'; return `<span class="cell-chip ${c}">${row.avgGoals.toFixed(1)}</span>`; };
+  const chipDist    = row => { const p=row._n_pctDist;  const c=p>=60?'cell-green':p<=30?'cell-red':'cell-yellow'; return `<span class="cell-chip ${c}">${row.pctDist.toFixed(0)}%</span>`; };
+  const chipRenewal = row => { const p=row._n_renewal;  const c=p>=60?'cell-green':p<=30?'cell-red':'cell-yellow'; return `<span class="cell-chip ${c}">${row.renewal.toFixed(0)}%</span>`; };
+  const chipCSP     = row => {
+    if (!hasCPData) return `<span class="cell-chip cell-yellow">No CP</span>`;
+    const p=row._n_cspPct; const c=p>=60?'cell-green':p<=30?'cell-red':'cell-yellow';
+    return `<span class="cell-chip ${c}">${row.cspPct.toFixed(0)}%</span>`;
+  };
+  const chipAtRisk  = row => { const p=row._n_atRiskPct; const c=p>=60?'cell-green':p<=30?'cell-red':'cell-yellow'; return `<span class="cell-chip ${c}">${row.atRiskN}/${row.clubs}</span>`; };
+
+  document.getElementById('div-comp-table').innerHTML = `
+    <table class="comp-table">
+      <thead><tr>
+        <th style="text-align:left">Rank / Division</th>
+        <th>Score</th>
+        <th>Avg Goals</th>
+        <th>% Dist.</th>
+        <th>Apr Renewed</th>
+        <th>CSP %</th>
+        <th>At-Risk</th>
+      </tr></thead>
+      <tbody>
+        ${ranked.map((x, i) => {
+          const scoreColor = x.compScore >= 70 ? '#3fb950' : x.compScore >= 40 ? '#d29922' : '#f85149';
+          return `<tr>
+            <td><span class="comp-rank">#${i+1}</span> Division ${x.d}</td>
+            <td><span class="comp-score-pill" style="background:${scoreColor}22;color:${scoreColor};border:1px solid ${scoreColor}44">${x.compScore.toFixed(0)}</span></td>
+            <td>${chipAvg(x)}</td>
+            <td>${chipDist(x)}</td>
+            <td>${chipRenewal(x)}</td>
+            <td>${chipCSP(x)}</td>
+            <td>${chipAtRisk(x)}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+    <div style="margin-top:8px;font-size:10px;color:var(--muted)">Score = weighted composite: avg goals 35% · % distinguished 25% · April renewal 20% · CSP % 10% · at-risk (inverted) 10%. Colors: <span style="color:var(--green)">■</span> top third <span style="color:var(--yellow)">■</span> middle <span style="color:var(--red)">■</span> bottom third across divisions.</div>`;
 
   // Goals distribution
   const maxG = 9;
   const dist_data = Array.from({length: maxG+1}, (_, i) => active.filter(r => goals(r) === i).length);
   const maxCount = Math.max(...dist_data);
-  const barColors = ['#f85149','#f85149','#d29922','#d29922','#d29922','#3fb950','#3fb950','#e8a44a','#e8a44a','#a371f7'];
+  const goalsBarColors = ['#f85149','#f85149','#d29922','#d29922','#d29922','#3fb950','#3fb950','#e8a44a','#e8a44a','#a371f7'];
   document.getElementById('goals-dist').innerHTML = dist_data.map((c, i) => `
     <div class="goals-bar-wrap">
       <div class="tooltip-wrap">
-        <div class="goals-bar" style="height:${maxCount ? (c/maxCount*64).toFixed(0) : 0}px;background:${barColors[i]}"></div>
+        <div class="goals-bar" style="height:${maxCount ? (c/maxCount*64).toFixed(0) : 0}px;background:${goalsBarColors[i]}"></div>
         <div class="tooltip-box">${i} goals: ${c} clubs</div>
       </div>
       <div class="goals-bar-lbl">${i}</div>
