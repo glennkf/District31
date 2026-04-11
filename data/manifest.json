@@ -6,13 +6,16 @@
     "District_Performance_4-2-2026.csv",
     "District_Performance_4-3-2026.csv",
     "District_Performance_4-8-2026.csv",
+    "District_Performance_4-10-2026.csv",
     "PY_District_Performance_4-2-2025.csv",
     "PY_District_Performance_4-3-2025.csv",
     "PY_District_Performance_4-8-2025.csv",
+    "PY_District_Performance_4-10-2025.csv",
     "District_Performance_6-30-2025.csv",
     "PY_Division_Performance_4-2-2025.csv",
     "PY_Division_Performance_4-3-2025.csv",
     "PY_Division_Performance_4-8-2025.csv",
+    "PY_Division_Performance_4-10-2025.csv",
     "Division_Performance_7-1-2025.csv",
     "Division_Performance_8-1-2025.csv",
     "Division_Performance_9-1-2025.csv",
@@ -29,9 +32,11 @@
     "Division_Performance_4-2-2026.csv",
     "Division_Performance_4-3-2026.csv",
     "Division_Performance_4-8-2026.csv",
+    "Division_Performance_4-10-2026.csv",
     "PY_Club_Performance_4-2-2025.csv",
     "PY_Club_Performance_4-3-2025.csv",
     "PY_Club_Performance_4-8-2025.csv",
+    "PY_Club_Performance_4-10-2025.csv",
     "Club_Performance_7-1-2025.csv",
     "Club_Performance_10-1-2025.csv",
     "Club_Performance_1-1-2026.csv",
@@ -39,6 +44,7 @@
     "Club_Performance_3-31-2026.csv",
     "Club_Performance_4-2-2026.csv",
     "Club_Performance_4-3-2026.csv",
-    "Club_Performance_4-8-2026.csv"
+    "Club_Performance_4-8-2026.csv",
+    "Club_Performance_4-10-2026.csv"
   ]
 }
