@@ -1286,7 +1286,6 @@
         <div class="rec-metric"><div class="rec-metric-label">Distinguished Clubs</div><div class="rec-metric-value" id="drec-dist-clubs">—</div><div class="rec-metric-sub">of <span id="drec-dist-base">—</span> club base</div></div>
         <div class="rec-metric"><div class="rec-metric-label">Mem. Payments YTD</div><div class="rec-metric-value" id="drec-mem-ytd">—</div><div class="rec-metric-sub">Base: <span id="drec-mem-base">—</span></div></div>
       </div>
-      <div id="drec-debug" style="font-size:10px;color:var(--muted);font-family:var(--mono);padding:4px 0;margin-top:4px"></div>
       <div id="district-rec-progress"></div>
       <div class="rec-qualifiers" id="district-rec-quals">
         <span class="rec-qual-info">ℹ Load Division Performance + District Performance CSVs to populate</span>
@@ -3020,11 +3019,16 @@ function renderSummary() {
   const divStats = divs.map(d => {
     const dclubs = active.filter(r => r['Division'] === d);
     const n = dclubs.length || 1;
+    // Renewal % denominator = clubs with members > 0 and not suspended in this division
+    // (same logic as YoY — excludes zero-member and suspended clubs that can't renew)
+    const renewalEligibleD = allRows.filter(r => r['Division'] === d &&
+      (parseInt(r['Membership to date']) || 0) > 0 &&
+      !isSuspended(r)).length || 1;
     const avgGoals  = dclubs.reduce((s, r) => s + goals(r), 0) / n;
     const distCount = dclubs.filter(r => getDistTier(r, cpMap)).length;
     const pctDist   = distCount / n * 100;
-    const renewedN  = dclubs.filter(r => r['April Renewals'] === '1').length;
-    const renewal   = renewedN / n * 100;
+    const renewedN  = allRows.filter(r => r['Division'] === d && r['April Renewals'] === '1').length;
+    const renewal   = renewedN / renewalEligibleD * 100;
     const cspN      = dclubs.filter(r => { const cp = getCPData(r, cpMap); return cp && (cp['CSP']||'').toUpperCase()==='Y'; }).length;
     const cspPct    = cspN / n * 100;
     const atRiskN   = dclubs.filter(r => goals(r) <= 1).length;
@@ -3686,25 +3690,6 @@ function renderRecognition() {
   // Live active clubs = April renewed + new charters (113) — used for Current Paid Clubs display
   const liveActiveCount = allRows.filter(isActive).length;
   const distNetClubs = liveActiveCount - distClubBase;
-
-  // ── DEBUG: show distPerfRows contents ──
-  const debugEl = document.getElementById('drec-debug');
-  if (debugEl) {
-    if (distPerfRows.length === 0) {
-      debugEl.textContent = 'distPerfRows: empty';
-    } else {
-      const sorted2 = [...distPerfRows].sort((a,b) => b.dateObj - a.dateObj);
-      const cy2 = sorted2[0];
-      const cd2 = cy2.dateObj || new Date();
-      const sy2 = (cd2.getMonth() >= 6) ? cd2.getFullYear() : cd2.getFullYear() - 1;
-      const pyc2 = new Date(sy2 + 1, 0, 1); // Jan 1 of season-start-year+1
-      debugEl.textContent = 'distPerfRows: ' + sorted2.map(d => {
-        const t = d.rows.reduce((s,r) => s + (parseInt(r['Total to Date'])||0), 0);
-        const tag = d === cy2 ? '[CY]' : d.dateObj < pyc2 ? '[PY]' : '[skip]';
-        return `${d.date}=${tag}$${t}`;
-      }).join(' | ');
-    }
-  }
 
   // Membership payments — from distPerfRows
   // Current year = the most recent distPerfRows entry
