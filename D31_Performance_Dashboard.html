@@ -996,7 +996,7 @@
     <div class="section-sub" id="summary-sub">Upload a CSV to populate this dashboard.</div>
 
     <div class="kpi-grid" id="kpi-grid">
-      <div class="kpi clickable" style="--kpi-color:#5b9cf6" onclick="drillDown('active')" title="Click to see active clubs"><div class="kpi-label">Active Clubs</div><div class="kpi-value" id="kpi-active">—</div><div class="kpi-sub" id="kpi-active-sub">of <span id="kpi-total">—</span> total</div></div>
+      <div class="kpi clickable" style="--kpi-color:#5b9cf6" onclick="drillDown('active')" title="Click to see active clubs"><div class="kpi-label">Active Clubs</div><div class="kpi-value" id="kpi-active">—</div><div class="kpi-sub" id="kpi-active-sub">—</div></div>
       <div class="kpi clickable" style="--kpi-color:#e8a44a" onclick="drillDown('newcharter')" title="Click to see newly chartered clubs"><div class="kpi-label">New Charters</div><div class="kpi-value" id="kpi-newcharter">—</div><div class="kpi-sub">chartered Apr 1+</div></div>
       <div class="kpi clickable" style="--kpi-color:#3fb950" onclick="drillDown('dist')" title="Click to see distinguished clubs"><div class="kpi-label">Distinguished</div><div class="kpi-value" id="kpi-dist">—</div><div class="kpi-sub">5+ goals met</div></div>
       <div class="kpi clickable" style="--kpi-color:#e8a44a" onclick="drillDown('select')" title="Click to see Select Distinguished clubs"><div class="kpi-label">Select Dist.</div><div class="kpi-value" id="kpi-select">—</div><div class="kpi-sub">7+ goals met</div></div>
@@ -1004,7 +1004,7 @@
       <div class="kpi clickable" style="--kpi-color:#ffd700" onclick="drillDown('smedley')" title="Click to see Smedley Distinguished clubs"><div class="kpi-label">Smedley Dist.</div><div class="kpi-value" id="kpi-smedley">—</div><div class="kpi-sub">10 goals + 25+ members</div></div>
       <div class="kpi clickable" style="--kpi-color:#f85149" onclick="drillDown('risk')" title="Click to see at-risk clubs"><div class="kpi-label">At-Risk Clubs</div><div class="kpi-value" id="kpi-risk">—</div><div class="kpi-sub">0–1 goals</div></div>
       <div class="kpi clickable" style="--kpi-color:#3fb950" onclick="drillDown('renewed')" title="Click to see April renewed clubs"><div class="kpi-label">April Renewed</div><div class="kpi-value" id="kpi-renewed">—</div><div class="kpi-sub" id="kpi-renewed-pct">—</div></div>
-      <div class="kpi clickable" style="--kpi-color:#8b949e" onclick="drillDown('susp')" title="Click to see suspended &amp; inactive clubs"><div class="kpi-label">Suspended &amp; Inactive</div><div class="kpi-value" id="kpi-susp">—</div><div class="kpi-sub">this season</div></div>
+      <div class="kpi clickable" style="--kpi-color:#8b949e" onclick="drillDown('susp')" title="Click to see suspended clubs"><div class="kpi-label">Suspended Clubs</div><div class="kpi-value" id="kpi-susp">—</div><div class="kpi-sub">this season</div></div>
       <div class="kpi" style="--kpi-color:#5b9cf6"><div class="kpi-label">Total Members</div><div class="kpi-value" id="kpi-members">—</div><div class="kpi-sub">active clubs</div></div>
     </div>
 
@@ -1044,9 +1044,18 @@
     </div>
 
     <div class="card wide-card">
-      <div class="card-title">Suspended &amp; Inactive Clubs</div>
+      <div class="card-title">Clubs Needing Attention <span style="font-size:12px;font-weight:400;color:var(--muted)" id="needs-attention-count"></span></div>
+      <div class="section-sub" style="margin:0 0 10px">Not yet renewed April dues or zero members — not officially suspended. These clubs need outreach before June 30.</div>
       <div class="table-wrap"><table>
-        <thead><tr><th>Club Name</th><th>Div</th><th>Area</th><th>Note</th></tr></thead>
+        <thead><tr><th>Club Name</th><th>Div</th><th>Area</th><th>Members</th><th>Goals</th><th>Note</th></tr></thead>
+        <tbody id="needs-attention-body"></tbody>
+      </table></div>
+    </div>
+
+    <div class="card wide-card">
+      <div class="card-title">Suspended Clubs <span style="font-size:12px;font-weight:400;color:var(--muted)" id="susp-count"></span></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Club Name</th><th>Div</th><th>Area</th><th>Suspended</th></tr></thead>
         <tbody id="susp-body"></tbody>
       </table></div>
     </div>
@@ -1608,12 +1617,13 @@ function processAllTexts(items, total) {
     try { localStorage.setItem('d31_cp_rows', JSON.stringify(latestCP)); } catch(e) {}
   }
 
-  // Process District Performance — store all, keyed by date, for prior-year base lookup
+  // Process District Performance — store all rows including non-standard divisions (e.g. 0D new charters)
   if (dpTexts.length > 0) {
     dpTexts.forEach(text => {
       const dateStr = extractDateFromText(text);
       const rows = parseRowsFromText(text);
-      const validRows = rows.filter(r => r['Division'] && r['Division'].length === 1 && /^[A-Z]$/i.test(r['Division']));
+      // Keep all rows with a non-empty Division — filtering to A-Z only happens in renderRecognition display
+      const validRows = rows.filter(r => r['Division'] && r['Division'].trim());
       if (validRows.length > 0) {
         distPerfRows = distPerfRows.filter(d => d.date !== dateStr);
         distPerfRows.push({ date: dateStr, dateObj: dateStr ? parseSnapDate(dateStr) : new Date(0), rows: validRows });
@@ -1708,7 +1718,7 @@ function processPriorYearEntries(entries) {
       // Prior-year District Performance
       const dateStr = extractDateFromText(text);
       const rows = parseRowsFromText(text);
-      const validRows = rows.filter(r => r['Division'] && r['Division'].length === 1 && /^[A-Z]$/i.test(r['Division']));
+      const validRows = rows.filter(r => r['Division'] && r['Division'].trim());
       if (validRows.length > 0) {
         pyDistPerfRows = pyDistPerfRows.filter(d => d.date !== dateStr);
         pyDistPerfRows.push({ date: dateStr, dateObj: dateStr ? parseSnapDate(dateStr) : new Date(0), rows: validRows });
@@ -1799,7 +1809,7 @@ function parseCSV(text, manualDate) {
   if (isDistrictPerfText(text)) {
     const dateStr = extractDateFromText(text) || new Date().toLocaleDateString();
     const rows = parseRowsFromText(text);
-    const validRows = rows.filter(r => r['Division'] && r['Division'].length === 1 && /^[A-Z]$/i.test(r['Division']));
+    const validRows = rows.filter(r => r['Division'] && r['Division'].trim());
     distPerfRows = distPerfRows.filter(d => d.date !== dateStr);
     distPerfRows.push({ date: dateStr, dateObj: parseSnapDate(dateStr), rows: validRows });
     try { localStorage.setItem('d31_dist_perf', JSON.stringify(distPerfRows.map(d => ({ date: d.date, rows: d.rows })))); } catch(e) {}
@@ -1955,11 +1965,19 @@ function getDistTier(divRow, cpMap) {
 // HELPERS
 // ══════════════════════════════════════════════
 function isActive(r) {
-  const mem = parseInt(r['Membership to date']) || 0;
-  const note = r['Charter Date/Suspend Date'] || '';
-  return mem > 0 && !note.includes('Susp');
+  // Active = club that has paid April dues OR is a new charter (Apr 1+)
+  // Aligns with TI's "paid clubs" definition (113 clubs)
+  return r['April Renewals'] === '1' || isNewCharter(r);
 }
 function isSuspended(r) { return (r['Charter Date/Suspend Date'] || '').includes('Susp'); }
+function isInactive(r) {
+  // Zero members, not suspended, not a new charter
+  return (parseInt(r['Membership to date']) || 0) === 0 && !isSuspended(r) && !isNewCharter(r);
+}
+function isNotYetRenewed(r) {
+  // Has members > 0, not yet renewed, not suspended, not a new charter
+  return (parseInt(r['Membership to date']) || 0) > 0 && r['April Renewals'] !== '1' && !isSuspended(r) && !isNewCharter(r);
+}
 // Returns true if the club was chartered on or after April 1 of the current TM season end year.
 // New charters appear in Division Perf with "Charter MM/DD/YY" in the Charter Date/Suspend Date field.
 function isNewCharter(r) {
@@ -2202,12 +2220,11 @@ function drillDown(type) {
 
   switch(type) {
     case 'active': {
-      // Three-group modal: April Renewed / Newly Chartered / Not Yet Renewed
+      // Two-group modal: April Renewed / Newly Chartered
       const renewed    = active.filter(r => r['April Renewals'] === '1');
       const newCharts  = active.filter(r => isNewCharter(r));
-      const notYet     = active.filter(r => r['April Renewals'] !== '1' && !isNewCharter(r));
       title = 'Active Clubs';
-      sub   = `${active.length} clubs · ${renewed.length} April renewed · ${newCharts.length} newly chartered · ${notYet.length} not yet renewed`;
+      sub   = `${active.length} clubs · ${renewed.length} April renewed · ${newCharts.length} newly chartered`;
 
       function groupRows(list) {
         return [...list].sort((a,b) => goals(b)-goals(a) || members(b)-members(a)).map(r => {
@@ -2233,8 +2250,7 @@ function drillDown(type) {
 
       const html =
         sectionHeader('April Renewed', renewed.length, 'var(--green)') + groupRows(renewed) +
-        sectionHeader('Newly Chartered (Apr 1+)', newCharts.length, 'var(--accent2)') + groupRows(newCharts) +
-        sectionHeader('Not Yet Renewed', notYet.length, 'var(--red)') + groupRows(notYet);
+        sectionHeader('Newly Chartered (Apr 1+)', newCharts.length, 'var(--accent2)') + groupRows(newCharts);
 
       document.getElementById('drill-modal-title').textContent = title;
       document.getElementById('drill-modal-sub').textContent = sub;
@@ -2277,10 +2293,15 @@ function drillDown(type) {
       title = 'April Renewed Clubs';
       sub = `${clubs.length} clubs that have renewed April dues`;
       break;
+    case 'needsattention':
+      clubs = allRows.filter(r => isNotYetRenewed(r) || isInactive(r));
+      title = 'Clubs Needing Attention';
+      sub = `${clubs.length} clubs — not yet renewed or zero members (not officially suspended)`;
+      break;
     case 'susp':
-      clubs = allRows.filter(r => isSuspended(r) || (parseInt(r['Membership to date'])||0) === 0);
-      title = 'Suspended & Inactive Clubs';
-      sub = `${clubs.length} clubs currently suspended or with no active members`;
+      clubs = allRows.filter(isSuspended);
+      title = 'Suspended Clubs';
+      sub = `${clubs.length} clubs officially suspended this season`;
       break;
   }
 
@@ -2878,7 +2899,10 @@ function renderYoY() {
 // ══════════════════════════════════════════════
 function renderSummary() {
   const active = allRows.filter(isActive);
-  const susp = allRows.filter(r => isSuspended(r) || (parseInt(r['Membership to date'])||0) === 0);
+  const susp = allRows.filter(isSuspended);                          // Change 2: suspended only
+  const notYetRenewed = allRows.filter(isNotYetRenewed);            // Change 4: has members, not renewed
+  const inactive = allRows.filter(isInactive);                       // Change 4: zero members, not susp
+  const needAttention = [...notYetRenewed, ...inactive];             // Change 4: combined 20 clubs
   const total = allRows.length;
   const hasCPData = clubPerfRows.length > 0;
   const cpMap = buildCPMap();
@@ -2896,14 +2920,12 @@ function renderSummary() {
   const risk = active.filter(r => goals(r) <= 1).length;
   const renewed = active.filter(r => r['April Renewals'] === '1').length;
   const newCharters = active.filter(r => isNewCharter(r));
-  const notYetRenewed = active.filter(r => r['April Renewals'] !== '1' && !isNewCharter(r));
   const totalMem = active.reduce((s, r) => s + members(r), 0);
   const totalDist = smedley + pres + sel + dist;
 
   document.getElementById('kpi-active').textContent = active.length;
-  document.getElementById('kpi-total').textContent = total;
   document.getElementById('kpi-active-sub').innerHTML =
-    `<span style="color:var(--green)">${renewed} renewed</span> · <span style="color:var(--accent2)">${newCharters.length} newly chartered</span> · <span style="color:var(--muted)">${notYetRenewed.length} not yet renewed</span>`;
+    `<span style="color:var(--green)">${renewed} April renewed</span> · <span style="color:var(--accent2)">${newCharters.length} newly chartered</span>`;
   document.getElementById('kpi-newcharter').textContent = newCharters.length;
   document.getElementById('kpi-dist').textContent = dist;
   document.getElementById('kpi-select').textContent = sel;
@@ -2912,7 +2934,7 @@ function renderSummary() {
   document.getElementById('kpi-risk').textContent = risk;
   document.getElementById('kpi-renewed').textContent = renewed;
   document.getElementById('kpi-renewed-pct').textContent = `${(renewed/active.length*100).toFixed(1)}% of active clubs`;
-  document.getElementById('kpi-susp').textContent = susp.length;
+  document.getElementById('kpi-susp').textContent = susp.length;   // Change 2: suspended only
   document.getElementById('kpi-members').textContent = totalMem.toLocaleString();
 
   document.getElementById('summary-sub').textContent =
@@ -3059,14 +3081,35 @@ function renderSummary() {
     </tr>`;
   }).join('');
 
-  // Suspended
-  const suspClubs = allRows.filter(r => isSuspended(r) || (parseInt(r['Membership to date'])||0) === 0);
-  document.getElementById('susp-body').innerHTML = suspClubs.map(r => `<tr>
+  // Needs Attention table (Change 4) — not yet renewed + zero members
+  const needsAttentionEl = document.getElementById('needs-attention-body');
+  const needsCountEl = document.getElementById('needs-attention-count');
+  if (needsAttentionEl) {
+    const allNeedAttention = [...notYetRenewed, ...inactive].sort((a,b) => members(b)-members(a) || goals(b)-goals(a));
+    if (needsCountEl) needsCountEl.textContent = `(${allNeedAttention.length} clubs)`;
+    needsAttentionEl.innerHTML = allNeedAttention.map(r => {
+      const isZero = (parseInt(r['Membership to date'])||0) === 0;
+      const noteText = isZero ? '<span style="color:var(--muted)">Zero members</span>' : '<span style="color:var(--yellow)">Not yet renewed</span>';
+      return `<tr>
+        <td style="font-weight:500">${r['Club Name']}</td>
+        <td><span class="badge badge-blue">${r['Division']}</span></td>
+        <td style="font-family:var(--mono)">${r['Area']}</td>
+        <td style="font-family:var(--mono)">${members(r)}</td>
+        <td style="font-family:var(--mono);font-weight:600">${goals(r)}</td>
+        <td>${noteText}</td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">No clubs in this category</td></tr>';
+  }
+
+  // Suspended table (Change 3) — officially suspended only
+  const suspCountEl = document.getElementById('susp-count');
+  if (suspCountEl) suspCountEl.textContent = `(${susp.length} clubs)`;
+  document.getElementById('susp-body').innerHTML = susp.map(r => `<tr>
     <td style="font-weight:500">${r['Club Name']}</td>
     <td><span class="badge badge-blue">${r['Division']}</span></td>
     <td style="font-family:var(--mono)">${r['Area']}</td>
-    <td style="font-family:var(--mono);color:var(--muted)">${r['Charter Date/Suspend Date'] || 'No members / inactive'}</td>
-  </tr>`).join('');
+    <td style="font-family:var(--mono);color:var(--muted)">${r['Charter Date/Suspend Date']}</td>
+  </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">No suspended clubs</td></tr>';
 
   renderYoY();
 }
@@ -3539,7 +3582,9 @@ function renderRecognition() {
   });
   // Live Distinguished count across entire district
   const distTotalDist = allRows.filter(r => isActive(r)).filter(r => getDistTier(r, cpMap)).length;
-  const distNetClubs = distTotalPaid - distClubBase;
+  // Live active clubs = April renewed + new charters (113) — used for Current Paid Clubs display
+  const liveActiveCount = allRows.filter(isActive).length;
+  const distNetClubs = liveActiveCount - distClubBase;
 
   // Membership payments — from distPerfRows
   // Prior year = the Jun 30 snapshot (latest date on or before Jul 1 of current TM year)
@@ -3603,7 +3648,7 @@ function renderRecognition() {
   const elMemYTD = document.getElementById('drec-mem-ytd');
   const elMemB   = document.getElementById('drec-mem-base');
   if (elBase)   elBase.textContent   = distClubBase;
-  if (elPaid)   elPaid.textContent   = distTotalPaid;
+  if (elPaid)   elPaid.textContent   = liveActiveCount;  // April renewed + new charters
   if (elNet)    { elNet.textContent  = (distNetClubs>=0?'+':'')+distNetClubs; elNet.style.color = distNetClubs>=0?'var(--green)':'var(--red)'; }
   if (elDist)   elDist.textContent   = distTotalDist;
   if (elDistB)  elDistB.textContent  = distClubBase;
@@ -4076,12 +4121,18 @@ function clearAllData() {
   document.getElementById('upload-status').textContent = 'Upload one or multiple CSVs · date tag applies to single-file uploads';
   renderSnapshotList();
   // Clear all rendered views
-  ['kpi-active','kpi-total','kpi-dist','kpi-select','kpi-pres','kpi-smedley','kpi-risk',
+  ['kpi-active','kpi-dist','kpi-select','kpi-pres','kpi-smedley','kpi-risk',
    'kpi-renewed','kpi-members','kpi-susp','kpi-newcharter'].forEach(id => {
     const el = document.getElementById(id); if (el) el.textContent = '—';
   });
   const activeSub = document.getElementById('kpi-active-sub');
-  if (activeSub) activeSub.innerHTML = 'of <span id="kpi-total">—</span> total';
+  if (activeSub) activeSub.textContent = '—';
+  const naBody = document.getElementById('needs-attention-body');
+  if (naBody) naBody.innerHTML = '';
+  const naCount = document.getElementById('needs-attention-count');
+  if (naCount) naCount.textContent = '';
+  const suspCount = document.getElementById('susp-count');
+  if (suspCount) suspCount.textContent = '';
   document.getElementById('top-clubs-body').innerHTML = '';
   document.getElementById('susp-body').innerHTML = '';
   document.getElementById('div-bars').innerHTML = '';
