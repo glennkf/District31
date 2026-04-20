@@ -981,6 +981,7 @@
   <div class="tab" data-view="area">Area View</div>
   <div class="tab" data-view="distinguished">Distinguished</div>
   <div class="tab" data-view="recognition">District Recognition</div>
+  <div class="tab" data-view="roster">Club Roster</div>
   <div class="tab" data-view="renewal" style="color:var(--red)">⚠ Renewal Alert</div>
   <div class="tab" data-view="trend">Trend &amp; History</div>
 </div>
@@ -1104,10 +1105,27 @@
     </div>
 
     <div class="card wide-card">
-      <div class="card-title">All Clubs in Division</div>
+      <div class="card-title">Active / Paid Clubs <span style="font-size:12px;font-weight:400;color:var(--muted)" id="div-active-count"></span></div>
       <div class="table-wrap"><table id="div-clubs-table">
         <thead><tr><th onclick="sortTable('div-clubs-body',0)">Area</th><th onclick="sortTable('div-clubs-body',1)">Club Name</th><th onclick="sortTable('div-clubs-body',2)">Goals ▾</th><th onclick="sortTable('div-clubs-body',3)">Members</th><th>Apr Renewed</th><th>Status</th><th>Path to Distinguished</th></tr></thead>
         <tbody id="div-clubs-body"></tbody>
+      </table></div>
+    </div>
+
+    <div class="card wide-card">
+      <div class="card-title">Not Yet Renewed / Inactive <span style="font-size:12px;font-weight:400;color:var(--muted)" id="div-notrenewed-count"></span></div>
+      <div class="section-sub" style="margin:0 0 10px">Clubs with members not yet paid April dues, plus clubs with zero members. Not officially suspended.</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Area</th><th>Club Name</th><th>Goals</th><th>Members</th><th>Note</th></tr></thead>
+        <tbody id="div-notrenewed-body"></tbody>
+      </table></div>
+    </div>
+
+    <div class="card wide-card">
+      <div class="card-title">Suspended Clubs <span style="font-size:12px;font-weight:400;color:var(--muted)" id="div-susp-count"></span></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Area</th><th>Club Name</th><th>Suspended</th></tr></thead>
+        <tbody id="div-susp-body"></tbody>
       </table></div>
     </div>
   </div>
@@ -1419,6 +1437,49 @@
           <tbody id="renewal-clubs-body"></tbody>
         </table></div>
       </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       VIEW — CLUB ROSTER
+  ════════════════════════════════════════════════ -->
+  <div class="view" id="view-roster">
+    <div class="section-title">Club Roster</div>
+    <div class="section-sub">All 138 clubs in the district with current status. The 132-club base reflects clubs paid as of July 1, 2025 — the official TM season start.</div>
+
+    <div class="filter-row" style="gap:12px;flex-wrap:wrap">
+      <span class="filter-label">Division:</span>
+      <select id="roster-div-filter">
+        <option value="">All Divisions</option>
+      </select>
+      <span class="filter-label" style="margin-left:8px">Status:</span>
+      <select id="roster-status-filter">
+        <option value="">All Statuses</option>
+        <option value="active">Active / Paid</option>
+        <option value="notrenewed">Not Yet Renewed</option>
+        <option value="inactive">Inactive</option>
+        <option value="suspended">Suspended</option>
+      </select>
+      <span id="roster-count" style="font-size:12px;color:var(--muted);margin-left:8px"></span>
+    </div>
+
+    <!-- Status summary pills -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px" id="roster-pills"></div>
+
+    <div class="card wide-card">
+      <div class="table-wrap"><table id="roster-table">
+        <thead><tr>
+          <th>Club Name</th>
+          <th>Div</th>
+          <th>Area</th>
+          <th onclick="rosterSort('members')" style="cursor:pointer">Members ▾</th>
+          <th onclick="rosterSort('goals')" style="cursor:pointer">Goals</th>
+          <th>CSP</th>
+          <th>Status</th>
+          <th>Charter / Suspend</th>
+        </tr></thead>
+        <tbody id="roster-body"></tbody>
+      </table></div>
     </div>
   </div>
 
@@ -2322,6 +2383,7 @@ function renderAll() {
   renderAreaView();
   renderDistinguished();
   renderRecognition();
+  renderRoster();
 }
 
 // ══════════════════════════════════════════════
@@ -3263,7 +3325,9 @@ function renderDivisionView() {
     </tr>`;
   }).join('');
 
-  // Clubs table
+  // Active clubs table
+  const activeCountEl = document.getElementById('div-active-count');
+  if (activeCountEl) activeCountEl.textContent = `(${active.length} clubs)`;
   const sorted = [...active].sort((a, b) => goals(b) - goals(a));
   document.getElementById('div-clubs-body').innerHTML = sorted.map(r => {
     const cp = getCPData(r, cpMap);
@@ -3294,6 +3358,39 @@ function renderDivisionView() {
       <td>${pathHtml}</td>
     </tr>`;
   }).join('');
+
+  // Not Yet Renewed / Inactive table
+  const divNotRenewed = allRows.filter(r => r['Division'] === div && (isNotYetRenewed(r) || isInactive(r)))
+    .sort((a,b) => members(b)-members(a) || goals(b)-goals(a));
+  const divNotRenewedCount = document.getElementById('div-notrenewed-count');
+  if (divNotRenewedCount) divNotRenewedCount.textContent = `(${divNotRenewed.length} clubs)`;
+  const divNotRenewedBody = document.getElementById('div-notrenewed-body');
+  if (divNotRenewedBody) {
+    divNotRenewedBody.innerHTML = divNotRenewed.map(r => {
+      const isZero = (parseInt(r['Membership to date'])||0) === 0;
+      const note = isZero ? '<span style="color:var(--muted)">Zero members</span>' : '<span style="color:var(--yellow)">Not yet renewed</span>';
+      return `<tr>
+        <td style="font-family:var(--mono)">${r['Area']}</td>
+        <td style="font-weight:500">${r['Club Name']}</td>
+        <td style="font-family:var(--mono);font-weight:600">${goals(r)}</td>
+        <td style="font-family:var(--mono)">${members(r)}</td>
+        <td>${note}</td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:16px">None</td></tr>';
+  }
+
+  // Suspended table
+  const divSusp = allRows.filter(r => r['Division'] === div && isSuspended(r));
+  const divSuspCount = document.getElementById('div-susp-count');
+  if (divSuspCount) divSuspCount.textContent = `(${divSusp.length} clubs)`;
+  const divSuspBody = document.getElementById('div-susp-body');
+  if (divSuspBody) {
+    divSuspBody.innerHTML = divSusp.map(r => `<tr>
+      <td style="font-family:var(--mono)">${r['Area']}</td>
+      <td style="font-weight:500">${r['Club Name']}</td>
+      <td style="font-family:var(--mono);color:var(--muted)">${r['Charter Date/Suspend Date']}</td>
+    </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:16px">None</td></tr>';
+  }
 }
 
 // ══════════════════════════════════════════════
@@ -3605,11 +3702,16 @@ function renderRecognition() {
       .reduce((s,r) => s + (parseInt(r['Total to Date'])||0), 0);
     memEstablishedPayments = memYTD - memNewCharterPayments;
 
-    // Prior year = the snapshot with date on/before 7/1 of current season
-    // We treat the earliest snapshot as the base if it looks like a year-end (Jun 30)
+    // Prior year base = the prior-year District Performance snapshot with the highest
+    // Total to Date. TI's payment reconciliation continues for weeks after Jun 30,
+    // so the highest total (regardless of date) is the most accurate final figure.
     const priorCandidates = sorted.filter(d => d !== current);
     if (priorCandidates.length > 0) {
-      const prior = priorCandidates[priorCandidates.length - 1]; // oldest
+      const prior = priorCandidates.reduce((best, d) => {
+        const t = d.rows.reduce((s,r) => s + (parseInt(r['Total to Date'])||0), 0);
+        const b = best.rows.reduce((s,r) => s + (parseInt(r['Total to Date'])||0), 0);
+        return t > b ? d : best;
+      });
       memBase = prior.rows.reduce((s,r) => s + (parseInt(r['Total to Date'])||0), 0);
     }
     if (memBase && memBase > 0) {
@@ -3722,6 +3824,117 @@ function renderRecognition() {
       <span class="rec-qual-chip ${memBase!==null?(memOk1?'rec-qual-ok':'rec-qual-warn'):'rec-qual-info'}">${memBase!==null?(memOk1?'✓':'⚠'):'ℹ'} Mem. Payments: ${memNote}</span>
       <span class="rec-qual-chip rec-qual-info">ℹ Qualifying reqs (training report, success plan, etc.) verified outside dashboard</span>`;
   }
+}
+
+// ══════════════════════════════════════════════
+// CLUB ROSTER VIEW
+// ══════════════════════════════════════════════
+let rosterSortCol = 'members', rosterSortAsc = false;
+
+function rosterSort(col) {
+  if (rosterSortCol === col) rosterSortAsc = !rosterSortAsc;
+  else { rosterSortCol = col; rosterSortAsc = false; }
+  renderRoster();
+}
+
+function getRosterStatus(r) {
+  if (isSuspended(r))    return 'suspended';
+  if (isActive(r))       return 'active';
+  if (isInactive(r))     return 'inactive';
+  return 'notrenewed';
+}
+
+function renderRoster() {
+  if (!allRows.length) return;
+  const cpMap = buildCPMap();
+
+  // Populate division filter once
+  const divSel = document.getElementById('roster-div-filter');
+  if (divSel && divSel.options.length <= 1) {
+    const divs = [...new Set(allRows.map(r => r['Division']).filter(d => /^[A-Za-z]$/.test(d)))].sort();
+    divs.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d; opt.textContent = 'Division ' + d;
+      divSel.appendChild(opt);
+    });
+    divSel.onchange = renderRoster;
+    document.getElementById('roster-status-filter').onchange = renderRoster;
+  }
+
+  const divFilter    = (divSel && divSel.value) || '';
+  const statusFilter = document.getElementById('roster-status-filter')?.value || '';
+
+  // Status badge config
+  const statusCfg = {
+    active:      { label: 'Active / Paid',      cls: 'badge-green',  color: 'var(--green)'   },
+    notrenewed:  { label: 'Not Yet Renewed',     cls: 'badge-yellow', color: 'var(--yellow)'  },
+    inactive:    { label: 'Inactive',            cls: 'badge-gray',   color: 'var(--muted)'   },
+    suspended:   { label: 'Suspended',           cls: 'badge-red',    color: 'var(--red)'     },
+  };
+
+  // Summary pills
+  const pillsEl = document.getElementById('roster-pills');
+  if (pillsEl) {
+    const counts = { active: 0, notrenewed: 0, inactive: 0, suspended: 0 };
+    allRows.forEach(r => { counts[getRosterStatus(r)]++; });
+    pillsEl.innerHTML = Object.entries(statusCfg).map(([key, cfg]) =>
+      `<span style="background:color-mix(in srgb,${cfg.color} 15%,var(--surface));color:${cfg.color};border:1px solid color-mix(in srgb,${cfg.color} 40%,transparent);border-radius:20px;padding:3px 12px;font-size:12px;font-weight:600;cursor:pointer"
+        onclick="document.getElementById('roster-status-filter').value='${key}';renderRoster()">
+        ${cfg.label}: ${counts[key]}
+      </span>`
+    ).join('');
+  }
+
+  // Filter rows
+  let rows = allRows.filter(r => {
+    if (divFilter && r['Division'] !== divFilter) return false;
+    if (statusFilter && getRosterStatus(r) !== statusFilter) return false;
+    return true;
+  });
+
+  // Sort
+  rows = [...rows].sort((a, b) => {
+    let va, vb;
+    if (rosterSortCol === 'goals')   { va = goals(a);   vb = goals(b); }
+    else                             { va = members(a); vb = members(b); }
+    return rosterSortAsc ? va - vb : vb - va;
+  });
+
+  // Update count
+  const countEl = document.getElementById('roster-count');
+  if (countEl) countEl.textContent = `Showing ${rows.length} of ${allRows.length} clubs`;
+
+  // Render table
+  const tbody = document.getElementById('roster-body');
+  if (!tbody) return;
+  tbody.innerHTML = rows.map(r => {
+    const status = getRosterStatus(r);
+    const cfg    = statusCfg[status];
+    const cp     = getCPData(r, cpMap);
+    const csp    = cp ? (cp['CSP'] || '').toUpperCase() : '';
+    const cspHtml = csp === 'Y'
+      ? '<span class="badge badge-green">Y</span>'
+      : csp === 'N' ? '<span class="badge badge-red">N</span>'
+      : '<span style="color:var(--muted)">—</span>';
+    const charterNote = (r['Charter Date/Suspend Date'] || '').trim();
+    const noteHtml = charterNote
+      ? `<span style="font-size:11px;color:var(--muted)">${charterNote}</span>`
+      : '<span style="color:var(--muted)">—</span>';
+    // Highlight not-yet-renewed and inactive rows subtly
+    const rowStyle = (status === 'notrenewed' || status === 'inactive')
+      ? `style="background:color-mix(in srgb,var(--yellow) 4%,var(--surface))"`
+      : status === 'suspended' ? `style="background:color-mix(in srgb,var(--red) 5%,var(--surface))"` : '';
+    return `<tr ${rowStyle}>
+      <td style="font-weight:500">${r['Club Name'] || '—'}</td>
+      <td><span class="badge badge-blue">${r['Division']}</span></td>
+      <td style="font-family:var(--mono)">${r['Area']}</td>
+      <td style="font-family:var(--mono);font-weight:600">${members(r)}</td>
+      <td style="font-family:var(--mono);font-weight:600">${goals(r)}</td>
+      <td style="text-align:center">${cspHtml}</td>
+      <td><span class="badge ${cfg.cls}">${cfg.label}</span></td>
+      <td>${noteHtml}</td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">No clubs match the current filters</td></tr>`;
 }
 
 // ══════════════════════════════════════════════
