@@ -1286,6 +1286,7 @@
         <div class="rec-metric"><div class="rec-metric-label">Distinguished Clubs</div><div class="rec-metric-value" id="drec-dist-clubs">—</div><div class="rec-metric-sub">of <span id="drec-dist-base">—</span> club base</div></div>
         <div class="rec-metric"><div class="rec-metric-label">Mem. Payments YTD</div><div class="rec-metric-value" id="drec-mem-ytd">—</div><div class="rec-metric-sub">Base: <span id="drec-mem-base">—</span></div></div>
       </div>
+      <div id="drec-debug" style="font-size:10px;color:var(--muted);font-family:var(--mono);padding:4px 0;margin-top:4px"></div>
       <div id="district-rec-progress"></div>
       <div class="rec-qualifiers" id="district-rec-quals">
         <span class="rec-qual-info">ℹ Load Division Performance + District Performance CSVs to populate</span>
@@ -3686,15 +3687,49 @@ function renderRecognition() {
   const liveActiveCount = allRows.filter(isActive).length;
   const distNetClubs = liveActiveCount - distClubBase;
 
+  // ── DEBUG: show distPerfRows contents ──
+  const debugEl = document.getElementById('drec-debug');
+  if (debugEl) {
+    if (distPerfRows.length === 0) {
+      debugEl.textContent = 'distPerfRows: empty';
+    } else {
+      const sorted2 = [...distPerfRows].sort((a,b) => b.dateObj - a.dateObj);
+      const cy2 = sorted2[0];
+      const cd2 = cy2.dateObj || new Date();
+      const sy2 = (cd2.getMonth() >= 6) ? cd2.getFullYear() : cd2.getFullYear() - 1;
+      const pyc2 = new Date(sy2 + 1, 0, 1); // Jan 1 of season-start-year+1
+      debugEl.textContent = 'distPerfRows: ' + sorted2.map(d => {
+        const t = d.rows.reduce((s,r) => s + (parseInt(r['Total to Date'])||0), 0);
+        const tag = d === cy2 ? '[CY]' : d.dateObj < pyc2 ? '[PY]' : '[skip]';
+        return `${d.date}=${tag}$${t}`;
+      }).join(' | ');
+    }
+  }
+
   // Membership payments — from distPerfRows
-  // Prior year = the Jun 30 snapshot (latest date on or before Jul 1 of current TM year)
   // Current year = the most recent distPerfRows entry
+  // Prior year base = the highest-total file dated before Jul 1 of the current TM season
+  // (TI reconciliation continues after Jun 30 so highest total = most accurate final figure)
   let memBase = null, memYTD = null, memGrowthPct = null;
   let memNewCharterPayments = 0, memEstablishedPayments = 0;
   if (distPerfRows.length > 0) {
     const sorted = [...distPerfRows].sort((a,b) => b.dateObj - a.dateObj);
     const current = sorted[0];
-    // Sum ALL rows (including 0D new-charter holding division) for accurate total
+
+    // Determine the current TM season start year.
+    // Current file is April 2026 → season started Jul 1, 2025 → seasonStartYear = 2025.
+    // Prior-year candidates = any file whose date falls within the prior TM season,
+    // i.e. between Jul 1 (seasonStartYear-1) and Jun 30 (seasonStartYear) inclusive —
+    // but we extend to Dec 31 of seasonStartYear to capture late-reconciliation files
+    // (e.g. a Jul 21 2025 file that contains final prior-season payment totals).
+    const currentDate = current.dateObj || new Date();
+    const currentYear = currentDate.getFullYear();
+    const seasonStartYear = (currentDate.getMonth() >= 6) ? currentYear : currentYear - 1;
+    // Any file dated before Jan 1 of the current season start year + 1 is prior-year
+    // e.g. seasonStartYear=2025 → anything before Jan 1 2026 is prior-year
+    const priorYearCutoff = new Date(seasonStartYear + 1, 0, 1); // Jan 1 of next year
+
+    // Sum ALL rows (including 0D new-charter holding division) for accurate current YTD
     memYTD = current.rows.reduce((s,r) => s + (parseInt(r['Total to Date'])||0), 0);
     // Split: new-charter clubs (Division code is not a single A-Z letter) vs established
     memNewCharterPayments = current.rows
@@ -3702,11 +3737,11 @@ function renderRecognition() {
       .reduce((s,r) => s + (parseInt(r['Total to Date'])||0), 0);
     memEstablishedPayments = memYTD - memNewCharterPayments;
 
-    // Prior year base = the prior-year District Performance snapshot with the highest
-    // Total to Date. TI's payment reconciliation continues for weeks after Jun 30,
-    // so the highest total (regardless of date) is the most accurate final figure.
-    const priorCandidates = sorted.filter(d => d !== current);
+    // Prior-year candidates = files strictly before Jan 1 of the current season's year
+    // (catches Jun 30, Jul 21, Aug 9 reconciliation files — all from the prior season)
+    const priorCandidates = sorted.filter(d => d !== current && d.dateObj < priorYearCutoff);
     if (priorCandidates.length > 0) {
+      // Pick the one with the highest total — most reconciled final figure
       const prior = priorCandidates.reduce((best, d) => {
         const t = d.rows.reduce((s,r) => s + (parseInt(r['Total to Date'])||0), 0);
         const b = best.rows.reduce((s,r) => s + (parseInt(r['Total to Date'])||0), 0);
