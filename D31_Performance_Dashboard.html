@@ -2787,9 +2787,12 @@ function computeMetrics(rows, cpRows, distRows) {
   });
 
   const atRisk   = active.filter(r => goals(r) <= 1).length;
-  const renewed  = active.filter(r => r['April Renewals'] === '1').length;
+  const renewed  = rows.filter(r => r['April Renewals'] === '1').length;
   const totalMem = active.reduce((s, r) => s + members(r), 0);
-  const renewedPct = active.length ? (renewed / active.length * 100) : 0;
+  // Renewal % denominator = clubs with members > 0 and not suspended
+  // (excludes zero-member clubs that couldn't renew, and officially suspended clubs)
+  const renewalEligible = rows.filter(r => (parseInt(r['Membership to date']) || 0) > 0 && !(r['Charter Date/Suspend Date'] || '').includes('Susp')).length;
+  const renewedPct = renewalEligible ? (renewed / renewalEligible * 100) : 0;
 
   let memPayments = null;
   if (distRows && distRows.length > 0) {
