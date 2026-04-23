@@ -1952,6 +1952,50 @@ function getCPData(divRow, cpMap) {
   return cpMap[num] || null;
 }
 
+// Compute Education / Membership / Administration goal breakdown from CP row.
+// Returns { ed, mem, admin } — each is the count of goals met in that category.
+// Education (Goals 1–6): Level thresholds per DCP rules.
+// Membership (Goals 7–8): New Members >=4, Add. New Members >=4.
+// Administration (Goals 9–10): Officers trained both rounds >=4 each (1 pt);
+//   dues on time (Oct OR Apr) AND officer list on time (1 pt).
+function getGoalBreakdown(cp) {
+  if (!cp) return null;
+  const i = col => parseInt(cp[col]) || 0;
+  const s = col => (cp[col] || '').toString().trim();
+
+  // Education
+  const ed =
+    (i('Level 1s') >= 4 ? 1 : 0) +
+    (i('Level 2s') >= 2 ? 1 : 0) +
+    (i('Add. Level 2s') >= 2 ? 1 : 0) +
+    (i('Level 3s') >= 2 ? 1 : 0) +
+    (i('Level 4s, Path Completions, or DTM Awards') >= 1 ? 1 : 0) +
+    (i('Add. Level 4s, Path Completions, or DTM award') >= 1 ? 1 : 0);
+
+  // Membership
+  const mem =
+    (i('New Members') >= 4 ? 1 : 0) +
+    (i('Add. New Members') >= 4 ? 1 : 0);
+
+  // Administration
+  // Goal 9: both officer training rounds >= 4
+  const adminG9 = (i('Off. Trained Round 1') >= 4 && i('Off. Trained Round 2') >= 4) ? 1 : 0;
+  // Goal 10: dues on time (Oct OR Apr) AND officer list on time
+  const duesOk = (s('Mem. dues on time Oct') === '1' || s('Mem. dues on time Apr') === '1');
+  const listOk = s('Off. List On Time') === '1';
+  const adminG10 = (duesOk && listOk) ? 1 : 0;
+  const admin = adminG9 + adminG10;
+
+  return { ed, mem, admin };
+}
+
+// Render the goal breakdown line: "Ed X · Mem X · Admin X" (muted, small)
+function goalBreakdownHtml(cp) {
+  const b = getGoalBreakdown(cp);
+  if (!b) return '';
+  return `<div style="font-size:11px;color:var(--muted);font-family:var(--sans);font-weight:400;margin-top:2px">Ed ${b.ed} · Mem ${b.mem} · Admin ${b.admin}</div>`;
+}
+
 // Membership threshold check for a given tier
 // Returns { met: bool, reason: string }
 function memThresholdMet(cp, tier) {
@@ -2519,7 +2563,7 @@ function renderDistinguished() {
       <td style="font-weight:500">${r['Club Name'] || r['Club'] || '—'}</td>
       <td><span class="badge badge-blue">${r['Division']}</span></td>
       <td style="font-family:var(--mono)">${r['Area']}</td>
-      <td style="font-family:var(--mono);font-weight:600">${g}</td>
+      <td style="font-family:var(--mono);font-weight:600">${g}${goalBreakdownHtml(cp)}</td>
       <td style="font-family:var(--mono)">${activeMem}</td>
       <td style="font-family:var(--mono);color:${netG>0?'var(--green)':netG<0?'var(--red)':'var(--muted)'}">${netG>0?'+':''}${netG}</td>
       <td>${chips.join(' ')}</td>
@@ -3543,7 +3587,7 @@ function renderAreaView() {
     }
     return `<tr>
       <td style="font-weight:500">${r['Club Name']}</td>
-      <td style="font-family:var(--mono);font-weight:600">${g}</td>
+      <td style="font-family:var(--mono);font-weight:600">${g}${goalBreakdownHtml(cp)}</td>
       <td style="font-family:var(--mono)">${members(r)}</td>
       <td>${r['April Renewals']==='1' ? '<span class="dot dot-green"></span>Yes' : '<span class="dot dot-red"></span>No'}</td>
       <td>${pathHtml}</td>
@@ -3949,7 +3993,7 @@ function renderRoster() {
       <td><span class="badge badge-blue">${r['Division']}</span></td>
       <td style="font-family:var(--mono)">${r['Area']}</td>
       <td style="font-family:var(--mono);font-weight:600">${members(r)}</td>
-      <td style="font-family:var(--mono);font-weight:600">${goals(r)}</td>
+      <td style="font-family:var(--mono);font-weight:600">${goals(r)}${goalBreakdownHtml(cp)}</td>
       <td style="text-align:center">${cspHtml}</td>
       <td><span class="badge ${cfg.cls}">${cfg.label}</span></td>
       <td>${noteHtml}</td>
