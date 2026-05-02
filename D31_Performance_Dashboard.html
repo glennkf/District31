@@ -771,6 +771,26 @@
 
   /* ── Likelihood badge (Distinguished tab) ── */
   .lh-badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:500; font-family:var(--mono); white-space:nowrap; }
+
+  /* ── Sortable table columns ── */
+  th.sortable { cursor:pointer; user-select:none; white-space:nowrap; }
+  th.sortable:hover { color:var(--accent); }
+  th.sortable::after { content:' ⇅'; opacity:0.35; font-size:10px; }
+  th.sort-asc::after  { content:' ▲'; opacity:0.9; font-size:10px; color:var(--accent); }
+  th.sort-desc::after { content:' ▼'; opacity:0.9; font-size:10px; color:var(--accent); }
+
+  /* ── Changes Since Last Snapshot ── */
+  .dist-changes-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:18px 22px; margin-bottom:8px; }
+  .dist-changes-heading { font-size:13px; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; color:var(--muted); margin-bottom:12px; }
+  .dist-changes-sub { margin-bottom:10px; }
+  .dist-changes-sub-label { font-size:12px; font-weight:600; margin-bottom:6px; padding:3px 8px; border-radius:4px; display:inline-block; }
+  .dist-changes-new   { color:#3fb950; background:rgba(63,185,80,0.1); }
+  .dist-changes-up    { color:#5b9cf6; background:rgba(91,156,246,0.1); }
+  .dist-changes-down  { color:#e8a44a; background:rgba(232,164,74,0.1); }
+  .dist-changes-table { width:100%; border-collapse:collapse; font-size:13px; margin-top:6px; }
+  .dist-changes-table th { text-align:left; color:var(--muted); font-weight:500; font-size:11px; padding:4px 8px; border-bottom:1px solid var(--border); }
+  .dist-changes-table td { padding:6px 8px; border-bottom:1px solid rgba(48,54,61,0.5); }
+  .dist-changes-table tr:last-child td { border-bottom:none; }
   .lh-very-likely      { background:rgba(63,185,80,0.18);  color:var(--green);  border:1px solid rgba(63,185,80,0.3); }
   .lh-quite-likely     { background:rgba(63,185,80,0.10);  color:var(--green); }
   .lh-likely           { background:rgba(210,153,34,0.15); color:var(--yellow); border:1px solid rgba(210,153,34,0.3); }
@@ -1038,7 +1058,7 @@
 
     <div class="card wide-card">
       <div class="card-title">Top 10 Clubs by Goals Met</div>
-      <div class="table-wrap"><table id="top-clubs-table">
+      <div class="table-wrap"><table id="top-clubs-table" class="no-sort">
         <thead><tr><th>#</th><th>Club Name</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Apr Renewed</th><th>Status</th></tr></thead>
         <tbody id="top-clubs-body"></tbody>
       </table></div>
@@ -1107,7 +1127,7 @@
     <div class="card wide-card">
       <div class="card-title">Active / Paid Clubs <span style="font-size:12px;font-weight:400;color:var(--muted)" id="div-active-count"></span></div>
       <div class="table-wrap"><table id="div-clubs-table">
-        <thead><tr><th onclick="sortTable('div-clubs-body',0)">Area</th><th onclick="sortTable('div-clubs-body',1)">Club Name</th><th onclick="sortTable('div-clubs-body',2)">Goals ▾</th><th onclick="sortTable('div-clubs-body',3)">Members</th><th>Apr Renewed</th><th>Status</th><th>Path to Distinguished</th></tr></thead>
+        <thead><tr><th>Area</th><th>Club Name</th><th>Goals</th><th>Members</th><th>Apr Renewed</th><th>Status</th><th>Path to Distinguished</th></tr></thead>
         <tbody id="div-clubs-body"></tbody>
       </table></div>
     </div>
@@ -1182,6 +1202,9 @@
   <div class="view" id="view-distinguished">
     <div class="section-title">Distinguished Club Tracker</div>
     <div class="section-sub" id="dist-view-sub">Tracks Distinguished status using Club Performance data (CSP, membership base, net growth) joined with Division Performance goals.</div>
+
+    <!-- Changes Since Last Snapshot -->
+    <div id="dist-changes-section" style="display:none;margin-bottom:24px"></div>
 
     <!-- June 30 Projection Card -->
     <div id="dist-proj-card" style="display:none"></div>
@@ -2017,14 +2040,20 @@ function memThresholdMet(cp, tier) {
     if (netGrowth >= 5) return { met: true, reason: `net growth ${netGrowth}` };
     const memGap = 20 - active;
     const growthGap = 5 - netGrowth;
-    return { met: false, reason: `needs ${memGap} more members OR ${growthGap} more net growth` };
+    const minGap = Math.min(memGap, growthGap);
+    const minLabel = memGap <= growthGap ? `${memGap} more members` : `${growthGap} more net growth`;
+    const fullDetail = `${memGap} more members OR ${growthGap} more net growth`;
+    return { met: false, reason: `needs ${minLabel}`, tooltip: `Full gap: needs ${fullDetail}` };
   }
   // distinguished
   if (active >= 20) return { met: true, reason: `${active} members` };
   if (netGrowth >= 3) return { met: true, reason: `net growth ${netGrowth}` };
   const memGap = 20 - active;
   const growthGap = 3 - netGrowth;
-  return { met: false, reason: `needs ${memGap} more members OR ${growthGap} more net growth` };
+  const minGap = Math.min(memGap, growthGap);
+  const minLabel = memGap <= growthGap ? `${memGap} more members` : `${growthGap} more net growth`;
+  const fullDetail = `${memGap} more members OR ${growthGap} more net growth`;
+  return { met: false, reason: `needs ${minLabel}`, tooltip: `Full gap: needs ${fullDetail}` };
 }
 
 // Full Distinguished qualification check
@@ -2428,6 +2457,134 @@ function renderAll() {
   renderDistinguished();
   renderRecognition();
   renderRoster();
+  makeSortableAll(document.body);
+}
+
+// ══════════════════════════════════════════════
+// CHANGES SINCE LAST SNAPSHOT (Distinguished tab)
+// ══════════════════════════════════════════════
+function renderDistChanges(active, cpMap) {
+  const el = document.getElementById('dist-changes-section');
+  if (!el) return;
+
+  // Need at least 2 snapshots to compare
+  if (snapshots.length < 2) { el.style.display = 'none'; return; }
+
+  // Current and previous snapshots (sorted chronologically)
+  const ordered = snapshots.slice().sort((a, b) => parseSnapDate(a.date) - parseSnapDate(b.date));
+  const prevSnap = ordered[ordered.length - 2];
+  const currSnap = ordered[ordered.length - 1];
+
+  // Build club-tier list for current active rows
+  const currClubTiers = active.map(r => ({
+    club: (r['Club'] || '').replace(/^0+/, ''),
+    name: r['Club Name'], div: r['Division'], area: r['Area'],
+    tier: getDistTier(r, cpMap)
+  }));
+
+  // Always save current snapshot club-tier data first so next load has it
+  try {
+    const stored = JSON.parse(localStorage.getItem('d31_snapshot_rows') || '{}');
+    stored[currSnap.date] = currClubTiers;
+    const keys = Object.keys(stored).sort((a,b) => parseSnapDate(a) - parseSnapDate(b));
+    if (keys.length > 10) delete stored[keys[0]];
+    localStorage.setItem('d31_snapshot_rows', JSON.stringify(stored));
+  } catch(e) {}
+
+  // Check if we have previous snapshot club-tier data
+  let prevRows = null;
+  try {
+    const stored = JSON.parse(localStorage.getItem('d31_snapshot_rows') || '{}');
+    prevRows = stored[prevSnap.date] || null;
+  } catch(e) {}
+
+  if (!prevRows) {
+    // Bootstrap: data for prev snapshot not yet stored — show one-time message
+    el.innerHTML = `<div class="dist-changes-card" style="border-color:rgba(91,156,246,0.3)">
+      <div class="dist-changes-heading">📊 Changes Since Last Snapshot</div>
+      <div style="color:var(--muted);font-size:13px">
+        ℹ Club-level tracking is now active. Changes will appear here the next time new data is loaded.
+        <span style="opacity:0.6;margin-left:8px">(Comparing ${prevSnap.date} → ${currSnap.date})</span>
+      </div>
+    </div>`;
+    el.style.display = 'block';
+    return;
+  }
+
+  // Build lookup maps
+  const currTierMap = {};
+  currClubTiers.forEach(c => { currTierMap[c.club] = c; });
+  const prevTierMap = {};
+  prevRows.forEach(r => { prevTierMap[r.club] = r; });
+
+  const tierOrder = { smedley:4, pres:3, select:2, dist:1 };
+  const tierLabel = { smedley:'Smedley Dist.', pres:"President's Dist.", select:'Select Dist.', dist:'Distinguished' };
+
+  const newlyDist = [], tierUp = [], tierDown = [];
+
+  Object.entries(currTierMap).forEach(([club, curr]) => {
+    const prev = prevTierMap[club];
+    const prevTier = prev ? prev.tier : null;
+    const currTier = curr.tier;
+    if (!currTier) return;
+    if (!prevTier) {
+      newlyDist.push(curr);
+    } else if (tierOrder[currTier] > tierOrder[prevTier]) {
+      tierUp.push({ ...curr, prevTier, currTier });
+    } else if (tierOrder[currTier] < tierOrder[prevTier]) {
+      tierDown.push({ ...curr, prevTier, currTier });
+    }
+  });
+
+  // Clubs that lost distinguished status
+  Object.entries(prevTierMap).forEach(([club, prev]) => {
+    if (!prev.tier) return;
+    const curr = currTierMap[club];
+    if (!curr || !curr.tier) {
+      tierDown.push({ name: prev.name, div: prev.div, area: prev.area, prevTier: prev.tier, currTier: null });
+    }
+  });
+
+  if (!newlyDist.length && !tierUp.length && !tierDown.length) {
+    el.style.display = 'none';
+    return;
+  }
+
+  const rowHtml = (clubs, showPrev) => clubs.map(c => `
+    <tr>
+      <td style="font-weight:500">${c.name}</td>
+      <td style="font-family:var(--mono)">${c.div}</td>
+      <td style="font-family:var(--mono)">${c.area}</td>
+      <td>${showPrev
+        ? `<span style="color:var(--muted)">${tierLabel[c.prevTier] || '—'}</span> → <strong>${tierLabel[c.currTier] || 'None'}</strong>`
+        : `<strong>${tierLabel[c.tier] || c.tier}</strong>`}</td>
+    </tr>`).join('');
+
+  let html = `<div class="dist-changes-card">
+    <div class="dist-changes-heading">📊 Changes Since Last Snapshot <span style="font-size:11px;color:var(--muted);font-weight:400;margin-left:8px">${prevSnap.date} → ${currSnap.date}</span></div>`;
+
+  if (newlyDist.length) {
+    html += `<div class="dist-changes-sub">
+      <span class="dist-changes-sub-label dist-changes-new">🟢 Newly Distinguished (${newlyDist.length})</span>
+      <table class="dist-changes-table no-sort"><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Tier Achieved</th></tr></thead>
+      <tbody>${rowHtml(newlyDist, false)}</tbody></table></div>`;
+  }
+  if (tierUp.length) {
+    html += `<div class="dist-changes-sub">
+      <span class="dist-changes-sub-label dist-changes-up">🔵 Tier Upgrades (${tierUp.length})</span>
+      <table class="dist-changes-table no-sort"><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Change</th></tr></thead>
+      <tbody>${rowHtml(tierUp, true)}</tbody></table></div>`;
+  }
+  if (tierDown.length) {
+    html += `<div class="dist-changes-sub">
+      <span class="dist-changes-sub-label dist-changes-down">🟡 Tier Downgrades (${tierDown.length})</span>
+      <table class="dist-changes-table no-sort"><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Change</th></tr></thead>
+      <tbody>${rowHtml(tierDown, true)}</tbody></table></div>`;
+  }
+
+  html += `</div>`;
+  el.innerHTML = html;
+  el.style.display = 'block';
 }
 
 // ══════════════════════════════════════════════
@@ -2439,6 +2596,9 @@ function renderDistinguished() {
   const cpMap = buildCPMap();
 
   document.getElementById('dist-no-cp').style.display = hasCPData ? 'none' : 'flex';
+
+  // Render changes since last snapshot
+  renderDistChanges(active, cpMap);
 
   // Helper to render a row in the "already distinguished" tables
   function distRow(r, cp) {
@@ -2465,7 +2625,7 @@ function renderDistinguished() {
 
     if (cp) {
       const mem = memThresholdMet(cp, 'dist');
-      if (!mem.met) chips.push(`<span class="gap-chip gap-mem">${mem.reason}</span>`);
+      if (!mem.met) chips.push(`<span class="gap-chip gap-mem"${mem.tooltip ? ` title="${mem.tooltip}"` : ''}>${mem.reason}</span>`);
     }
     if (!forInelig) {
       // CSP already confirmed Y for almost-distinguished
@@ -2541,7 +2701,7 @@ function renderDistinguished() {
       if (g < 5) chips.push(`<span class="gap-chip gap-goals">+${5-g} goal${5-g>1?'s':''} needed</span>`);
       if (hasCPData && cp) {
         const mem = memThresholdMet(cp, 'dist');
-        if (!mem.met) chips.push(`<span class="gap-chip gap-mem">${mem.reason}</span>`);
+        if (!mem.met) chips.push(`<span class="gap-chip gap-mem"${mem.tooltip ? ` title="${mem.tooltip}"` : ''}>${mem.reason}</span>`);
       } else if (activeMem < 20) {
         chips.push(`<span class="gap-chip gap-mem">needs ${20-activeMem} more members</span>`);
       }
@@ -2549,7 +2709,7 @@ function renderDistinguished() {
       if (g < 5) chips.push(`<span class="gap-chip gap-goals">+${5-g} goal${5-g>1?'s':''} needed</span>`);
       if (hasCPData && cp) {
         const mem = memThresholdMet(cp, 'dist');
-        if (!mem.met) chips.push(`<span class="gap-chip gap-mem">${mem.reason}</span>`);
+        if (!mem.met) chips.push(`<span class="gap-chip gap-mem"${mem.tooltip ? ` title="${mem.tooltip}"` : ''}>${mem.reason}</span>`);
       }
       chips.push(`<span class="gap-chip gap-csp">CSP not submitted</span>`);
     }
@@ -2651,6 +2811,8 @@ function clubLikelihood(r, cpMap) {
   if (goalGap === 0 && memGap >= 3)  return { label:'🔴 Long Shot',        cls:'long-shot'       };
   if (goalGap === 3 && memGap === 1) return { label:'🔴 Long Shot',        cls:'long-shot'       };
   if (goalGap >= 3  && memGap >= 2)  return { label:'🔴 Long Shot',        cls:'long-shot'       };
+  // Catch-all: any remaining gap combination is a Long Shot
+  if (goalGap > 0 || memGap > 0)    return { label:'🔴 Long Shot',        cls:'long-shot'       };
   return null;
 }
 
@@ -3001,6 +3163,7 @@ function renderYoY() {
         </tbody>
       </table>
     </div>`;
+  makeSortableAll(document.getElementById('view-distinguished'));
 }
 
 // ══════════════════════════════════════════════
@@ -3131,7 +3294,7 @@ function renderSummary() {
     return `<span class="cell-chip ${cls}">${displayVal}</span>`;
   }
   document.getElementById('div-comp-table').innerHTML = `
-    <table class="comp-table">
+    <table class="comp-table no-sort">
       <thead><tr>
         <th style="text-align:left">Rank / Division</th>
         <th>Score</th><th>Avg Goals</th><th>% Dist.</th><th>Pipeline</th>
@@ -3391,7 +3554,7 @@ function renderDivisionView() {
       if (goalGap > 0) parts.push(`<span class="gap-chip gap-goals">+${goalGap} goal${goalGap>1?'s':''}</span>`);
       if (cp) {
         const mem = memThresholdMet(cp, 'dist');
-        if (!mem.met) parts.push(`<span class="gap-chip gap-mem">${mem.reason}</span>`);
+        if (!mem.met) parts.push(`<span class="gap-chip gap-mem"${mem.tooltip ? ` title="${mem.tooltip}"` : ''}>${mem.reason}</span>`);
         const csp = (cp['CSP']||'').toUpperCase();
         if (csp !== 'Y') parts.push(`<span class="gap-chip gap-csp">CSP needed</span>`);
       }
@@ -3440,6 +3603,7 @@ function renderDivisionView() {
       <td style="font-family:var(--mono);color:var(--muted)">${r['Charter Date/Suspend Date']}</td>
     </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:16px">None</td></tr>';
   }
+  makeSortableAll(document.getElementById('view-division'));
 }
 
 // ══════════════════════════════════════════════
@@ -3558,8 +3722,8 @@ function renderAreaView() {
     // Qualifying requirement chips
     document.getElementById('area-rec-quals').innerHTML = `
       <span class="rec-qual-chip ${noNetLoss?'rec-qual-ok':'rec-qual-fail'}">${noNetLoss?'✓ No Net Club Loss':'✗ Net Club Loss'} (${netClubs>=0?'+':''}${netClubs})</span>
-      <span class="rec-qual-chip ${novOk?'rec-qual-ok':'rec-qual-warn'}">${novOk?'✓':'⚠'} Nov Visits: ${novVisits}/${visitBase75} needed</span>
-      <span class="rec-qual-chip ${mayOk?'rec-qual-ok':'rec-qual-warn'}">${mayOk?'✓':'⚠'} May Visits: ${mayVisits}/${visitBase75} needed</span>
+      <span class="rec-qual-chip ${novOk?'rec-qual-ok':'rec-qual-warn'}">${novOk?'✓':'⚠'} Nov Visits: ${novOk ? '✓ Met' : `${visitBase75 - novVisits} remaining`}</span>
+      <span class="rec-qual-chip ${mayOk?'rec-qual-ok':'rec-qual-warn'}">${mayOk?'✓':'⚠'} May Visits: ${mayOk ? '✓ Met' : `${visitBase75 - mayVisits} remaining`}</span>
       <span class="rec-qual-chip ${qualifyingMet?'rec-qual-ok':'rec-qual-warn'}">${qualifyingMet?'✓ All qualifying reqs met':'⚠ Qualifying reqs incomplete'}</span>`;
   } else {
     panel.style.display = 'none';
@@ -3579,7 +3743,7 @@ function renderAreaView() {
       if (goalGap > 0) parts.push(`<span class="gap-chip gap-goals">+${goalGap} goal${goalGap>1?'s':''}</span>`);
       if (cp) {
         const mem = memThresholdMet(cp, 'dist');
-        if (!mem.met) parts.push(`<span class="gap-chip gap-mem">${mem.reason}</span>`);
+        if (!mem.met) parts.push(`<span class="gap-chip gap-mem"${mem.tooltip ? ` title="${mem.tooltip}"` : ''}>${mem.reason}</span>`);
         const csp = (cp['CSP']||'').toUpperCase();
         if (csp !== 'Y') parts.push(`<span class="gap-chip gap-csp">CSP needed</span>`);
       }
@@ -3594,6 +3758,7 @@ function renderAreaView() {
       <td>${priorityLabel(g)}</td>
     </tr>`;
   }).join('');
+  makeSortableAll(document.getElementById('view-area'));
 }
 
 // ══════════════════════════════════════════════
@@ -3713,8 +3878,8 @@ function renderRecognition() {
         <td style="font-family:var(--mono);color:${totalDist>=goalD&&noLoss?'var(--green)':'var(--muted)'}">${goalD}</td>
         <td style="font-family:var(--mono);color:${totalDist>=goalS&&noLoss?'var(--green)':'var(--muted)'}">${goalS}+1</td>
         <td style="font-family:var(--mono);color:${totalDist>=goalP&&net>=1?'var(--green)':'var(--muted)'}">${goalP}+growth</td>
-        <td style="font-family:var(--mono)"><span style="color:${novOk?'var(--green)':'var(--yellow)'}">${novVisits}/${need75}</span></td>
-        <td style="font-family:var(--mono)"><span style="color:${mayOk?'var(--green)':'var(--yellow)'}">${mayVisits}/${need75}</span></td>
+        <td>${novOk ? '<span class="rec-qual-chip rec-qual-ok">✓ Met</span>' : `<span class="rec-qual-chip rec-qual-warn">${need75 - novVisits} remaining</span>`}</td>
+        <td>${mayOk ? '<span class="rec-qual-chip rec-qual-ok">✓ Met</span>' : `<span class="rec-qual-chip rec-qual-warn">${need75 - mayVisits} remaining</span>`}</td>
         <td><span class="badge ${tierCls}" ${tierStyle}>${tierLabel}</span></td>
       </tr>`;
     }).join('') || '<tr><td colspan="12" style="text-align:center;color:var(--muted);padding:24px">No data</td></tr>';
@@ -3888,6 +4053,7 @@ function renderRecognition() {
       <span class="rec-qual-chip ${memBase!==null?(memOk1?'rec-qual-ok':'rec-qual-warn'):'rec-qual-info'}">${memBase!==null?(memOk1?'✓':'⚠'):'ℹ'} Mem. Payments: ${memNote}</span>
       <span class="rec-qual-chip rec-qual-info">ℹ Qualifying reqs (training report, success plan, etc.) verified outside dashboard</span>`;
   }
+  makeSortableAll(document.getElementById('view-recognition'));
 }
 
 // ══════════════════════════════════════════════
@@ -3999,6 +4165,7 @@ function renderRoster() {
       <td>${noteHtml}</td>
     </tr>`;
   }).join('') || `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">No clubs match the current filters</td></tr>`;
+  makeSortableAll(document.getElementById('view-roster'));
 }
 
 // ══════════════════════════════════════════════
@@ -4154,6 +4321,53 @@ function renderRenewalTable(atRisk) {
 // ══════════════════════════════════════════════
 // SNAPSHOTS
 // ══════════════════════════════════════════════
+// ══════════════════════════════════════════════
+// SORTABLE TABLES
+// ══════════════════════════════════════════════
+// Call makeSortable(tableEl) after rendering any table to enable click-to-sort on all <th> cells.
+// Sorts by text content; detects numeric values automatically.
+// Resets to unsorted state (removes sort classes) when called again on re-render.
+function makeSortable(table) {
+  if (!table) return;
+  if (table.classList.contains('no-sort')) return;
+  const thead = table.querySelector('thead');
+  const tbody = table.querySelector('tbody');
+  if (!thead || !tbody) return;
+  const ths = Array.from(thead.querySelectorAll('th'));
+  ths.forEach((th, colIdx) => {
+    th.classList.add('sortable');
+    // Remove old listener by cloning
+    const newTh = th.cloneNode(true);
+    th.parentNode.replaceChild(newTh, th);
+    newTh.addEventListener('click', () => {
+      const currentDir = newTh.classList.contains('sort-asc') ? 'asc' : newTh.classList.contains('sort-desc') ? 'desc' : 'none';
+      const nextDir = currentDir === 'none' || currentDir === 'desc' ? 'asc' : 'desc';
+      // Clear all sort classes on all headers in this table
+      thead.querySelectorAll('th').forEach(h => h.classList.remove('sort-asc','sort-desc','sortable'));
+      thead.querySelectorAll('th').forEach(h => h.classList.add('sortable'));
+      newTh.classList.add(nextDir === 'asc' ? 'sort-asc' : 'sort-desc');
+      // Sort rows
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort((a, b) => {
+        const aText = (a.cells[colIdx] ? a.cells[colIdx].textContent : '').trim();
+        const bText = (b.cells[colIdx] ? b.cells[colIdx].textContent : '').trim();
+        const aNum = parseFloat(aText.replace(/[^0-9.\-]/g, ''));
+        const bNum = parseFloat(bText.replace(/[^0-9.\-]/g, ''));
+        const isNum = !isNaN(aNum) && !isNaN(bNum);
+        const cmp = isNum ? (aNum - bNum) : aText.localeCompare(bText);
+        return nextDir === 'asc' ? cmp : -cmp;
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  });
+}
+
+// Apply makeSortable to all tables within a container element
+function makeSortableAll(containerEl) {
+  if (!containerEl) return;
+  containerEl.querySelectorAll('table').forEach(t => makeSortable(t));
+}
+
 function contentFingerprint(rows) {
   // Build a deterministic fingerprint from every club's key metrics
   // sorted by club ID so order in the CSV doesn't matter
@@ -4191,7 +4405,7 @@ function saveSnapshotFromRows(rows, dateLabel, silent) {
     fingerprint: fingerprint,
     totalClubs: rows.length,
     activeClubs: active.length,
-    distinguished: active.filter(r => goals(r) >= 5).length,
+    distinguished: active.filter(r => getDistTier(r, buildCPMap())).length,
     atRisk: active.filter(r => goals(r) <= 1).length,
     aprRenewed: active.filter(r => r['April Renewals'] === '1').length,
     totalMembers: active.reduce((s, r) => s + members(r), 0),
