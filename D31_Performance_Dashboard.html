@@ -1743,11 +1743,32 @@ function processAllTexts(items, total) {
     return { text, dateStr, dateObj };
   });
 
-  // Step 2: Save all as snapshots
+  // Step 2: Save all as snapshots + store club-tier data for each date
+  // Building cpMap here (clubPerfRows already populated above) so every
+  // Division Performance file gets accurate club-tier data for renderDistChanges
   const countBefore = snapshots.length;
+  const snapRowsStore = (() => {
+    try { return JSON.parse(localStorage.getItem('d31_snapshot_rows') || '{}'); } catch(e) { return {}; }
+  })();
+  const batchCpMap = buildCPMap();
   parsed.forEach(({ text, dateStr }) => {
-    if (dateStr) saveSnapshotFromRows(parseRowsFromText(text), dateStr, true);
+    if (!dateStr) return;
+    saveSnapshotFromRows(parseRowsFromText(text), dateStr, true);
+    // Store club-tier data for this date if not already stored
+    if (!snapRowsStore[dateStr]) {
+      const rows = parseRowsFromText(text);
+      const activeRows = rows.filter(isActive);
+      snapRowsStore[dateStr] = activeRows.map(r => ({
+        club: (r['Club'] || '').replace(/^0+/, ''),
+        name: r['Club Name'], div: r['Division'], area: r['Area'],
+        tier: getDistTier(r, batchCpMap)
+      }));
+    }
   });
+  // Prune to last 10 entries and save
+  const snapRowsKeys = Object.keys(snapRowsStore).sort((a,b) => parseSnapDate(a) - parseSnapDate(b));
+  if (snapRowsKeys.length > 10) snapRowsKeys.slice(0, snapRowsKeys.length - 10).forEach(k => delete snapRowsStore[k]);
+  try { localStorage.setItem('d31_snapshot_rows', JSON.stringify(snapRowsStore)); } catch(e) {}
   const newCount = snapshots.length - countBefore;
 
   // Step 3: Live view = most recent file in THIS batch, regardless of whether its
