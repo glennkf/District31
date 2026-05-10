@@ -1320,6 +1320,13 @@
       <span>Add District Performance CSV files (current year + Jun 30 prior year) to the GitHub manifest to enable membership payments tracking. Division Performance CSVs provide club and Distinguished club counts.</span>
     </div>
 
+    <!-- District Goals Tracker -->
+    <div class="rec-section-heading">🎯 District Goals Tracker</div>
+    <div class="rec-section-sub">At-a-glance view of what D31 needs on each metric to reach each recognition tier. Targets are computed from the club base and payments base using TI's official percentages (rounded up per TI rules).</div>
+    <div id="district-goals-tracker" class="card wide-card" style="margin-bottom:24px">
+      <div style="color:var(--muted);padding:24px;text-align:center">Load a Division Performance CSV to populate</div>
+    </div>
+
     <!-- Division summary -->
     <div class="rec-section-heading">📊 Distinguished Divisions</div>
     <div class="rec-section-sub">Status derived directly from TI-computed columns in the Division Performance CSV. Qualifying requirement: no net club loss.</div>
@@ -1561,6 +1568,14 @@ let pySnapshots = JSON.parse(localStorage.getItem('d31_py_snapshots') || '[]');
 let pyAllRowsByDate = {}; // date string → full rows array, for live YoY metric computation
 let pyClubPerfRows = []; // Prior-year Club Performance rows (latest PY_ CP file)
 let pyDistPerfRows = []; // Prior-year District Performance rows
+
+// ── Season-specific corrections ──────────────────────────────────────────────
+// TI's exported prior-year membership payments base for D31 (2025-26 season) is
+// 4,898 — 7 short of the correct figure of 4,905. TI made a manual adjustment
+// that does not appear in their CSV exports. This constant corrects for that.
+// Applies ONLY to the 2025-26 season base. Remove/update when the season rolls.
+const D31_MEM_BASE_CORRECTION = 7; // 4,898 (TI export) → 4,905 (correct figure)
+// ─────────────────────────────────────────────────────────────────────────────
 
 // ══════════════════════════════════════════════
 // TABS
@@ -3022,7 +3037,7 @@ function findPriorYearMatch(currentDateStr) {
   });
 
   if (!best) return null;
-  const matchType = bestDiff === 0 ? 'exact' : bestDiff <= 7 ? 'near' : null;
+  const matchType = bestDiff === 0 ? 'exact' : bestDiff <= 14 ? 'near' : null;
   if (!matchType) return null;
 
   const rows = pyAllRowsByDate[best.date] || null;
@@ -3137,8 +3152,8 @@ function renderYoY() {
     return `<span style="color:${color};font-family:var(--mono)">${arrow} ${formatted}</span>`;
   }
 
-  const matchNote = match.matchType === 'near'
-    ? `<span style="color:var(--yellow);font-size:11px;font-family:var(--mono);margin-left:10px">⚠ closest match: ${match.snap.date} (±${match.diffDays}d)</span>`
+  const matchNote = (match.matchType === 'near' && match.diffDays > 3)
+    ? `<span style="color:var(--muted);font-size:11px;font-family:var(--mono);margin-left:10px">closest match: ${match.snap.date} (±${match.diffDays}d)</span>`
     : `<span style="color:var(--muted);font-size:11px;font-family:var(--mono);margin-left:10px">vs. ${match.snap.date}</span>`;
 
   const fmtPct = d => (d > 0 ? '+' : '') + d.toFixed(1) + '%';
@@ -3884,10 +3899,12 @@ function renderRecognition() {
       const novOk     = novVisits >= need75;
       const mayOk     = mayVisits >= need75;
 
+      // Both visit rounds are qualifying requirements for ALL area recognition tiers
+      const visitsQualified = novOk && mayOk;
       let tierCls = 'badge-gray', tierStyle = '', tierLabel = '—';
-      if (totalDist >= goalP && net >= 1 && noLoss) { tierCls = 'badge'; tierStyle = 'style="background:rgba(163,113,247,0.15);color:#a371f7"'; tierLabel = "President's Dist."; }
-      else if (totalDist >= goalS && noLoss) { tierCls = 'badge-orange'; tierLabel = 'Select Dist.'; }
-      else if (totalDist >= goalD && noLoss) { tierCls = 'badge-green';  tierLabel = 'Distinguished'; }
+      if (visitsQualified && totalDist >= goalP && net >= 1 && noLoss) { tierCls = 'badge'; tierStyle = 'style="background:rgba(163,113,247,0.15);color:#a371f7"'; tierLabel = "President's Dist."; }
+      else if (visitsQualified && totalDist >= goalS && noLoss) { tierCls = 'badge-orange'; tierLabel = 'Select Dist.'; }
+      else if (visitsQualified && totalDist >= goalD && noLoss) { tierCls = 'badge-green';  tierLabel = 'Distinguished'; }
 
       return `<tr>
         <td><span class="badge badge-blue">${d}</span></td>
@@ -3963,6 +3980,8 @@ function renderRecognition() {
         return t > b ? d : best;
       });
       memBase = prior.rows.reduce((s,r) => s + (parseInt(r['Total to Date'])||0), 0);
+      // Apply D31-specific correction — TI's export is 7 short of the official base
+      if (memBase) memBase += D31_MEM_BASE_CORRECTION;
     }
     if (memBase && memBase > 0) {
       memGrowthPct = ((memYTD - memBase) / memBase * 100);
@@ -4074,6 +4093,100 @@ function renderRecognition() {
       <span class="rec-qual-chip ${memBase!==null?(memOk1?'rec-qual-ok':'rec-qual-warn'):'rec-qual-info'}">${memBase!==null?(memOk1?'✓':'⚠'):'ℹ'} Mem. Payments: ${memNote}</span>
       <span class="rec-qual-chip rec-qual-info">ℹ Qualifying reqs (training report, success plan, etc.) verified outside dashboard</span>`;
   }
+  // ── District Goals Tracker table ──
+  const trackerEl = document.getElementById('district-goals-tracker');
+  if (trackerEl && distClubBase > 0) {
+    // Paid clubs targets (net growth: 1%, 3%, 5%, 8% of club base)
+    const paidGoalDist   = Math.ceil(distClubBase * 1.01);
+    const paidGoalSelect = Math.ceil(distClubBase * 1.03);
+    const paidGoalPres   = Math.ceil(distClubBase * 1.05);
+    const paidGoalSmed   = Math.ceil(distClubBase * 1.08);
+
+    // Membership payments targets (only meaningful when memBase is available)
+    const memGoalDist   = memBase ? Math.ceil(memBase * 1.01) : null;
+    const memGoalSelect = memBase ? Math.ceil(memBase * 1.03) : null;
+    const memGoalPres   = memBase ? Math.ceil(memBase * 1.05) : null;
+    const memGoalSmed   = memBase ? Math.ceil(memBase * 1.08) : null;
+
+    // Helper: render a cell with current value, target, and gap chip
+    function trackerCell(current, target, goodIfMet, isMem) {
+      if (target === null) return `<td style="color:var(--muted);font-family:var(--mono);text-align:center">—</td>`;
+      const met = current >= target;
+      const gap = target - current;
+      const gapChip = met
+        ? `<span style="display:inline-block;margin-top:4px;padding:2px 7px;border-radius:10px;font-size:10px;background:rgba(63,185,80,0.15);color:var(--green);font-family:var(--mono)">✓ Met</span>`
+        : `<span style="display:inline-block;margin-top:4px;padding:2px 7px;border-radius:10px;font-size:10px;background:rgba(248,81,73,0.12);color:var(--red);font-family:var(--mono)">+${gap.toLocaleString()} needed</span>`;
+      return `<td style="text-align:center;font-family:var(--mono)">
+        <div style="font-weight:700;font-size:15px;color:${met?'var(--green)':'var(--text)'}">${target.toLocaleString()}</div>
+        <div>${gapChip}</div>
+      </td>`;
+    }
+
+    // Tier header colors
+    const tierHdrs = [
+      { label: 'Distinguished',         color: '#3fb950', bg: 'rgba(63,185,80,0.10)'    },
+      { label: "Select Distinguished",  color: '#f0883e', bg: 'rgba(240,136,62,0.10)'   },
+      { label: "President's Dist.",     color: '#a371f7', bg: 'rgba(163,113,247,0.10)'  },
+      { label: 'Smedley Dist.',         color: '#ffd700', bg: 'rgba(255,215,0,0.10)'    },
+    ];
+
+    const tierHdrHtml = tierHdrs.map(t =>
+      `<th style="text-align:center;background:${t.bg};color:${t.color};font-size:12px;padding:10px 14px">${t.label}</th>`
+    ).join('');
+
+    const currentPayDisplay = memYTD !== null ? memYTD.toLocaleString() : '—';
+    const basePayDisplay    = memBase !== null ? memBase.toLocaleString() : '—';
+
+    trackerEl.innerHTML = `
+      <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;min-width:680px">
+        <thead>
+          <tr>
+            <th style="text-align:left;padding:10px 14px;font-size:12px;color:var(--muted)">Requirement</th>
+            <th style="text-align:center;padding:10px 14px;font-size:12px;color:var(--muted)">Current</th>
+            ${tierHdrHtml}
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-top:1px solid var(--border)">
+            <td style="padding:12px 14px">
+              <div style="font-weight:600;font-size:13px">Paid Clubs (net growth)</div>
+              <div style="font-size:11px;color:var(--muted)">Base: ${distClubBase} &nbsp;·&nbsp; Need 1% / 3% / 5% / 8% net growth</div>
+            </td>
+            <td style="text-align:center;font-family:var(--mono);font-weight:700;font-size:15px">${liveActiveCount}</td>
+            ${trackerCell(liveActiveCount, paidGoalDist)}
+            ${trackerCell(liveActiveCount, paidGoalSelect)}
+            ${trackerCell(liveActiveCount, paidGoalPres)}
+            ${trackerCell(liveActiveCount, paidGoalSmed)}
+          </tr>
+          <tr style="border-top:1px solid var(--border)">
+            <td style="padding:12px 14px">
+              <div style="font-weight:600;font-size:13px">Membership Payments YTD</div>
+              <div style="font-size:11px;color:var(--muted)">Base: ${basePayDisplay} &nbsp;·&nbsp; Need 1% / 3% / 5% / 8% growth</div>
+            </td>
+            <td style="text-align:center;font-family:var(--mono);font-weight:700;font-size:15px">${currentPayDisplay}</td>
+            ${trackerCell(memYTD !== null ? memYTD : -1, memGoalDist)}
+            ${trackerCell(memYTD !== null ? memYTD : -1, memGoalSelect)}
+            ${trackerCell(memYTD !== null ? memYTD : -1, memGoalPres)}
+            ${trackerCell(memYTD !== null ? memYTD : -1, memGoalSmed)}
+          </tr>
+          <tr style="border-top:1px solid var(--border)">
+            <td style="padding:12px 14px">
+              <div style="font-weight:600;font-size:13px">Distinguished Clubs</div>
+              <div style="font-size:11px;color:var(--muted)">Base: ${distClubBase} &nbsp;·&nbsp; Need 45% / 50% / 55% / 60% of club base</div>
+            </td>
+            <td style="text-align:center;font-family:var(--mono);font-weight:700;font-size:15px">${distTotalDist}</td>
+            ${trackerCell(distTotalDist, clubGoalDist)}
+            ${trackerCell(distTotalDist, clubGoalSelect)}
+            ${trackerCell(distTotalDist, clubGoalPres)}
+            ${trackerCell(distTotalDist, clubGoalSmed)}
+          </tr>
+        </tbody>
+      </table>
+      <div style="padding:10px 14px 6px;font-size:11px;color:var(--muted)">All three requirements must be met simultaneously for a given tier. Targets use TI's round-up rule (ceiling). Membership payments data requires the prior-year District Performance CSV.</div>
+      </div>`;
+  }
+
   makeSortableAll(document.getElementById('view-recognition'));
 }
 
