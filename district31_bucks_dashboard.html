@@ -2134,8 +2134,8 @@ function applyFilters() {
     const statusEl = c.current_status === 'Active'
       ? `<span class="status-badge s-active">Active</span>`
       : `<span class="status-badge s-other">${c.current_status || '—'}</span>`;
-    const q4cells = hasQ4
-      ? `<td>${qBadge(c.uyg_per_q.Q4||0)}</td><td>${qBadge(c.mb_per_q.Q4||0)}</td>` : '';
+    const q4uygCell = hasQ4 ? `<td>${qBadge(c.uyg_per_q.Q4||0)}</td>` : '';
+    const q4mbCell  = hasQ4 ? `<td>${qBadge(c.mb_per_q.Q4||0)}</td>`  : '';
     return `<tr>
       <td>${rankEl}</td>
       <td><div class="club-name-link" onclick="openClubModal('${c.club_num}')">${c.name}</div><div class="club-meta">Div ${c.division} · Area ${c.area} · #${c.club_num}</div></td>
@@ -2150,10 +2150,11 @@ function applyFilters() {
       <td>${qBadge(c.uyg_per_q.Q1||0)}</td>
       <td>${qBadge(c.uyg_per_q.Q2||0)}</td>
       <td>${qBadge(c.uyg_per_q.Q3||0)}</td>
+      ${q4uygCell}
       <td>${qBadge(c.mb_per_q.Q1||0)}</td>
       <td>${qBadge(c.mb_per_q.Q2||0)}</td>
       <td>${qBadge(c.mb_per_q.Q3||0)}</td>
-      ${q4cells}
+      ${q4mbCell}
       <td>${c.current_active}</td>
       <td>${statusEl}</td>
     </tr>`;
