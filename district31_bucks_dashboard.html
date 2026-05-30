@@ -1530,6 +1530,7 @@ let csvStore = { ...ORIGINAL_CSV };
 // v3 keys — deliberately different prefix to guarantee clean slate on upgrade
 const LS_KEY = 'd31_bucks_v5_csvStore';
 const LS_NAMES_KEY = 'd31_bucks_v5_fileNames';
+const LS_EDU_KEY = 'd31_bucks_v5_eduStore';
 
 // Purge ALL keys written by prior versions of this dashboard
 ['d31_bucks_csvStore','d31_bucks_fileNames','d31_bucks_version','d31_bucks_v2_csvStore',
@@ -1548,6 +1549,11 @@ function saveToStorage() {
     }
     localStorage.setItem(LS_KEY, JSON.stringify(overrides));
     localStorage.setItem(LS_NAMES_KEY, JSON.stringify(uploadedNames));
+    if (eduStore) {
+      localStorage.setItem(LS_EDU_KEY, JSON.stringify(eduStore));
+    } else {
+      localStorage.removeItem(LS_EDU_KEY);
+    }
   } catch(e) { console.warn('Could not save to localStorage:', e); }
 }
 
@@ -1557,6 +1563,8 @@ function loadFromStorage() {
     if (raw) Object.assign(csvStore, JSON.parse(raw));
     const names = localStorage.getItem(LS_NAMES_KEY);
     if (names) Object.assign(uploadedNames, JSON.parse(names));
+    const edu = localStorage.getItem(LS_EDU_KEY);
+    if (edu) eduStore = JSON.parse(edu);
   } catch(e) { console.warn('Could not load from localStorage:', e); }
 }
 
@@ -2401,11 +2409,13 @@ function applyUploads() {
 function resetToOriginal() {
   if (!confirm('Reset all data to the original 6 uploaded snapshots?')) return;
   csvStore = { ...ORIGINAL_CSV };
+  eduStore = null;
   pendingUploads = {};
   pendingUploadNames = {};
   uploadedNames = {};
   localStorage.removeItem(LS_KEY);
   localStorage.removeItem(LS_NAMES_KEY);
+  localStorage.removeItem(LS_EDU_KEY);
   processData();
   render();
 }
