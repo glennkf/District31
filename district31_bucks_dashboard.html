@@ -1538,6 +1538,9 @@ const LS_EDU_KEY = 'd31_bucks_v5_eduStore';
  'd31_bucks_v4_csvStore','d31_bucks_v4_fileNames']
   .forEach(k => localStorage.removeItem(k));
 
+// Education Achievements file store (separate from CSV store)
+let eduStore = null; // null = use built-in EDU_DATA; non-null = user upload
+
 // Track uploaded filenames (key → filename)
 let uploadedNames = {};
 
@@ -2194,8 +2197,7 @@ function goPage(p) { currentPage = p; applyFilters(); }
 // UPDATE TAB
 // ══════════════════════════════════════════════
 
-// Education Achievements file store (separate from CSV store)
-let eduStore = null; // null = use built-in EDU_DATA; non-null = user upload
+// Education Achievements file store (separate from CSV store) -- declared above loadFromStorage()
 let pendingEdu = null;
 let pendingEduName = null;
 
