@@ -1216,9 +1216,11 @@
       <div class="kpi clickable" style="--kpi-color:#e8a44a" onclick="drillDownDist('select')" title="Click to see Select Distinguished clubs"><div class="kpi-label">Select Distinguished</div><div class="kpi-value" id="dist-kpi-select">—</div><div class="kpi-sub">7–8 goals · mem threshold</div></div>
       <div class="kpi clickable" style="--kpi-color:#3fb950" onclick="drillDownDist('dist')" title="Click to see Distinguished clubs"><div class="kpi-label">Distinguished</div><div class="kpi-value" id="dist-kpi-dist">—</div><div class="kpi-sub">5–6 goals · mem threshold</div></div>
       <div class="kpi clickable" style="--kpi-color:#5b9cf6" onclick="drillDownDist('need-goals')" title="Click to see Almost — Need Goals clubs"><div class="kpi-label">Almost — Need Goals</div><div class="kpi-value" id="dist-kpi-need-goals">—</div><div class="kpi-sub">mem ✓ · 3–4 goals</div></div>
-      <div class="kpi clickable" style="--kpi-color:#5b9cf6" onclick="drillDownDist('need-mem')" title="Click to see Almost — Need Members clubs"><div class="kpi-label">Almost — Need Members</div><div class="kpi-value" id="dist-kpi-need-mem">—</div><div class="kpi-sub">4+ goals · mem ✗</div></div>
-      <div class="kpi clickable" style="--kpi-color:#5b9cf6" onclick="drillDownDist('need-both')" title="Click to see Almost — Need Both clubs"><div class="kpi-label">Almost — Need Both</div><div class="kpi-value" id="dist-kpi-need-both">—</div><div class="kpi-sub">3 goals · mem ✗</div></div>
+      <div class="kpi clickable" style="--kpi-color:#5b9cf6" onclick="drillDownDist('close-on-goals')" title="Click to see Almost — Close on Goals clubs"><div class="kpi-label">Almost — Close on Goals</div><div class="kpi-value" id="dist-kpi-close-on-goals">—</div><div class="kpi-sub">0–1 goals · 1–3 members</div></div>
+      <div class="kpi clickable" style="--kpi-color:#5b9cf6" onclick="drillDownDist('need-both')" title="Click to see Almost — Need Both clubs"><div class="kpi-label">Almost — Need Both</div><div class="kpi-value" id="dist-kpi-need-both">—</div><div class="kpi-sub">2 goals · 1–3 members</div></div>
+      <div class="kpi clickable" style="--kpi-color:#8b949e" onclick="drillDownDist('long-shot')" title="Click to see Long Shot clubs"><div class="kpi-label">Long Shot</div><div class="kpi-value" id="dist-kpi-long-shot">—</div><div class="kpi-sub">3+ goals or 3+ members</div></div>
       <div class="kpi clickable" style="--kpi-color:#8b949e" onclick="drillDownDist('inelig')" title="Click to see Ineligible clubs"><div class="kpi-label">Ineligible (CSP)</div><div class="kpi-value" id="dist-kpi-inelig">—</div><div class="kpi-sub">CSP not submitted</div></div>
+      <div class="kpi" style="--kpi-color:#3fb950"><div class="kpi-label">Newly Distinguished</div><div class="kpi-value" id="dist-kpi-newly">—</div><div class="kpi-sub">since last snapshot</div></div>
     </div>
 
     <div id="dist-no-cp" class="alert" style="display:none">
@@ -1232,26 +1234,46 @@
 
     <div class="card wide-card">
       <div class="card-title">Smedley Distinguished — 10 goals &amp; 25+ members &amp; CSP <span id="dt-count-smedley" style="font-family:var(--mono);color:var(--muted);font-weight:400;margin-left:8px"></span></div>
-      <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>CSP</th></tr></thead>
+      <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>CSP</th><th>🔗</th></tr></thead>
       <tbody id="dist-body-smedley"></tbody></table></div>
     </div>
 
     <div class="card wide-card">
       <div class="card-title">President's Distinguished — 9 goals &amp; 20+ members &amp; CSP <span id="dt-count-pres" style="font-family:var(--mono);color:var(--muted);font-weight:400;margin-left:8px"></span></div>
-      <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>CSP</th></tr></thead>
+      <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>CSP</th><th>🔗</th></tr></thead>
       <tbody id="dist-body-pres"></tbody></table></div>
     </div>
 
     <div class="card wide-card">
       <div class="card-title">Select Distinguished — 7–8 goals &amp; (20+ members or net growth ≥ 5) &amp; CSP <span id="dt-count-select" style="font-family:var(--mono);color:var(--muted);font-weight:400;margin-left:8px"></span></div>
-      <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>CSP</th></tr></thead>
+      <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>CSP</th><th>🔗</th></tr></thead>
       <tbody id="dist-body-select"></tbody></table></div>
     </div>
 
     <div class="card wide-card">
       <div class="card-title">Distinguished — 5–6 goals &amp; (20+ members or net growth ≥ 3) &amp; CSP <span id="dt-count-dist" style="font-family:var(--mono);color:var(--muted);font-weight:400;margin-left:8px"></span></div>
-      <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>CSP</th></tr></thead>
+      <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>CSP</th><th>🔗</th></tr></thead>
       <tbody id="dist-body-dist"></tbody></table></div>
+    </div>
+
+    <!-- Division Pipeline Breakdown -->
+    <div class="dist-section-heading">📊 Division Pipeline Breakdown</div>
+    <div class="dist-section-sub">Distinguished count and Almost Distinguished pipeline per division, based on July 1 club base. Each division needs 45% of its base clubs Distinguished for District recognition.</div>
+    <div class="card wide-card" id="div-pipeline-card">
+      <div class="table-wrap"><table id="div-pipeline-table">
+        <thead><tr>
+          <th>Division</th>
+          <th style="text-align:right">Base Clubs</th>
+          <th style="text-align:right">Distinguished</th>
+          <th style="text-align:right">Just Need Goals</th>
+          <th style="text-align:right">Close on Goals</th>
+          <th style="text-align:right">Needs Both</th>
+          <th style="text-align:right">Significant Gap</th>
+          <th style="text-align:right">Target (45%)</th>
+          <th style="text-align:right">Still Needed</th>
+        </tr></thead>
+        <tbody id="div-pipeline-body"></tbody>
+      </table></div>
     </div>
 
     <!-- Section 2: Almost Distinguished -->
@@ -1260,20 +1282,26 @@
 
     <div class="card wide-card">
       <div class="card-title">Just Need Goals — membership threshold met, 3–4 goals <span id="dt-count-need-goals" style="font-family:var(--mono);color:var(--muted);font-weight:400;margin-left:8px"></span></div>
-      <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>What's Needed</th><th>Likelihood</th></tr></thead>
+      <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>What's Needed</th><th>Likelihood</th><th>🔗</th></tr></thead>
       <tbody id="dist-body-need-goals"></tbody></table></div>
     </div>
 
     <div class="card wide-card">
-      <div class="card-title">Just Need Members — 4+ goals, membership threshold not met <span id="dt-count-need-mem" style="font-family:var(--mono);color:var(--muted);font-weight:400;margin-left:8px"></span></div>
-      <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>What's Needed</th><th>Likelihood</th></tr></thead>
-      <tbody id="dist-body-need-mem"></tbody></table></div>
+      <div class="card-title">Close on Goals, Needs Members — 0–1 goals &amp; 1–3 members (new or net growth) <span id="dt-count-close-on-goals" style="font-family:var(--mono);color:var(--muted);font-weight:400;margin-left:8px"></span></div>
+      <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>What's Needed</th><th>Likelihood</th><th>🔗</th></tr></thead>
+      <tbody id="dist-body-close-on-goals"></tbody></table></div>
     </div>
 
     <div class="card wide-card">
-      <div class="card-title">Needs Both — 3 goals &amp; membership threshold not met <span id="dt-count-need-both" style="font-family:var(--mono);color:var(--muted);font-weight:400;margin-left:8px"></span></div>
-      <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>What's Needed</th><th>Likelihood</th></tr></thead>
+      <div class="card-title">Needs Both — 2 goals &amp; 1–3 members (new or net growth) <span id="dt-count-need-both" style="font-family:var(--mono);color:var(--muted);font-weight:400;margin-left:8px"></span></div>
+      <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>What's Needed</th><th>Likelihood</th><th>🔗</th></tr></thead>
       <tbody id="dist-body-need-both"></tbody></table></div>
+    </div>
+
+    <div class="card wide-card">
+      <div class="card-title">Significant Gap — 3+ goals or 3+ members still needed <span id="dt-count-long-shot" style="font-family:var(--mono);color:var(--muted);font-weight:400;margin-left:8px"></span></div>
+      <div class="table-wrap"><table><thead><tr><th>Club</th><th>Div</th><th>Area</th><th>Goals</th><th>Members</th><th>Net Growth</th><th>What's Needed</th><th>Likelihood</th><th>🔗</th></tr></thead>
+      <tbody id="dist-body-long-shot"></tbody></table></div>
     </div>
 
     <!-- Section 3: Ineligible -->
@@ -1507,6 +1535,7 @@
           <th>CSP</th>
           <th>Status</th>
           <th>Charter / Suspend</th>
+          <th>🔗</th>
         </tr></thead>
         <tbody id="roster-body"></tbody>
       </table></div>
@@ -2304,37 +2333,49 @@ function drillDownDist(type) {
       title = 'Almost Distinguished — Need Goals';
       sub   = `${clubs.length} clubs — membership met · 3–4 goals · CSP ✓`; break;
     }
-    case 'need-mem': {
-      // CSP=Y, goals ≥5, members not met
+    case 'close-on-goals': {
+      title = 'Close on Goals, Needs Members';
+      color = '#5b9cf6';
       clubs = active.filter(r => {
-        const tier = getDistTier(r, cpMap); if (tier) return false;
-        const g = goals(r); if (g < 3) return false;
         const cp = getCPData(r, cpMap);
-        const csp = cp ? (cp['CSP']||'').toUpperCase()==='Y' : null;
-        if (hasCPData && csp !== true) return false;
-        const activeMem = cp ? (parseInt(cp['Active Members'])||0) : members(r);
-        const netG = cp ? (parseInt(cp['Net Growth'])||0) : 0;
-        const memOk = activeMem >= 20 || netG >= 3;
-        return g >= 5 && !memOk;
+        if (!cp || (cp['CSP']||'').toUpperCase() !== 'Y') return false;
+        if (getDistTier(r, cpMap)) return false;
+        const goalGap = Math.max(0, 5 - goals(r));
+        const memGap  = calcMemberGap(cp);
+        return goalGap <= 1 && memGap >= 1 && memGap <= 3;
       });
-      title = 'Almost Distinguished — Need Members';
-      sub   = `${clubs.length} clubs — 4+ goals · membership not met · CSP ✓`; break;
+      break;
+    }
+    case 'long-shot': {
+      title = 'Significant Gap';
+      color = '#8b949e';
+      clubs = active.filter(r => {
+        const cp = getCPData(r, cpMap);
+        if (!cp || (cp['CSP']||'').toUpperCase() !== 'Y') return false;
+        if (getDistTier(r, cpMap)) return false;
+        const g = goals(r);
+        if (g < 3) return false;
+        const goalGap = Math.max(0, 5 - g);
+        const memGap  = calcMemberGap(cp);
+        if (goalGap >= 1 && goalGap <= 2 && memGap === 0) return false;
+        if (goalGap <= 1 && memGap >= 1 && memGap <= 3)   return false;
+        if (goalGap === 2 && memGap >= 1 && memGap <= 3)   return false;
+        return true;
+      });
+      break;
     }
     case 'need-both': {
-      // CSP=Y, goals <5, members not met
+      title = 'Needs Both — 2 goals & 1–3 members';
+      color = '#5b9cf6';
       clubs = active.filter(r => {
-        const tier = getDistTier(r, cpMap); if (tier) return false;
-        const g = goals(r); if (g < 3) return false;
         const cp = getCPData(r, cpMap);
-        const csp = cp ? (cp['CSP']||'').toUpperCase()==='Y' : null;
-        if (hasCPData && csp !== true) return false;
-        const activeMem = cp ? (parseInt(cp['Active Members'])||0) : members(r);
-        const netG = cp ? (parseInt(cp['Net Growth'])||0) : 0;
-        const memOk = activeMem >= 20 || netG >= 3;
-        return g < 5 && !memOk;
+        if (!cp || (cp['CSP']||'').toUpperCase() !== 'Y') return false;
+        if (getDistTier(r, cpMap)) return false;
+        const goalGap = Math.max(0, 5 - goals(r));
+        const memGap  = calcMemberGap(cp);
+        return goalGap === 2 && memGap >= 1 && memGap <= 3;
       });
-      title = 'Almost Distinguished — Need Both';
-      sub   = `${clubs.length} clubs — need goals and membership · CSP ✓`; break;
+      sub = `${clubs.length} clubs — 2 goals & 1–3 members needed · CSP ✓`; break;
     }
     case 'inelig':
       clubs = active.filter(r => {
@@ -2583,8 +2624,14 @@ function renderDistChanges(active, cpMap) {
 
   if (!newlyDist.length && !tierUp.length && !tierDown.length) {
     el.style.display = 'none';
+    const newlyKpi = document.getElementById('dist-kpi-newly');
+    if (newlyKpi) newlyKpi.textContent = '0';
     return;
   }
+
+  // Update Newly Distinguished KPI card
+  const newlyKpi = document.getElementById('dist-kpi-newly');
+  if (newlyKpi) newlyKpi.textContent = newlyDist.length || '0';
 
   const rowHtml = (clubs, showPrev) => clubs.map(c => `
     <tr>
@@ -2642,6 +2689,10 @@ function renderDistinguished() {
     const activeMem = cp ? (parseInt(cp['Active Members']) || 0) : members(r);
     const netG = cp ? (parseInt(cp['Net Growth']) || 0) : 0;
     const csp = cp ? (cp['CSP'] || '').toUpperCase() : '?';
+    const clubNum = (r['Club'] || '').replace(/^0+/, '');
+    const scorecardLink = clubNum
+      ? `<a href="https://dashboards.toastmasters.org/ClubReport.aspx?id=${clubNum}" target="_blank" title="Open TI Scorecard" style="color:var(--accent);text-decoration:none;font-size:14px">↗</a>`
+      : '—';
     return `<tr>
       <td style="font-weight:500">${r['Club Name'] || r['Club'] || '—'}</td>
       <td><span class="badge badge-blue">${r['Division']}</span></td>
@@ -2650,6 +2701,7 @@ function renderDistinguished() {
       <td style="font-family:var(--mono)">${activeMem}</td>
       <td style="font-family:var(--mono);color:${netG>0?'var(--green)':netG<0?'var(--red)':'var(--muted)'}">${netG>0?'+':''}${netG}</td>
       <td><span class="badge ${csp==='Y'?'badge-green':'badge-red'}">${csp}</span></td>
+      <td style="text-align:center">${scorecardLink}</td>
     </tr>`;
   }
 
@@ -2672,7 +2724,7 @@ function renderDistinguished() {
   }
 
   // Categorise every active club
-  const smedley=[], pres=[], select=[], dist=[], needGoals=[], needMem=[], needBoth=[], inelig=[];
+  const smedley=[], pres=[], select=[], dist=[], needGoals=[], closeOnGoals=[], needBoth=[], longShot=[], inelig=[];
 
   active.forEach(r => {
     const g = goals(r);
@@ -2700,11 +2752,18 @@ function renderDistinguished() {
       return;
     }
 
-    // CSP = Y (or no CP data) — categorise by what's missing
-    const goalsMet = g >= 5;
-    if (goalsMet && !memOk)  { needMem.push(r);   return; }
-    if (!goalsMet && memOk)  { needGoals.push(r);  return; }
-    if (!goalsMet && !memOk) { needBoth.push(r);   return; }
+    // CSP = Y (or no CP data) — categorise by new bucket logic
+    const goalGap = Math.max(0, 5 - g);
+    const memGap  = calcMemberGap(cp);
+
+    // Cat 1: Just Need Goals -- goals gap 1-2, mem met
+    if (goalGap >= 1 && goalGap <= 2 && memGap === 0) { needGoals.push(r); return; }
+    // Cat 2: Close on Goals -- goals gap 0-1, members gap 1-3
+    if (goalGap <= 1 && memGap >= 1 && memGap <= 3)   { closeOnGoals.push(r); return; }
+    // Cat 3: Needs Both -- goals gap 2, members gap 1-3
+    if (goalGap === 2 && memGap >= 1 && memGap <= 3)   { needBoth.push(r); return; }
+    // Cat 4: Significant Gap -- everything else
+    longShot.push(r);
   });
 
   // Sort helpers
@@ -2716,7 +2775,7 @@ function renderDistinguished() {
     const countEl = document.getElementById('dt-count-' + tbody.replace('dist-body-',''));
     if (countEl) countEl.textContent = rows.length ? `(${rows.length})` : '(0)';
     if (!rows.length) {
-      el.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:16px">No clubs in this tier yet</td></tr>`;
+      el.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:16px">No clubs in this tier yet</td></tr>`;
       return;
     }
     el.innerHTML = [...rows].sort(byGoalsDesc).map(r => distRow(r, getCPData(r, cpMap))).join('');
@@ -2726,8 +2785,8 @@ function renderDistinguished() {
   renderDistTable('dist-body-select', select);
   renderDistTable('dist-body-dist', dist);
 
-  // Helper for almost/inelig rows — now includes Likelihood column
-  function almostRow(r, cp, forInelig) {
+  // Helper for almost/inelig rows — includes Likelihood column and scorecard link
+  function almostRow(r, cp, forInelig, fixedLabel) {
     const g = goals(r);
     const activeMem = cp ? (parseInt(cp['Active Members']) || 0) : members(r);
     const netG = cp ? (parseInt(cp['Net Growth']) || 0) : 0;
@@ -2750,10 +2809,16 @@ function renderDistinguished() {
       chips.push(`<span class="gap-chip gap-csp">CSP not submitted</span>`);
     }
 
-    const lh = forInelig ? null : clubLikelihood(r, cpMap);
+    const lh = fixedLabel ? fixedLabel : (forInelig ? null : clubLikelihood(r, cpMap));
     const lhCell = lh
       ? `<td><span class="lh-badge lh-${lh.cls}">${lh.label}</span></td>`
       : `<td></td>`;
+
+    // Scorecard link
+    const clubNum = (r['Club'] || '').replace(/^0+/, '');
+    const scorecardLink = clubNum
+      ? `<a href="https://dashboards.toastmasters.org/ClubReport.aspx?id=${clubNum}" target="_blank" title="Open TI Scorecard" style="color:var(--accent);text-decoration:none;font-size:14px">↗</a>`
+      : '—';
 
     return `<tr>
       <td style="font-weight:500">${r['Club Name'] || r['Club'] || '—'}</td>
@@ -2764,6 +2829,7 @@ function renderDistinguished() {
       <td style="font-family:var(--mono);color:${netG>0?'var(--green)':netG<0?'var(--red)':'var(--muted)'}">${netG>0?'+':''}${netG}</td>
       <td>${chips.join(' ')}</td>
       ${lhCell}
+      <td style="text-align:center">${scorecardLink}</td>
     </tr>`;
   }
 
@@ -2778,21 +2844,22 @@ function renderDistinguished() {
     return goals(b) - goals(a); // tiebreak by goals desc
   }
 
-  function renderAlmostTable(tbody, rows, forInelig) {
+  function renderAlmostTable(tbody, rows, forInelig, fixedLabel) {
     const el = document.getElementById(tbody);
     const countEl = document.getElementById('dt-count-' + tbody.replace('dist-body-',''));
     if (countEl) countEl.textContent = rows.length ? `(${rows.length})` : '(0)';
-    const colSpan = forInelig ? 7 : 8;
+    const colSpan = forInelig ? 8 : 9;
     if (!rows.length) {
       el.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center;color:var(--muted);padding:16px">No clubs in this category</td></tr>`;
       return;
     }
     const sorted = forInelig ? [...rows].sort((a,b) => goals(b)-goals(a)) : [...rows].sort(byLikelihood);
-    el.innerHTML = sorted.map(r => almostRow(r, getCPData(r, cpMap), forInelig)).join('');
+    el.innerHTML = sorted.map(r => almostRow(r, getCPData(r, cpMap), forInelig, fixedLabel)).join('');
   }
-  renderAlmostTable('dist-body-need-goals', needGoals, false);
-  renderAlmostTable('dist-body-need-mem',   needMem,   false);
-  renderAlmostTable('dist-body-need-both',  needBoth,  false);
+  renderAlmostTable('dist-body-need-goals',    needGoals,    false);
+  renderAlmostTable('dist-body-close-on-goals', closeOnGoals, false, { label:'🟡 Likely',        cls:'likely'        });
+  renderAlmostTable('dist-body-need-both',      needBoth,     false, { label:'🟠 Somewhat Likely', cls:'somewhat-likely' });
+  renderAlmostTable('dist-body-long-shot',      longShot,     false, { label:'🔴 Long Shot',      cls:'long-shot'     });
   renderAlmostTable('dist-body-inelig',     inelig,    true);
 
   // Update KPI cards
@@ -2800,13 +2867,95 @@ function renderDistinguished() {
   document.getElementById('dist-kpi-pres').textContent       = pres.length;
   document.getElementById('dist-kpi-select').textContent     = select.length;
   document.getElementById('dist-kpi-dist').textContent       = dist.length;
-  document.getElementById('dist-kpi-need-goals').textContent = needGoals.length;
-  document.getElementById('dist-kpi-need-mem').textContent   = needMem.length;
-  document.getElementById('dist-kpi-need-both').textContent  = needBoth.length;
+  document.getElementById('dist-kpi-need-goals').textContent    = needGoals.length;
+  document.getElementById('dist-kpi-close-on-goals').textContent = closeOnGoals.length;
+  document.getElementById('dist-kpi-need-both').textContent      = needBoth.length;
+  document.getElementById('dist-kpi-long-shot').textContent      = longShot.length;
   document.getElementById('dist-kpi-inelig').textContent     = inelig.length;
 
   // Render projection card
-  renderDistProjection(active, smedley, pres, select, dist, needGoals, needMem, needBoth, cpMap);
+  renderDistProjection(active, smedley, pres, select, dist, needGoals, closeOnGoals, needBoth, longShot, cpMap);
+
+  // Render division pipeline breakdown
+  renderDivPipeline(active, cpMap);
+}
+
+// ══════════════════════════════════════════════
+// DIVISION PIPELINE BREAKDOWN TABLE
+// ══════════════════════════════════════════════
+function renderDivPipeline(active, cpMap) {
+  const tbody = document.getElementById('div-pipeline-body');
+  if (!tbody) return;
+
+  const divs = [...new Set(active.map(r => r['Division']).filter(d => /^[A-Za-z]$/.test(d)))].sort();
+
+  const rows = divs.map(div => {
+    const dClubs = active.filter(r => r['Division'] === div);
+
+    // Base clubs: read directly from Division Club Base in DP CSV -- same source as Division View tab
+    const refRow = allRows.find(r => r['Division'] === div && r['Division Club Base']);
+    const base = refRow ? (parseInt(refRow['Division Club Base']) || dClubs.length) : dClubs.length;
+    const target = refRow ? (parseInt(refRow['Division Dist. Club Goal for Dist.']) || Math.ceil(base * 0.45)) : Math.ceil(base * 0.45);
+
+    // Counts
+    let distinguished = 0, cat1 = 0, cat2 = 0, cat3 = 0, longShotDiv = 0;
+    dClubs.forEach(r => {
+      if (getDistTier(r, cpMap)) { distinguished++; return; }
+      const cp = getCPData(r, cpMap);
+      if (!cp || (cp['CSP'] || '').toUpperCase() !== 'Y') return;
+      const g = goals(r);
+      if (g < 3) return;
+      const goalGap = Math.max(0, 5 - g);
+      const memGap = calcMemberGap(cp);
+      if (goalGap >= 1 && goalGap <= 2 && memGap === 0)  { cat1++;        return; }
+      if (goalGap <= 1 && memGap >= 1 && memGap <= 3)    { cat2++;        return; }
+      if (goalGap === 2 && memGap >= 1 && memGap <= 3)   { cat3++;        return; }
+      longShotDiv++;
+    });
+
+    const needed = target - distinguished;
+    const neededHtml = needed <= 0
+      ? `<span class="badge badge-green" style="font-size:10px">Met</span>`
+      : `<span style="font-family:var(--mono);color:var(--red);font-weight:600">+${needed}</span>`;
+
+    return `<tr>
+      <td><span class="badge badge-blue">${div}</span></td>
+      <td style="font-family:var(--mono);text-align:right">${base}</td>
+      <td style="font-family:var(--mono);text-align:right;color:var(--green);font-weight:600">${distinguished}</td>
+      <td style="font-family:var(--mono);text-align:right">${cat1}</td>
+      <td style="font-family:var(--mono);text-align:right">${cat2}</td>
+      <td style="font-family:var(--mono);text-align:right">${cat3}</td>
+      <td style="font-family:var(--mono);text-align:right;color:var(--muted)">${longShotDiv}</td>
+      <td style="font-family:var(--mono);text-align:right">${target}</td>
+      <td style="text-align:right">${neededHtml}</td>
+    </tr>`;
+  });
+
+  // Totals row
+  const totalBase = divs.reduce((s, div) => {
+    const refRow = allRows.find(r => r['Division'] === div && r['Division Club Base']);
+    return s + (refRow ? (parseInt(refRow['Division Club Base']) || 0) : active.filter(r => r['Division'] === div).length);
+  }, 0);
+
+  const totalDist = active.filter(r => /^[A-Za-z]$/.test(r['Division']) && getDistTier(r, cpMap)).length;
+  const totalTarget = divs.reduce((s, div) => {
+    const refRow = allRows.find(r => r['Division'] === div && r['Division Club Base']);
+    const base = refRow ? (parseInt(refRow['Division Club Base']) || 0) : active.filter(r => r['Division'] === div).length;
+    const goalDist = refRow ? (parseInt(refRow['Division Dist. Club Goal for Dist.']) || 0) : 0;
+    return s + (goalDist || Math.ceil(base * 0.45));
+  }, 0);
+  const totalNeeded = Math.max(0, totalTarget - totalDist);
+
+  tbody.innerHTML = rows.join('') + `<tr style="border-top:2px solid var(--border);font-weight:600">
+    <td>Total</td>
+    <td style="font-family:var(--mono);text-align:right">${totalBase}</td>
+    <td style="font-family:var(--mono);text-align:right;color:var(--green)">${totalDist}</td>
+    <td colspan="4"></td>
+    <td style="font-family:var(--mono);text-align:right">${totalTarget}</td>
+    <td style="text-align:right">${totalNeeded <= 0
+      ? '<span class="badge badge-green" style="font-size:10px">Met</span>'
+      : `<span style="font-family:var(--mono);color:var(--red);font-weight:600">+${totalNeeded}</span>`}</td>
+  </tr>`;
 }
 
 // ══════════════════════════════════════════════
@@ -2832,23 +2981,19 @@ function clubLikelihood(r, cpMap) {
   const g       = goals(r);
   const goalGap = Math.max(0, 5 - g);
   const memGap  = calcMemberGap(cp);
-  // Map all 12 situations to likelihood tiers
+
+  // Non-overlapping bucket definitions (v2 -- revised May 2026)
+  // Already Distinguished handled above (returns null)
   if (goalGap === 1 && memGap === 0) return { label:'🟢 Very Likely',      cls:'very-likely'     };
+  // Quite Likely: (2 goals, mem met) OR (0-1 goals, 1 member away)
   if (goalGap === 2 && memGap === 0) return { label:'🟢 Quite Likely',     cls:'quite-likely'    };
-  if (goalGap === 0 && memGap === 1) return { label:'🟢 Quite Likely',     cls:'quite-likely'    };
-  if (goalGap === 0 && memGap === 2) return { label:'🟡 Likely',           cls:'likely'          };
-  if (goalGap === 1 && memGap === 1) return { label:'🟡 Likely',           cls:'likely'          };
-  if (goalGap === 1 && memGap === 2) return { label:'🟡 Likely',           cls:'likely'          };
+  if (goalGap <= 1  && memGap === 1) return { label:'🟢 Quite Likely',     cls:'quite-likely'    };
+  // Likely: exactly 2 goals + 1 member away
   if (goalGap === 2 && memGap === 1) return { label:'🟡 Likely',           cls:'likely'          };
-  if (goalGap === 2 && memGap === 2) return { label:'🟠 Somewhat Likely',  cls:'somewhat-likely' };
-  // Long shot situations
-  if (goalGap === 3 && memGap === 0) return { label:'🔴 Long Shot',        cls:'long-shot'       };
-  if (goalGap === 4 && memGap === 0) return { label:'🔴 Long Shot',        cls:'long-shot'       };
-  if (goalGap === 0 && memGap >= 3)  return { label:'🔴 Long Shot',        cls:'long-shot'       };
-  if (goalGap === 3 && memGap === 1) return { label:'🔴 Long Shot',        cls:'long-shot'       };
-  if (goalGap >= 3  && memGap >= 2)  return { label:'🔴 Long Shot',        cls:'long-shot'       };
-  // Catch-all: any remaining gap combination is a Long Shot
-  if (goalGap > 0 || memGap > 0)    return { label:'🔴 Long Shot',        cls:'long-shot'       };
+  // Long Shot: 4+ goals AND 4+ members (both must be large)
+  if (goalGap >= 4  && memGap >= 4)  return { label:'🔴 Long Shot',        cls:'long-shot'       };
+  // Somewhat Likely: everything else (up to 3 goals or up to 3 members, not both >= 4)
+  if (goalGap > 0 || memGap > 0)    return { label:'🟠 Somewhat Likely',  cls:'somewhat-likely' };
   return null;
 }
 
@@ -2894,7 +3039,7 @@ function pipelineTooltip(dclubs, cpMap) {
 // ══════════════════════════════════════════════
 // JUNE 30 PROJECTION
 // ══════════════════════════════════════════════
-function renderDistProjection(active, smedley, pres, select, dist, needGoals, needMem, needBoth, cpMap) {
+function renderDistProjection(active, smedley, pres, select, dist, needGoals, closeOnGoals, needBoth, longShot, cpMap) {
   const el = document.getElementById('dist-proj-card');
   if (!el || !active.length) { if (el) el.style.display = 'none'; return; }
 
@@ -2903,15 +3048,13 @@ function renderDistProjection(active, smedley, pres, select, dist, needGoals, ne
 
   const floor = smedley.length + pres.length + select.length + dist.length;
 
-  // Classify near-miss clubs using clubLikelihood
-  const veryLikely    = active.filter(r => { const lh = clubLikelihood(r, cpMap); return lh && lh.cls === 'very-likely';     });
-  const quiteLikely   = active.filter(r => { const lh = clubLikelihood(r, cpMap); return lh && lh.cls === 'quite-likely';    });
-  const likelyCl      = active.filter(r => { const lh = clubLikelihood(r, cpMap); return lh && lh.cls === 'likely';          });
-  const somewhatLikely= active.filter(r => { const lh = clubLikelihood(r, cpMap); return lh && lh.cls === 'somewhat-likely'; });
-  const longShot      = active.filter(r => { const lh = clubLikelihood(r, cpMap); return lh && lh.cls === 'long-shot';       });
+  // Use category arrays directly for projection
+  // Very Likely = needGoals clubs with goalGap=1; Quite Likely = needGoals clubs with goalGap=2
+  const veryLikely  = needGoals.filter(r => Math.max(0, 5 - goals(r)) === 1);
+  const quiteLikely = needGoals.filter(r => Math.max(0, 5 - goals(r)) === 2);
 
   const likely   = floor + veryLikely.length;
-  const ceiling  = likely + quiteLikely.length + likelyCl.length + somewhatLikely.length;
+  const ceiling  = likely + quiteLikely.length + closeOnGoals.length + needBoth.length;
   const lsMax    = ceiling + longShot.length;
 
   el.style.display = 'block';
@@ -2979,8 +3122,8 @@ function renderDistProjection(active, smedley, pres, select, dist, needGoals, ne
         <div style="font-size:11px;color:var(--muted);line-height:1.9;margin-left:8px">
           <div><span style="color:var(--accent2)">■</span> Floor = already distinguished</div>
           <div><span style="color:var(--green)">■</span> Likely = + Very Likely clubs</div>
-          <div><span style="color:var(--muted)">■</span> Ceiling = + Quite Likely + Likely + Somewhat Likely</div>
-          <div><span style="color:var(--red);opacity:0.6">■</span> LS Max = + Long Shot clubs (dimmed)</div>
+          <div><span style="color:var(--muted)">■</span> Ceiling = + Quite Likely + Close on Goals (Likely) + Needs Both (Somewhat Likely)</div>
+          <div><span style="color:var(--red);opacity:0.6">■</span> LS Max = + Significant Gap clubs (dimmed)</div>
         </div>
       </div>
       ${trackHTML(TARGET_DIST,   'Distinguished District (60)')}
@@ -2996,19 +3139,19 @@ function renderDistProjection(active, smedley, pres, select, dist, needGoals, ne
           <span style="display:flex;gap:10px;align-items:center"><span style="font-family:var(--mono);font-weight:600">${veryLikely.length}</span><span class="lh-badge lh-very-likely" style="font-size:10px">→ Likely</span></span>
         </div>
         <div class="proj-bk-row">
-          <span>🟢 Quite Likely — 2 goals away (mem ✓) · or 1 member away (goals ✓)</span>
+          <span>🟢 Quite Likely — 2 goals away · members ✓</span>
           <span style="display:flex;gap:10px;align-items:center"><span style="font-family:var(--mono);font-weight:600">${quiteLikely.length}</span><span class="lh-badge lh-quite-likely" style="font-size:10px">→ Ceiling</span></span>
         </div>
         <div class="proj-bk-row">
-          <span>🟡 Likely — small combined gaps (see table)</span>
-          <span style="display:flex;gap:10px;align-items:center"><span style="font-family:var(--mono);font-weight:600">${likelyCl.length}</span><span class="lh-badge lh-likely" style="font-size:10px">→ Ceiling</span></span>
+          <span>🟡 Likely — close on goals (0–1 goals &amp; 1–3 members)</span>
+          <span style="display:flex;gap:10px;align-items:center"><span style="font-family:var(--mono);font-weight:600">${closeOnGoals.length}</span><span class="lh-badge lh-likely" style="font-size:10px">→ Ceiling</span></span>
         </div>
         <div class="proj-bk-row">
-          <span>🟠 Somewhat Likely — 2 goals + 2 members away</span>
-          <span style="display:flex;gap:10px;align-items:center"><span style="font-family:var(--mono);font-weight:600">${somewhatLikely.length}</span><span class="lh-badge lh-somewhat-likely" style="font-size:10px">→ Ceiling</span></span>
+          <span>🟠 Somewhat Likely — needs both (2 goals &amp; 1–3 members)</span>
+          <span style="display:flex;gap:10px;align-items:center"><span style="font-family:var(--mono);font-weight:600">${needBoth.length}</span><span class="lh-badge lh-somewhat-likely" style="font-size:10px">→ Ceiling</span></span>
         </div>
         <div class="proj-bk-row" style="opacity:0.6">
-          <span>🔴 Long Shot — large gaps (3+ goals or 3+ members)</span>
+          <span>🔴 Long Shot — 3+ goals or 3+ members still needed</span>
           <span style="display:flex;gap:10px;align-items:center"><span style="font-family:var(--mono);font-weight:600">${longShot.length}</span><span class="lh-badge lh-long-shot" style="font-size:10px">→ LS Max only</span></span>
         </div>
         <div class="proj-bk-row" style="opacity:0.45">
@@ -4284,6 +4427,13 @@ function renderRoster() {
     const noteHtml = charterNote
       ? `<span style="font-size:11px;color:var(--muted)">${charterNote}</span>`
       : '<span style="color:var(--muted)">—</span>';
+
+    // Scorecard link
+    const clubNum = (r['Club'] || '').replace(/^0+/, '');
+    const scorecardLink = clubNum
+      ? `<a href="https://dashboards.toastmasters.org/ClubReport.aspx?id=${clubNum}" target="_blank" title="Open TI Scorecard" style="color:var(--accent);text-decoration:none;font-size:14px">↗</a>`
+      : '—';
+
     // Highlight not-yet-renewed and inactive rows subtly
     const rowStyle = (status === 'notrenewed' || status === 'inactive')
       ? `style="background:color-mix(in srgb,var(--yellow) 4%,var(--surface))"`
@@ -4297,8 +4447,9 @@ function renderRoster() {
       <td style="text-align:center">${cspHtml}</td>
       <td><span class="badge ${cfg.cls}">${cfg.label}</span></td>
       <td>${noteHtml}</td>
+      <td style="text-align:center">${scorecardLink}</td>
     </tr>`;
-  }).join('') || `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">No clubs match the current filters</td></tr>`;
+  }).join('') || `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px">No clubs match the current filters</td></tr>`;
   makeSortableAll(document.getElementById('view-roster'));
 }
 
