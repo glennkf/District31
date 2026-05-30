@@ -538,6 +538,7 @@
 
 </main>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 // ══════════════════════════════════════════════
 // EMBEDDED CSV DATA (original 6 snapshots)
@@ -2275,10 +2276,10 @@ function renderUploadGrid() {
     ondragover="event.preventDefault();this.classList.add('drag-over')"
     ondragleave="this.classList.remove('drag-over')"
     ondrop="handleEduDrop(event)">
-    <input type="file" accept=".txt,.tsv" onchange="handleEduInput(event)">
+    <input type="file" accept=".xlsx,.xls,.txt,.tsv" onchange="handleEduInput(event)">
     <div class="upload-icon">📚</div>
     <div class="upload-label">Education Achievements</div>
-    <div class="upload-desc">TSV export from TI Reporting<br><span style="color:var(--border)">Education_Achievements_District_31.tsv</span></div>
+    <div class="upload-desc">XLSX from TI Reporting<br><span style="color:var(--border)">Education_Achievements_District_31.xlsx</span></div>
     <div class="upload-status ok" id="status-edu">${eduStatusText}</div>
   </div>`;
 }
@@ -2294,11 +2295,40 @@ function handleEduInput(event) {
   if (file) readEduFile(file);
 }
 function readEduFile(file) {
+  const isXlsx = file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls');
   const reader = new FileReader();
   reader.onload = e => {
-    const parsed = parseEduXlsx(e.target.result);
+    let parsed = null;
+    if (isXlsx) {
+      try {
+        const wb = XLSX.read(e.target.result, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        // TI exports have a title row on row 1; actual headers are on row 2.
+        // Use range override to start from row 2.
+        const range = XLSX.utils.decode_range(ws['!ref']);
+        range.s.r = 1; // skip row 1 (title row)
+        ws['!ref'] = XLSX.utils.encode_range(range);
+        const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        parsed = rows
+          .filter(r => r['Club'] && r['Award'] && r['Date'])
+          .map(r => ({
+            club:   String(r['Club']).trim(),
+            div:    String(r['Division'] || '').trim(),
+            area:   String(r['Area'] || '').trim(),
+            award:  String(r['Award']).trim(),
+            date:   String(r['Date']).trim(),
+            member: String(r['Member'] || '').trim(),
+            name:   String(r['Name'] || '').trim(),
+          }));
+        if (!parsed.length) parsed = null;
+      } catch(err) {
+        parsed = null;
+      }
+    } else {
+      parsed = parseEduXlsx(e.target.result);
+    }
     if (!parsed) {
-      document.getElementById('status-edu').innerHTML = '❌ Invalid file — expected TSV with Club, Award, Date columns';
+      document.getElementById('status-edu').innerHTML = '❌ Invalid file — expected Education Achievements .xlsx or TSV with Club, Award, Date columns';
       document.getElementById('status-edu').className = 'upload-status err';
       return;
     }
@@ -2307,7 +2337,11 @@ function readEduFile(file) {
     document.getElementById('status-edu').innerHTML = `⏳ Pending: ${file.name} (${parsed.length} rows)`;
     document.getElementById('status-edu').className = 'upload-status ok';
   };
-  reader.readAsText(file);
+  if (isXlsx) {
+    reader.readAsArrayBuffer(file);
+  } else {
+    reader.readAsText(file);
+  }
 }
 
 function handleFileInput(event, key) {
